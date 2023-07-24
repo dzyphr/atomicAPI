@@ -1,0 +1,3 @@
+[submodule "rust/ElGamal"]
+	path = rust/ElGamal
+	url = https://github.com/dzyphr/rsElGamal
