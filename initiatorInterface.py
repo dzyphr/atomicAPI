@@ -12,7 +12,7 @@ def sanitizeInitiation(initiationJSON):
     j = json.loads(initiationJSON)
     ksG = j["ksG"]
     ks = j["ks"]
-    rs = j["rs"] #Returns the same JSON with ks and rs removed
+    rs = j["rs"] #Returns the same JSON with ks and rs (Private Variables) removed
     strip0 = initiationJSON.replace("\"ks\": " + str(ks) + ",", "")\
             .replace("\"rs\": " + str(rs) , "")\
             .replace("\"rs\": " + str(rs) + ",", "")\
@@ -24,4 +24,6 @@ def sanitizeInitiation(initiationJSON):
             .replace("\"ksG\": \"" + str(ksG) + "\"", "\"ksG\": \"" + str(ksG) + "\"\n}")\
             .rstrip()
     return strip1
+
+
 
