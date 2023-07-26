@@ -14,6 +14,8 @@ import org.ergoplatform
 import sigmastate
 from sigmastate.interpreter.CryptoConstants import * 
 from java.math import BigInteger
+#from ergo_python_appkit.appkit import *
+#from ergpy import helper_functions, appkit
 import waits
 import coinSelection
 import scalaPipe
@@ -210,6 +212,39 @@ def main(args):
     
 
 
+    '''
+    check = add_points(srG, xG) #P1 CHECKS WITH ECC
+    sr_G = scalar_mult(sr_, g)
+    print("\np1 checks that srG + xG == sr_G", check, "==", sr_G, "and that xG are locking funds in contract")
+    assert(check == sr_G, "check != sr_G")
+    print("\np1 locks funds to contract that checks that the inputed sr and ss are == to srG and ssG as well as include krG and ksG in the second half of the conditions")
+    ss = ks + e * rs
+    ss = ss % n
+    ss = ss % javaBigIntegerMAX
+    ssERGO = BigInteger(str(ss))
+    ssGERGO = dlogGroup().generator().multiply(ssERGO).normalize()
+    print("create ergo script locked to ", srGERGO, ssGERGO, krGERGO, ksGERGO)
+    print("\np1 computes their part of the signature ss = ks + e * rs:", ss, "and sends result to p2" )
+#    print("ss:", ss, "ssGERGO", ssGERGO)
+    print("ssGX-ERGO:", int(str(ssGERGO.getXCoord().toBigInteger())), "ssGY-ERGO:", int(str(ssGERGO.getYCoord().toBigInteger())))
+    print("\np2 computes their part of the signature sr = kr + e *rr:", sr)
+    Q = sr + ss
+    print("\nthe contract can check for the combined sig:", Q, "obtained by doing assert([input]ss*G + sr*G == [spending condition]ssG + srG)")
+    print("\np1 sees that p2 broadcasted Q on chain and can then use it to compute sr")
+    p1sr = Q - ss
+    print("\nsr:", sr,"==", "p1sr:", p1sr)
+    assert(sr == p1sr )
+    p1x = sr_ - sr  #p1 discovers x this way
+    print("\np1 discovers sr_ - sr = x", p1x)
+    assert(p1x == x)
+    print("p1 can now spend value locked to hash/public pair xG with x and their signature")
+
+
+
+
+
+
+    ''' 
 
 
 
