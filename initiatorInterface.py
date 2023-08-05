@@ -1,6 +1,7 @@
 import os
 import json
 from file_tools import *
+from AtomicityInterface import *
 py = "python3 -u "
 AtomicSwapECCPath = "Ergo/SigmaParticle/AtomicMultiSigECC/py/deploy.py " #TODO Ergo Specific
 s_ = " "
@@ -35,7 +36,4 @@ def inspectResponse(DEC_response_filepath, responderinfo_filepath):
 
 
 
-def Atomicity_CheckContractFunds(j_response):
-    chain = j_response["chain"]
-    contractAddr = j_response["contractAddr"]
-    
+     

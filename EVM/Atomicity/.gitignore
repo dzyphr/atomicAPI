@@ -1,0 +1,22 @@
+# ignore all .env files
+*.env
+
+# ignore all swap files
+*.swp
+
+#ignore all milkAave scripts
+milkAave*
+aave*
+milk*
+
+
+#ignore test projects that arent official examples (no official examples yet)
+MultiSigWallet/
+Payable/
+SafePayable/
+UniDirectionalPaymentChannel/
+VerifySignature/
+simple_storage/
+simple_storage_constructor
+test/
+testname/

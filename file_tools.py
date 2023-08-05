@@ -31,4 +31,22 @@ def clean_file_open(filepath, readOrWrite, writingContent=None, extraWarn=None, 
     else:
         print("unknown argument", readOrWrite , "\nfor argument 2 'readOrWrite' enter r or w as a string")
         
-
+def wait_for_file(path, tries=None):
+    if tries == None:
+        while True:
+            if os.path.isfile(path):
+                return
+            else:
+                time.sleep(1)
+                continue
+    else:
+        if type(tries) != type(int):
+            print("tries must be an int type")
+        i = 0
+        while i < tries:
+            if os.path.isfile(path):
+                return
+            else:
+                time.sleep(1)
+                i = i + 1
+                continue
