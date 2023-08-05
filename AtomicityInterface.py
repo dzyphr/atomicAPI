@@ -26,3 +26,26 @@ def buildScalarContract(chain, counterpartyChainPub, xG, locktimeDuration, swapN
     clean_file_open(Atomicity + swapName + "/contracts/" + swapName + ".sol", "w", rename.replace('AtomicMultiSigSecp256k1', swapName))
     specifyChain = os.popen("echo 'CurrentChain=\"" + chain  + "\"' >> " + Atomicity + \
           swapName + "/.env").read()
+
+def deployContract(swapName, customGas=None, customGasMod=None):
+    custom = False
+    gas = "8000000"
+    if customGas != None:
+        if type(customGas) != type(int):
+            print("customGas must be int")
+        else:
+            gas = customGas
+            custom = True
+    gasMod = 1
+    if customGasMod != None:
+        if type(customGasMod) != type(int):
+            print("gasMod must be int")
+        else:
+            gasMod = customGasMod
+            custom = True
+    if custom == False:
+       return os.popen("cd " + Atomicity + swapName + "/ && python3 py/deploy.py").read()
+    elif custom == True:
+       return os.popen("cd" +  Atomicity + swapName + "/ && python3 py/deploy.py deployCustomGas " + gas + " " + gasMod)
+
+
