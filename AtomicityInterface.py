@@ -6,7 +6,7 @@ def Atomicity_CheckContractFunds(j_response):
     chain = j_response["chain"]
     contractAddr = j_response["contractAddr"]
     if chain == "Sepolia":
-        value = os.popen("cd Atomicity/Sepolia && python3 -u py/deploy.py getBalance " + contractAddr).read()
+        value = os.popen("cd " + Atomicity + "Sepolia && python3 -u py/deploy.py getBalance " + contractAddr).read()
         return value
 
 def buildScalarContract(chain, counterpartyChainPub, xG, locktimeDuration, swapName):
@@ -44,8 +44,23 @@ def deployContract(swapName, customGas=None, customGasMod=None):
             gasMod = customGasMod
             custom = True
     if custom == False:
-       return os.popen("cd " + Atomicity + swapName + "/ && python3 py/deploy.py").read()
+       response = os.popen("cd " + Atomicity + swapName + "/ && python3 py/deploy.py").read()
+       if response.startswith("0x"):
+           return response
+       else:
+           return "fail"
     elif custom == True:
-       return os.popen("cd" +  Atomicity + swapName + "/ && python3 py/deploy.py deployCustomGas " + gas + " " + gasMod)
+       response = os.popen("cd" +  Atomicity + swapName + "/ && python3 py/deploy.py deployCustomGas " + gas + " " + gasMod)
+       if response.startswith("0x"):
+           return response
+       else:
+           return "fail"
 
-
+def compareScalarContractCoords(swapName, contractAddr, expectedX, expectedY):
+    x = os.popen("cd " + Atomicity + swapname + " && python3 -u py/deploy.py getXCoord").read()
+    y = os.popen("cd " + Atomicity + swapname + " && python3 -u py/deploy.py getYCoord").read()
+    if x != expectedX or y != expectedY:
+        return False
+    else:
+        return True
+    

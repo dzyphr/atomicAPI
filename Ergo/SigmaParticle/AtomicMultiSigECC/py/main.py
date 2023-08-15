@@ -34,8 +34,8 @@ def main(args):
     sha256 = hashlib.sha256()
 
 
-    def p1Initiate(chainPubkey, localChain):
-        if chainPubkey == "":
+    def p1Initiate(crossChainPubkey, localChain, crossChain):
+        if crossChainPubkey == "":
             print("enter chainPubkey as arg")
             exit(1)
         rs = random.randrange(0, n)
@@ -50,8 +50,9 @@ def main(args):
         ksG = scalar_mult(ks, g)
         ksGERGO = dlogGroup().generator().multiply(ksERGO).normalize()
         #return a JSON for easy cross lang/client parsing!
+        label_crosschainpub = crossChain + "ChainPubkey"
         p1InitiateOBJECT =  {
-            "chainPubkey": chainPubkey,
+            label_crosschainpub : crossChainPubkey,
             "localChain": localChain,
             "rsG": "(" + str(rsGERGO.getXCoord().toBigInteger()) + ", " + str(rsGERGO.getYCoord().toBigInteger()) + ")",
             "ksG": "(" + str(ksGERGO.getXCoord().toBigInteger()) + ", " + str(ksGERGO.getYCoord().toBigInteger()) + ")",
@@ -186,10 +187,10 @@ def main(args):
         command = args[1]
         if command == "p1Initiate":
             if len(args) > 2:
-                if len(args) > 3:
-                    sys.stdout.write(str(p1Initiate(args[2], args[3])))
+                if len(args) > 4:
+                    sys.stdout.write(str(p1Initiate(args[2], args[3], args[4])))
                 else:
-                    print("enter your local chain  as following arg")
+                    print("followup args: [crossChainPubkey] [localChain] [crossChain]")
             else:
                 print("enter chainPubkey as following arg")
         if command == "p2Respond":

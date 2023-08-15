@@ -5,6 +5,7 @@ from initiatorInterface import *
 from responderInterface import *
 from ElGamalInterface import *
 from AtomicityInterface import * 
+import json_tools
 args = sys.argv
 
 
@@ -16,8 +17,14 @@ def test():
     testkey = "688344026718772736449750175203366052782498205293898002465375827258042277361951460658218874759221293994168145022574766874751338527256700500579101512082414055194093613376114567923022297129476978722630282962906957224675125386874494158492157124310481876254258350563100432848938338097941551681473725391869419801716664372453775554757712481751968704577158437846771260413284009770218290762832891954510055886590737"
     testkeypath = "Key0.ElGamalKey"
     testswapname = "testswapname"
-    privateInit = initiation("0xFe4cc19ea6472582028641B2633d3adBB7685C69", "Ergo")
-#    print(privateInit)
+    initiatorJSONPath = "initiator_test.json" #initiators local swap session json state
+    clean_file_open(initiatorJSONPath, "w", "{}")
+    privateInit = initiation("0xFe4cc19ea6472582028641B2633d3adBB7685C69", "Ergo", "Sepolia")
+    print(privateInit)
+    clean_file_open("priv_init_test.json", "w", privateInit)
+    initiation_keyValList = json_tools.json_to_keyValList("priv_init_test.json")
+    json_tools.keyVal_list_update(initiation_keyValList, initiatorJSONPath)
+
     publicInit = sanitizeInitiation(privateInit)
 #    print(publicInit)
     encrypt = ElGamal_Encrypt(testkey, testkeypath, publicInit, "Test_Encryption.bin")
@@ -27,7 +34,12 @@ def test():
             "response_path_test.bin",  "ENC_response_path_test.bin", testkey, testkeypath)
     xG = json.loads(clean_file_open("response_path_test.bin", "r"))["xG"]
     buildScalarContract("Sepolia", "0xFe4cc19ea6472582028641B2633d3adBB7685C69",  xG, 100, testswapname)
-    print(deployContract(testswapname))
+    addr = deployContract(testswapname)
+    if addr != "fail":
+        clean_file_open("ScalarContractAddrTest.bin", "w", addr)
+    else:
+        print("fail: deployContract() didnt return a contract addr")
+        exit()
     print("success!")
 #    decrypted_response = ElGamal_Decrypt("ENC_response_path_test.bin", testkey, testkeypath)
 #    print(decrypted_response)
