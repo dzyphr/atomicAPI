@@ -5,11 +5,13 @@ s_ = " "
 
 def ElGamal_Encrypt(receiverPubKey, userKeyFileName, subject, filePath):
     command = \
+            "subject=" + "\'" + subject + "\' " + " && " + \
             ElGamal + "encryptToPubKey " + \
             receiverPubKey + s_ + \
             userKeyFileName + s_ + \
-            "\'" + subject + "\'" + s_ + \
+            " $subject " + s_ + \
             filePath
+    print(command)
     return os.popen(command).read()
 
 def ElGamal_Decrypt(subjectFilePath, senderPubKey, userKeyFileName):

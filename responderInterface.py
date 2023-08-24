@@ -13,7 +13,7 @@ def process_initiation(EncryptedInitiation, ENC_filepath, DEC_filepath, SenderPu
     clean_file_open(DEC_filepath, "w", decrypt)
 
 
-def response(DEC_initiation_filepath, sr_filepath, x_filepath, response_filepath, ENC_response_filepath, SenderPubKey, UserKeyFileName):
+def response(DEC_initiation_filepath, sr_filepath, x_filepath, response_filepath, SenderPubKey, UserKeyFileName):
     j_init = json.loads(clean_file_open(DEC_initiation_filepath, "r"))
     ksG = j_init["ksG"]
     command = \
@@ -22,6 +22,5 @@ def response(DEC_initiation_filepath, sr_filepath, x_filepath, response_filepath
         sr_filepath + s_ + x_filepath 
     response = os.popen(command).read()
     clean_file_open(response_filepath, "w", response)
-    encrypt = ElGamal_Encrypt(SenderPubKey, UserKeyFileName, response, ENC_response_filepath)
 
 
