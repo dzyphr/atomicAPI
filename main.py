@@ -6,6 +6,7 @@ from responderInterface import *
 from ElGamalInterface import *
 from AtomicityInterface import * 
 import json_tools
+import time
 args = sys.argv
 
 
@@ -42,7 +43,7 @@ def test():
     addr = deployContract(testswapname)
     if addr != "fail":
         #ASSUMING ITS ENDING WITH \n
-        addr  =  addr[:-2]
+        addr  =  addr[:-1]
         clean_file_open("ScalarContractAddrTest.bin", "w", addr.rstrip())
     else:
         print("fail: deployContract() didnt return a contract addr")
@@ -57,6 +58,7 @@ def test():
     decrypted_response = ElGamal_Decrypt("ENC_response_path_test.bin", testkey, testkeypath)
     print("self decrypted response:", decrypted_response)
     clean_file_open("DEC_response_path_test.bin", "w", decrypted_response)
+    time.sleep(10)
     inspectResponse("DEC_response_path_test.bin", "responderinfo_test.json")
     print("success!")
 
