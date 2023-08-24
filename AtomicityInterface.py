@@ -27,7 +27,7 @@ def buildScalarContract(chain, counterpartyChainPub, xG, locktimeDuration, swapN
     specifyChain = os.popen("echo 'CurrentChain=\"" + chain  + "\"' >> " + Atomicity + \
           swapName + "/.env").read()
 
-def deployContract(swapName, customGas=None, customGasMod=None):
+def deployEVMContract(swapName, customGas=None, customGasMod=None):
     custom = False
     gas = "8000000"
     if customGas != None:

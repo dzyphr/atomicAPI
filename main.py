@@ -40,7 +40,7 @@ def test():
             "response_path_test.bin", testkey, testkeypath)
     xG = json.loads(clean_file_open("response_path_test.bin", "r"))["xG"]
     buildScalarContract(testResponderChain, "0xFe4cc19ea6472582028641B2633d3adBB7685C69",  xG, 100, testswapname)
-    addr = deployContract(testswapname)
+    addr = deployEVMContract(testswapname)
     if addr != "fail":
         #ASSUMING ITS ENDING WITH \n
         addr  =  addr[:-1]
