@@ -21,9 +21,10 @@ def test():
     testInitiatorChain = "Ergo"
     testResponderChain = "Sepolia"
     initiatorJSONPath = "initiator_test.json" #initiators local swap session json state
+    responderJSONPath = "responder_test.json"
     EVMAddr1 = "0xFe4cc19ea6472582028641B2633d3adBB7685C69"
 
-
+    ############### INITIATOR #####################################################
     clean_file_open(initiatorJSONPath, "w", "{}") #open initiators store file
     privateInit = initiation(EVMAddr1, testInitiatorChain, testResponderChain) #create a local initiation
     privateInitPATH = "priv_init_test.json"
@@ -36,14 +37,20 @@ def test():
     clean_file_open(publicInitPATH, "w", publicInit) #write the public variables into a public file
 
     encrypt = ElGamal_Encrypt(testkey, testkeypath, publicInitPATH, "ENC_init_test.bin") #encrypt the public file to receiver's pub
+    ################################################################################
 
+
+    ############## RESPONDER #######################################################
     ENC_Init_PATH = "ENC_init_test.bin"
-    process_initiation(ENC_Init_PATH, "TestInitiationDecryptedPath.bin", testkey, testkeypath)
-    #receiver will process this initiation 
-
+    DEC_Init_PATH = "DEC_init_test.json"
+    process_initiation(ENC_Init_PATH, DEC_Init_PATH, testkey, testkeypath)
+    clean_file_open(responderJSONPath, "w", "{}")
+    r_initiation_keyValList = json_tools.json_to_keyValList(DEC_Init_PATH)
+    json_tools.keyVal_list_update(r_initiation_keyValList, responderJSONPath)
+    responsePATH = "response_path_test.json"
     response("TestInitiationDecryptedPath.bin", "sr_path_test.bin", "x_path_test.bin", \
-            "response_path_test.bin", testkey, testkeypath)
-    xG = json.loads(clean_file_open("response_path_test.bin", "r"))["xG"]
+            responsePATH, testkey, testkeypath)
+    xG = json.loads(clean_file_open(responsePATH, "r"))["xG"]
     buildScalarContract(testResponderChain, "0xFe4cc19ea6472582028641B2633d3adBB7685C69",  xG, 100, testswapname)
     addr = deployEVMContract(testswapname)
     if addr != "fail":
@@ -55,11 +62,13 @@ def test():
         exit()
     #add contract addr and chain name to response here then encrypt 
     update_response_keyValList = [{"chain":testResponderChain}, {"contractAddr":addr}]
-    json_tools.keyVal_list_update(update_response_keyValList, "response_path_test.bin")
-    updatedResponsePATH = "response_path_test.bin"
-    print("encrypting")
-    encrypted_response = ElGamal_Encrypt(testkey, testkeypath, updatedResponsePATH, "ENC_response_path_test.bin")
-    print("self decrypting")
+    json_tools.keyVal_list_update(update_response_keyValList, responsePATH)
+    responseLIST = json_tools.json_to_keyValList(responsePATH)
+    json_tools.keyVal_list_update(responseLIST, responderJSONPath)
+    encrypted_response = ElGamal_Encrypt(testkey, testkeypath, responsePATH, "ENC_response_path_test.bin")
+    ################################################################################
+
+    ############### INITIATOR #####################################################
     decrypted_response = ElGamal_Decrypt("ENC_response_path_test.bin", testkey, testkeypath)
     print("self decrypted response:", decrypted_response)
     clean_file_open("DEC_response_path_test.bin", "w", decrypted_response)
@@ -68,6 +77,7 @@ def test():
     j = json.loads(clean_file_open("DEC_response_path_test.bin", "r"))
     update_initiators_json = [{"responderChain":j["chain"]}, {"responderContractAddr":j["contractAddr"]}]
     json_tools.keyVal_list_update(update_initiators_json, initiatorJSONPath)
+    ###############################################################################
     print("success!")
 
 if len(args) >= 1:

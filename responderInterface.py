@@ -10,7 +10,7 @@ s_ = " "
 
 
 # we need to assume we have the ENC file saved already
-def process_initiation(ENC_filepath, DEC_filepath, SenderPubKey, UserKeyFileName):
+def process_initiation(ENC_filepath, DEC_filepath, SenderPubKey, UserKeyFileName): #this is generic to any enc_message actually
     clean_file_open(ENC_filepath, "r")
     decrypt = ElGamal_Decrypt(ENC_filepath, SenderPubKey, UserKeyFileName) #TODO verify initiation details including json sanity
     clean_file_open(DEC_filepath, "w", decrypt)
