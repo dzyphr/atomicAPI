@@ -28,7 +28,7 @@ def sanitizeInitiation(initiationJSON): #this can be done at the SigmaParticle f
 
 def inspectResponse(DEC_response_filepath, responderinfo_filepath):
     j_response = json.loads(clean_file_open(DEC_response_filepath, "r"))
-    if "chain" not in j_response or "contractAddr" not in j_response:
+    if "responderLocalChain" not in j_response or "responderContractAddr" not in j_response:
         print("Error: response does not have expected keys")
         return "Error: response does not have expected keys"
     else:

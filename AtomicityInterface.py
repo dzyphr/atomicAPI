@@ -3,8 +3,8 @@ from file_tools import *
 Atomicity = "EVM/Atomicity/"
 
 def Atomicity_CheckContractFunds(j_response):
-    chain = j_response["chain"]
-    contractAddr = j_response["contractAddr"]
+    chain = j_response["responderLocalChain"]
+    contractAddr = j_response["responderContractAddr"]
     if chain == "Sepolia":
         value = os.popen("cd " + Atomicity + "Sepolia && python3 -u py/deploy.py getBalance " + contractAddr).read()
         return value

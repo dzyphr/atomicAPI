@@ -61,7 +61,7 @@ def test():
         print("fail: deployContract() didnt return a contract addr")
         exit()
     #add contract addr and chain name to response here then encrypt 
-    update_response_keyValList = [{"chain":testResponderChain}, {"contractAddr":addr}]
+    update_response_keyValList = [{"responderLocalChain":testResponderChain}, {"responderContractAddr":addr}]
     json_tools.keyVal_list_update(update_response_keyValList, responsePATH)
     responseLIST = json_tools.json_to_keyValList(responsePATH)
     json_tools.keyVal_list_update(responseLIST, responderJSONPath)
