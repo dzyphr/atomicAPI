@@ -53,7 +53,7 @@ def main(args):
         label_crosschainpub = crossChain + "ChainPubkey"
         p1InitiateOBJECT =  {
             label_crosschainpub : crossChainPubkey,
-            "localChain": localChain,
+            "initiatorLocalChain": localChain,
             "rsG": "(" + str(rsGERGO.getXCoord().toBigInteger()) + ", " + str(rsGERGO.getYCoord().toBigInteger()) + ")",
             "ksG": "(" + str(ksGERGO.getXCoord().toBigInteger()) + ", " + str(ksGERGO.getYCoord().toBigInteger()) + ")",
             "ks": ks, #must be stripped by client so it is not shared!

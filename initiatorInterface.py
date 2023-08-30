@@ -29,10 +29,15 @@ def sanitizeInitiation(initiationJSON): #this can be done at the SigmaParticle f
 def inspectResponse(DEC_response_filepath, responderinfo_filepath):
     j_response = json.loads(clean_file_open(DEC_response_filepath, "r"))
     if "chain" not in j_response or "contractAddr" not in j_response:
-        return print("Error: response does not have expected keys")
+        print("Error: response does not have expected keys")
+        return "Error: response does not have expected keys"
     else:
         fundedAmount = Atomicity_CheckContractFunds(j_response)
         print("contractAmount: ", fundedAmount, " wei")
+        inspectScalarContractObject = {
+                "counterpartyContractFundedAmount": fundedAmount
+        }
+        return json.dumps(inspectScalarContractObject)
 
 
 
