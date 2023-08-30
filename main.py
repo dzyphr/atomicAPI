@@ -21,21 +21,26 @@ def test():
     testInitiatorChain = "Ergo"
     testResponderChain = "Sepolia"
     initiatorJSONPath = "initiator_test.json" #initiators local swap session json state
-    clean_file_open(initiatorJSONPath, "w", "{}")
-    privateInit = initiation("0xFe4cc19ea6472582028641B2633d3adBB7685C69", testInitiatorChain, testResponderChain)
-    print(privateInit)
-    clean_file_open("priv_init_test.json", "w", privateInit)
-    initiation_keyValList = json_tools.json_to_keyValList("priv_init_test.json")
-    json_tools.keyVal_list_update(initiation_keyValList, initiatorJSONPath)
+    EVMAddr1 = "0xFe4cc19ea6472582028641B2633d3adBB7685C69"
 
-    publicInit = sanitizeInitiation(privateInit)
-    clean_file_open("public_init_test.json", "w", publicInit)
-#    print(publicInit)
-    #to get rid of json parsign BS we should enforce encryption via filepath instead of shell script level text object
+
+    clean_file_open(initiatorJSONPath, "w", "{}") #open initiators store file
+    privateInit = initiation(EVMAddr1, testInitiatorChain, testResponderChain) #create a local initiation
+    privateInitPATH = "priv_init_test.json"
+    clean_file_open(privateInitPATH, "w", privateInit) #write initiation contents into private file
+    initiation_keyValList = json_tools.json_to_keyValList(privateInitPATH) #backup the keys and values from this file
+    json_tools.keyVal_list_update(initiation_keyValList, initiatorJSONPath) #update the initiators store file with the values
+
+    publicInit = sanitizeInitiation(privateInit) #remove the private variables from the json
     publicInitPATH = "public_init_test.json"
-    encrypt = ElGamal_Encrypt(testkey, testkeypath, publicInitPATH, "Test_Encryption.bin")
-    ENC_init = clean_file_open("Test_Encryption.bin", "r")
-    process_initiation(ENC_init, "TestInitiationEncryptedPath.bin", "TestInitiationDecryptedPath.bin", testkey, testkeypath)
+    clean_file_open(publicInitPATH, "w", publicInit) #write the public variables into a public file
+
+    encrypt = ElGamal_Encrypt(testkey, testkeypath, publicInitPATH, "ENC_init_test.bin") #encrypt the public file to receiver's pub
+
+    ENC_Init_PATH = "ENC_init_test.bin"
+    process_initiation(ENC_Init_PATH, "TestInitiationDecryptedPath.bin", testkey, testkeypath)
+    #receiver will process this initiation 
+
     response("TestInitiationDecryptedPath.bin", "sr_path_test.bin", "x_path_test.bin", \
             "response_path_test.bin", testkey, testkeypath)
     xG = json.loads(clean_file_open("response_path_test.bin", "r"))["xG"]
@@ -60,6 +65,9 @@ def test():
     clean_file_open("DEC_response_path_test.bin", "w", decrypted_response)
     time.sleep(10)
     inspectResponse("DEC_response_path_test.bin", "responderinfo_test.json")
+    j = json.loads(clean_file_open("DEC_response_path_test.bin", "r"))
+    update_initiators_json = [{"responderChain":j["chain"]}, {"responderContractAddr":j["contractAddr"]}]
+    json_tools.keyVal_list_update(update_initiators_json, initiatorJSONPath)
     print("success!")
 
 if len(args) >= 1:

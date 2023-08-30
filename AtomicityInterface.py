@@ -29,7 +29,7 @@ def buildScalarContract(chain, counterpartyChainPub, xG, locktimeDuration, swapN
 
 def deployEVMContract(swapName, customGas=None, customGasMod=None):
     custom = False
-    gas = "8000000"
+    gas = "9000000"
     if customGas != None:
         if type(customGas) != type(int):
             print("customGas must be int")

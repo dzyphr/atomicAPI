@@ -7,8 +7,11 @@ AtomicSwapECCPath = "Ergo/SigmaParticle/AtomicMultiSigECC/py/deploy.py " #TODO E
 s_ = " "
 
 
-def process_initiation(EncryptedInitiation, ENC_filepath, DEC_filepath, SenderPubKey, UserKeyFileName):
-    clean_file_open(ENC_filepath, "w", EncryptedInitiation)
+
+
+# we need to assume we have the ENC file saved already
+def process_initiation(ENC_filepath, DEC_filepath, SenderPubKey, UserKeyFileName):
+    clean_file_open(ENC_filepath, "r")
     decrypt = ElGamal_Decrypt(ENC_filepath, SenderPubKey, UserKeyFileName) #TODO verify initiation details including json sanity
     clean_file_open(DEC_filepath, "w", decrypt)
 
