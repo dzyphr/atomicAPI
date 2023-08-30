@@ -39,6 +39,19 @@ def inspectResponse(DEC_response_filepath):
         }
         return json.dumps(inspectScalarContractObject)
 
+def finalizeSwap(initiatorMasterJSONPath):
+    j = json.loads(clean_file_open(initiatorMasterJSONPath, "r"))
+    sr_ = j["sr_"]
+    xG = j["xG"]
+    srG = j["srG"]
+    e = j["e"]
+    ks = j["ks"]
+    rs = j["rs"]
+    cmd  = py + AtomicSwapECCPath + "p1Finalize " + \
+            "\"" + str(sr_) + "\"" + " \"" + xG.replace(" ", "") + "\" \"" + srG.replace(" ", "") + "\" \"" + str(e) + "\" " + \
+            "\"" + str(ks) + "\"" + " \"" + str(rs) + "\""
+    finalizeJSON = os.popen(cmd).read()
+    return finalizeJSON
 
 
 

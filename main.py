@@ -83,11 +83,11 @@ def test():
     json_tools.keyVal_list_update(inspect_list, initiatorJSONPath)
     response_list = json_tools.json_to_keyValList("DEC_response_path_test.bin")
     json_tools.keyVal_list_update(response_list, initiatorJSONPath)
-    minimum_wei = 0
+    minimum_wei = 0 #this is practically set for existential transfer calculations due to variable fee rates
     if int(json.loads(clean_file_open(initiatorJSONPath, "r"))["counterpartyContractFundedAmount"]) < int(minimum_wei):
         print("not enough wei in contract, fail")
         exit()
-
+    print(finalizeSwap(initiatorJSONPath))
     ###############################################################################
     print("success!")
 
