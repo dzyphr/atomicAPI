@@ -71,20 +71,18 @@ def test():
     ############### INITIATOR #####################################################
     decrypted_response = ElGamal_Decrypt("ENC_response_path_test.bin", testkey, testkeypath)
     print("self decrypted response:", decrypted_response)
-    clean_file_open("DEC_response_path_test.bin", "w", decrypted_response)
+    DEC_response_PATH = "DEC_response_test.json"
+    clean_file_open(DEC_response_PATH, "w", decrypted_response)
     time.sleep(10)
-    inspect_json = inspectResponse("DEC_response_path_test.bin", "responderinfo_test.json")
+    inspect_json = inspectResponse(DEC_response_PATH)
     if inspect_json == "Error: response does not have expected keys":
         print("fail")
         exit()
     clean_file_open("inspectContractTest.json", "w", inspect_json)
     inspect_list = json_tools.json_to_keyValList("inspectContractTest.json")
     json_tools.keyVal_list_update(inspect_list, initiatorJSONPath)
-#    j = json.loads(clean_file_open("DEC_response_path_test.bin", "r"))
-#    update_initiators_json = [{"responderChain":j["chain"]}, {"responderContractAddr":j["contractAddr"]}]
     response_list = json_tools.json_to_keyValList("DEC_response_path_test.bin")
     json_tools.keyVal_list_update(response_list, initiatorJSONPath)
-#    json_tools.keyVal_list_update(update_initiators_json, initiatorJSONPath)
     ###############################################################################
     print("success!")
 
