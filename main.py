@@ -5,8 +5,10 @@ from initiatorInterface import *
 from responderInterface import *
 from ElGamalInterface import *
 from AtomicityInterface import * 
+from SigmaParticleInterface import *
 import json_tools
 import time
+
 args = sys.argv
 
 
@@ -22,11 +24,12 @@ def test():
     testResponderChain = "Sepolia"
     initiatorJSONPath = "initiator_test.json" #initiators local swap session json state
     responderJSONPath = "responder_test.json"
-    EVMAddr1 = "0xFe4cc19ea6472582028641B2633d3adBB7685C69"
-
+    InitiatorEVMAddr = "0xFe4cc19ea6472582028641B2633d3adBB7685C69"
+    InitiatorEIP3Secret = 0
+    ResponderEVMAddr = "0x01225869F695b4b7F0af5d75381Fe340A4d27593"
     ############### INITIATOR #####################################################
     clean_file_open(initiatorJSONPath, "w", "{}") #open initiators store file
-    privateInit = initiation(EVMAddr1, testInitiatorChain, testResponderChain) #create a local initiation
+    privateInit = initiation(InitiatorEVMAddr, testInitiatorChain, testResponderChain) #create a local initiation
     privateInitPATH = "priv_init_test.json"
     clean_file_open(privateInitPATH, "w", privateInit) #write initiation contents into private file
     initiation_keyValList = json_tools.json_to_keyValList(privateInitPATH) #backup the keys and values from this file
@@ -51,7 +54,7 @@ def test():
     response("TestInitiationDecryptedPath.bin", "sr_path_test.bin", "x_path_test.bin", \
             responsePATH, testkey, testkeypath)
     xG = json.loads(clean_file_open(responsePATH, "r"))["xG"]
-    buildScalarContract(testResponderChain, "0xFe4cc19ea6472582028641B2633d3adBB7685C69",  xG, 100, testswapname)
+    buildScalarContract(testResponderChain, InitiatorEVMAddr,  xG, 100, testswapname)
     addr = deployEVMContract(testswapname)
     if addr != "fail":
         #ASSUMING ITS ENDING WITH \n
@@ -61,7 +64,9 @@ def test():
         print("fail: deployContract() didnt return a contract addr")
         exit()
     #add contract addr and chain name to response here then encrypt 
-    update_response_keyValList = [{"responderLocalChain":testResponderChain}, {"responderContractAddr":addr}]
+    update_response_keyValList = [{"responderLocalChain":testResponderChain}, \
+            {"responderContractAddr":addr}, \
+            {"responderSepoliaChainPubKey":ResponderEVMAddr}]
     json_tools.keyVal_list_update(update_response_keyValList, responsePATH)
     responseLIST = json_tools.json_to_keyValList(responsePATH)
     json_tools.keyVal_list_update(responseLIST, responderJSONPath)
@@ -81,13 +86,20 @@ def test():
     clean_file_open("inspectContractTest.json", "w", inspect_json)
     inspect_list = json_tools.json_to_keyValList("inspectContractTest.json")
     json_tools.keyVal_list_update(inspect_list, initiatorJSONPath)
-    response_list = json_tools.json_to_keyValList("DEC_response_path_test.bin")
+    response_list = json_tools.json_to_keyValList("DEC_response_test.json")
     json_tools.keyVal_list_update(response_list, initiatorJSONPath)
     minimum_wei = 0 #this is practically set for existential transfer calculations due to variable fee rates
     if int(json.loads(clean_file_open(initiatorJSONPath, "r"))["counterpartyContractFundedAmount"]) < int(minimum_wei):
         print("not enough wei in contract, fail")
         exit()
-    print(finalizeSwap(initiatorJSONPath))
+    finalizeOBJ = finalizeSwap(initiatorJSONPath)
+    finalizationPATH = "finalization_test.json"
+    clean_file_open(finalizationPATH, "w", finalizeOBJ)
+    finalizeOBJ_LIST = json_tools.json_to_keyValList(finalizationPATH)
+    json_tools.keyVal_list_update(finalizeOBJ_LIST, initiatorJSONPath)
+    EIP3list = [{"initiatorEIP3Secret":InitiatorEIP3Secret}]
+    json_tools.keyVal_list_update(EIP3list, initiatorJSONPath)
+    AtomicSchnorr(initiatorJSONPath, 25, testswapname, 0)
     ###############################################################################
     print("success!")
 
