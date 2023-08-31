@@ -27,6 +27,7 @@ def test():
     InitiatorEVMAddr = "0xFe4cc19ea6472582028641B2633d3adBB7685C69"
     InitiatorEIP3Secret = 0
     ResponderEVMAddr = "0x01225869F695b4b7F0af5d75381Fe340A4d27593"
+    ResponderErgoAddr = "3WwS8bSAhXuTu5xR5CxCrcfvUemQ7fqoPcNMLd8SagSWbcAbrE1S"
     ############### INITIATOR #####################################################
     clean_file_open(initiatorJSONPath, "w", "{}") #open initiators store file
     privateInit = initiation(InitiatorEVMAddr, testInitiatorChain, testResponderChain) #create a local initiation
@@ -66,7 +67,7 @@ def test():
     #add contract addr and chain name to response here then encrypt 
     update_response_keyValList = [{"responderLocalChain":testResponderChain}, \
             {"responderContractAddr":addr}, \
-            {"responderSepoliaChainPubKey":ResponderEVMAddr}]
+            {"responderErgoChainPubKey":ResponderErgoAddr}]
     json_tools.keyVal_list_update(update_response_keyValList, responsePATH)
     responseLIST = json_tools.json_to_keyValList(responsePATH)
     json_tools.keyVal_list_update(responseLIST, responderJSONPath)
@@ -99,7 +100,8 @@ def test():
     json_tools.keyVal_list_update(finalizeOBJ_LIST, initiatorJSONPath)
     EIP3list = [{"initiatorEIP3Secret":InitiatorEIP3Secret}]
     json_tools.keyVal_list_update(EIP3list, initiatorJSONPath)
-    AtomicSchnorr(initiatorJSONPath, 25, testswapname, 0)
+    BuildAtomicSchnorrContract(initiatorJSONPath, 25, testswapname, 0)
+    deployErgoContract(testswapname)
     ###############################################################################
     print("success!")
 

@@ -5,19 +5,19 @@ SigmaParticlePath = "Ergo/SigmaParticle/"
 AtomicSwapECCPath = "Ergo/SigmaParticle/AtomicMultiSigECC/py/deploy.py " #TODO Ergo Specific
 AtomicSwapPath = "Ergo/SigmaParticle/AtomicMultiSig/"
 
-def AtomicSchnorr(initiatorMasterJSONPath, refundDuration_BLOCKS, swapName, valueERGO):
+def BuildAtomicSchnorrContract(initiatorMasterJSONPath, refundDuration_BLOCKS, swapName, valueERGO):
     j = json.loads(clean_file_open(initiatorMasterJSONPath, "r"))
     krG = ast.literal_eval(j["krG"])
     srG = ast.literal_eval(j["srG"])
     ssG = ast.literal_eval(j["ssG"])
     ksG = ast.literal_eval(j["ksG"])
-    receiverChainPubKey = j["responderSepoliaChainPubKey"]
+    responderChainPubKey = j["responderErgoChainPubKey"]
     initiatorEIP3Secret = j["initiatorEIP3Secret"]
     cmd = "cd " + str(SigmaParticlePath)  + " && ./new_frame " + str(swapName) + \
         " && cd " + str(swapName) + " && echo " + \
         "'" + \
         "senderEIP3Secret=" + str(initiatorEIP3Secret)  + "\n" + \
-        "receiverAddr=\"" + str(receiverChainPubKey) + "\"\n" + \
+        "receiverAddr=\"" + str(responderChainPubKey) + "\"\n" + \
         "ergoAmount=" + str(valueERGO) + "\n" +\
         "refundDuration=" + str(refundDuration_BLOCKS) + "\n" + \
         "krGX=" + str(krG[0]) + "\n" +\
@@ -34,4 +34,6 @@ def AtomicSchnorr(initiatorMasterJSONPath, refundDuration_BLOCKS, swapName, valu
     employScriptsCMD = "cp " + AtomicSwapPath + "py/main.py " + SigmaParticlePath + swapName + "/py/main.py"
     os.popen(employScriptsCMD).read()
 
-
+def deployErgoContract(swapName):
+    command = "cd " + SigmaParticlePath + swapName + " && ./deploy.sh deposit"
+    os.popen(command).read()
