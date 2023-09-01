@@ -1,4 +1,4 @@
-import json, ast, os
+import json, ast, os, time
 from file_tools import *
 py = "python3 -u "
 SigmaParticlePath = "Ergo/SigmaParticle/"
@@ -37,3 +37,18 @@ def BuildAtomicSchnorrContract(initiatorMasterJSONPath, refundDuration_BLOCKS, s
 def deployErgoContract(swapName):
     command = "cd " + SigmaParticlePath + swapName + " && ./deploy.sh deposit"
     os.popen(command).read()
+
+def getBoxID(swapName):
+    return clean_file_open(SigmaParticlePath + swapName + "/boxId", "r")
+
+def checkBoxValue(boxID, boxValPATH):
+    while True:
+        cmd = "cd " + SigmaParticlePath + "/boxValue/ && ./deploy.sh " + boxID + " " + "../../../" + boxValPATH
+        os.popen(cmd).read()
+        response = clean_file_open(boxValPATH, "r")
+        if "error" in str(response) or type(response) == type(None):
+            time.sleep(5)
+            continue
+        else:
+            return response #returns box value in nano Ergs (nΣ)
+            break

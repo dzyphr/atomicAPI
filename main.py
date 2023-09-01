@@ -27,7 +27,10 @@ def test():
     InitiatorEVMAddr = "0xFe4cc19ea6472582028641B2633d3adBB7685C69"
     InitiatorEIP3Secret = 0
     ResponderEVMAddr = "0x01225869F695b4b7F0af5d75381Fe340A4d27593"
-    ResponderErgoAddr = "3WwS8bSAhXuTu5xR5CxCrcfvUemQ7fqoPcNMLd8SagSWbcAbrE1S"
+    InitiatorErgoAddr = "3WwS8bSAhXuTu5xR5CxCrcfvUemQ7fqoPcNMLd8SagSWbcAbrE1S"
+    ResponderErgoAddr = "3WwGZfTh3uur3g1dSUdHFXtRfGKtRJUPhiAwNWDuf2LGpcjRzC3y"
+
+
     ############### INITIATOR #####################################################
     clean_file_open(initiatorJSONPath, "w", "{}") #open initiators store file
     privateInit = initiation(InitiatorEVMAddr, testInitiatorChain, testResponderChain) #create a local initiation
@@ -102,6 +105,23 @@ def test():
     json_tools.keyVal_list_update(EIP3list, initiatorJSONPath)
     BuildAtomicSchnorrContract(initiatorJSONPath, 25, testswapname, 0)
     deployErgoContract(testswapname)
+    boxId = getBoxID(testswapname)
+    boxIdKeyValList = [{"boxId":boxId}]
+    json_tools.keyVal_list_update(boxIdKeyValList, initiatorJSONPath)
+    json_tools.keyVal_list_update(boxIdKeyValList, finalizationPATH)
+    ENC_finalizationPATH = "ENC_finalization_test.bin"
+    ENC_finalization =  ElGamal_Encrypt(testkey, testkeypath, finalizationPATH, ENC_finalizationPATH)
+    ###############################################################################
+
+
+    ############## RESPONDER #######################################################
+    DEC_finalization = ElGamal_Decrypt(ENC_finalizationPATH, testkey, testkeypath)
+    DEC_finalizationPATH = "DEC_finalization_test.json"
+    clean_file_open(DEC_finalizationPATH, "w", DEC_finalization)
+    boxID = json.loads(DEC_finalization)["boxId"]
+    checkBoxValue(boxID, "testBoxValPath.bin")
+
+
     ###############################################################################
     print("success!")
 
