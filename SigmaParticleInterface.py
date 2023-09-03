@@ -34,6 +34,20 @@ def BuildAtomicSchnorrContract(initiatorMasterJSONPath, refundDuration_BLOCKS, s
     employScriptsCMD = "cp " + AtomicSwapPath + "py/main.py " + SigmaParticlePath + swapName + "/py/main.py"
     os.popen(employScriptsCMD).read()
 
+def responderClaimAtomicSchnorr(swapName, DEC_finalizationPATH, responderMasterJSONPATH):
+    if os.path.isfile(DEC_finalizationPATH) == False:
+        print("finalization path is not a file! check filepath")
+    else:
+        claimContractGeneration = "cd SigmaParticle && ./new_frame " + swapName
+        gen = os.popen(claimContractGeneration).read()
+        importBoilerplate = "cp " + SigmaParticlePath + "/AtomicMultiSig/py/main.py " + SigmaParticlePath + swapName + "/py/main.py"
+        imp = os.popen(importBoilerplate).read()
+        sr = json.loads(clean_file_open(DEC_finalizationPATH, "r"))["sr"]
+        
+
+
+
+
 def deployErgoContract(swapName):
     command = "cd " + SigmaParticlePath + swapName + " && ./deploy.sh deposit"
     os.popen(command).read()

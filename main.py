@@ -1,6 +1,7 @@
 import sys
 import json
 import shutil
+import configparser
 from initiatorInterface import *
 from responderInterface import *
 from ElGamalInterface import *
@@ -25,9 +26,14 @@ def test():
     initiatorJSONPath = "initiator_test.json" #initiators local swap session json state
     responderJSONPath = "responder_test.json"
     InitiatorEVMAddr = "0xFe4cc19ea6472582028641B2633d3adBB7685C69"
-    InitiatorEIP3Secret = 0
     ResponderEVMAddr = "0x01225869F695b4b7F0af5d75381Fe340A4d27593"
+    confParser = configparser.ConfigParser()
+    confParser.read("Ergo/SigmaParticle/" + "basic_framework/.env")
+    InitiatorEIP3Secret = confParser['default']['senderEIP3Secret']
     InitiatorErgoAddr = "3WwS8bSAhXuTu5xR5CxCrcfvUemQ7fqoPcNMLd8SagSWbcAbrE1S"
+    confParser = configparser.ConfigParser()
+    confParser.read("Ergo/SigmaParticle/" + "responderEnv/.env") 
+    ResponderEIP3Secret = confParser['default']['senderEIP3Secret']
     ResponderErgoAddr = "3WwGZfTh3uur3g1dSUdHFXtRfGKtRJUPhiAwNWDuf2LGpcjRzC3y"
 
 
@@ -57,6 +63,7 @@ def test():
     responsePATH = "response_path_test.json"
     response("TestInitiationDecryptedPath.bin", "sr_path_test.bin", "x_path_test.bin", \
             responsePATH, testkey, testkeypath)
+    #TODO: replace sr and x paths with master json update
     xG = json.loads(clean_file_open(responsePATH, "r"))["xG"]
     buildScalarContract(testResponderChain, InitiatorEVMAddr,  xG, 100, testswapname)
     addr = deployEVMContract(testswapname)
@@ -119,7 +126,14 @@ def test():
     DEC_finalizationPATH = "DEC_finalization_test.json"
     clean_file_open(DEC_finalizationPATH, "w", DEC_finalization)
     boxID = json.loads(DEC_finalization)["boxId"]
-    checkBoxValue(boxID, "testBoxValPath.bin")
+    boxValue = checkBoxValue(boxID, "testBoxValPath.bin")
+    minBoxValue = 0 #123841
+    if int(boxValue) < int(minBoxValue):
+        print("not enough nanoerg in contract")
+        exit()
+
+
+
 
 
     ###############################################################################
