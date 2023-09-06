@@ -31,14 +31,14 @@ def deployEVMContract(swapName, customGas=None, customGasMod=None):
     custom = False
     gas = "9000000"
     if customGas != None:
-        if type(customGas) != type(int):
+        if type(customGas) != int:
             print("customGas must be int")
         else:
             gas = customGas
             custom = True
     gasMod = 1
     if customGasMod != None:
-        if type(customGasMod) != type(int):
+        if type(customGasMod) != int:
             print("gasMod must be int")
         else:
             gasMod = customGasMod
@@ -50,8 +50,12 @@ def deployEVMContract(swapName, customGas=None, customGasMod=None):
        else:
            return "fail"
     elif custom == True:
-       response = os.popen("cd" +  Atomicity + swapName + "/ && python3 py/deploy.py deployCustomGas " + gas + " " + gasMod)
-       if response.startswith("0x"):
+       response = \
+               os.popen(\
+               "cd " +  Atomicity + swapName + \
+               "/ && python3 py/deploy.py deployCustomGas " + \
+               str(gas) + " " + str(gasMod)).read()
+       if str(response).startswith("0x"):
            return response
        else:
            return "fail"

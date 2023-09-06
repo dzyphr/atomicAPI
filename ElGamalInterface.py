@@ -11,7 +11,7 @@ def ElGamal_Encrypt(receiverPubKey, userKeyFileName, subject, filePath):
             userKeyFileName + s_ + \
             " $subject " + s_ + \
             filePath
-    print(command)
+#    print(command)
     return os.popen(command).read()
 
 def ElGamal_Decrypt(subjectFilePath, senderPubKey, userKeyFileName):

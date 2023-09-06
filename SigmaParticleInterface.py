@@ -34,11 +34,19 @@ def BuildAtomicSchnorrContract(initiatorMasterJSONPath, refundDuration_BLOCKS, s
     employScriptsCMD = "cp " + AtomicSwapPath + "py/main.py " + SigmaParticlePath + swapName + "/py/main.py"
     os.popen(employScriptsCMD).read()
 
-def responderClaimAtomicSchnorr(swapName, DEC_finalizationPATH, responderMasterJSONPATH, boxValue):
+def responderClaimAtomicSchnorr(swapName, DEC_finalizationPATH, responderMasterJSONPATH, boxValue, tries=None):
     if os.path.isfile(DEC_finalizationPATH) == False:
         print("finalization path is not a file! check filepath")
     else:
-        claimContractGeneration = "cd SigmaParticle && ./new_frame " + swapName
+        rounds = 0
+        if tries == None:
+            rounds = 60
+        elif type(tries) != int:
+            print("tries must be int! defaulting to 60 tries")
+            rounds = 60
+        else:
+            rounds = tries
+        claimContractGeneration = "cd " + SigmaParticlePath + " && ./new_frame " + swapName
         gen = os.popen(claimContractGeneration).read()
         importBoilerplate = "cp " + SigmaParticlePath + "/AtomicMultiSig/py/main.py " + SigmaParticlePath + swapName + "/py/main.py"
         imp = os.popen(importBoilerplate).read()
@@ -48,7 +56,7 @@ def responderClaimAtomicSchnorr(swapName, DEC_finalizationPATH, responderMasterJ
         sr = master["sr"]
         krG = master["krG"]
         ksG = master["ksG"]
-        boxID = finalization["boxID"]
+        boxID = finalization["boxId"]
         nanoErgs = boxValue
         echoVariablesCMD = \
             "echo \"" + \
@@ -60,17 +68,19 @@ def responderClaimAtomicSchnorr(swapName, DEC_finalizationPATH, responderMasterJ
             "krGY=" + str(ast.literal_eval(krG)[1]) + "\n" + \
             "atomicBox=" + "\"" + boxID + "\"\n" + \
             "ergoAmount=" + str(nanoErgs) + "\n" + \
-            "\" >> SigmaParticle/" + swapName + "/.env"
+            "\" >> " + SigmaParticlePath + swapName + "/.env"
         os.popen(echoVariablesCMD).read()
         claimCMD = \
-                "cd SigmaParticle/" + swapName + " && ./deploy.sh claim"
-        return os.popen(claimCMD).read()
-
-
-        
-
-
-
+                "cd " + SigmaParticlePath + swapName + " && ./deploy.sh claim"
+        while rounds > 0:
+            response = os.popen(claimCMD).read()
+            print("response:\n", response)
+            if response == None:
+                rounds = rounds - 1
+                time.sleep(5)
+                continue
+            else:
+                return response
 
 def deployErgoContract(swapName):
     command = "cd " + SigmaParticlePath + swapName + " && ./deploy.sh deposit"

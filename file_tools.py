@@ -1,4 +1,4 @@
-import os
+import os, time
 
 def clean_file_open(filepath, readOrWrite, writingContent=None, extraWarn=None, truncate=None):
     if type(readOrWrite) != str:

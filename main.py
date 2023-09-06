@@ -70,7 +70,8 @@ def test():
     #TODO: replace sr and x paths with master json update
     xG = json.loads(clean_file_open(responsePATH, "r"))["xG"]
     buildScalarContract(testResponderChain, InitiatorEVMAddr,  xG, 100, testswapname)
-    addr = deployEVMContract(testswapname)
+
+    addr = deployEVMContract(testswapname, customGasMod=2)
     if addr != "fail":
         #ASSUMING ITS ENDING WITH \n
         addr  =  addr[:-1]
@@ -135,7 +136,7 @@ def test():
     if int(boxValue) < int(minBoxValue):
         print("not enough nanoerg in contract")
         exit()
-
+    responderClaimAtomicSchnorr(testswapname, DEC_finalizationPATH, responderJSONPath, boxValue)
 
 
 
