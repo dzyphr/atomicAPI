@@ -34,7 +34,7 @@ def BuildAtomicSchnorrContract(initiatorMasterJSONPath, refundDuration_BLOCKS, s
     employScriptsCMD = "cp " + AtomicSwapPath + "py/main.py " + SigmaParticlePath + swapName + "/py/main.py"
     os.popen(employScriptsCMD).read()
 
-def responderClaimAtomicSchnorr(swapName, DEC_finalizationPATH, responderMasterJSONPATH):
+def responderClaimAtomicSchnorr(swapName, DEC_finalizationPATH, responderMasterJSONPATH, boxValue):
     if os.path.isfile(DEC_finalizationPATH) == False:
         print("finalization path is not a file! check filepath")
     else:
@@ -42,7 +42,30 @@ def responderClaimAtomicSchnorr(swapName, DEC_finalizationPATH, responderMasterJ
         gen = os.popen(claimContractGeneration).read()
         importBoilerplate = "cp " + SigmaParticlePath + "/AtomicMultiSig/py/main.py " + SigmaParticlePath + swapName + "/py/main.py"
         imp = os.popen(importBoilerplate).read()
-        sr = json.loads(clean_file_open(DEC_finalizationPATH, "r"))["sr"]
+        finalization = json.loads(clean_file_open(DEC_finalizationPATH, "r"))
+        master = json.loads(clean_file_open(responderMasterJSONPATH, "r"))
+        ss = finalization["ss"]
+        sr = master["sr"]
+        krG = master["krG"]
+        ksG = master["ksG"]
+        boxID = finalization["boxID"]
+        nanoErgs = boxValue
+        echoVariablesCMD = \
+            "echo \"" + \
+            "sr=" + sr + "\n" + \
+            "ss=" + ss + "\n" + \
+            "ksGX=" + str(ast.literal_eval(ksG)[0]) + "\n" + \
+            "ksGY=" + str(ast.literal_eval(ksG)[1]) + "\n" + \
+            "krGX=" + str(ast.literal_eval(krG)[0]) + "\n" + \
+            "krGY=" + str(ast.literal_eval(krG)[1]) + "\n" + \
+            "atomicBox=" + "\"" + boxID + "\"\n" + \
+            "ergoAmount=" + str(nanoErgs) + "\n" + \
+            "\" >> SigmaParticle/" + swapName + "/.env"
+        os.popen(echoVariablesCMD).read()
+        claimCMD = \
+                "cd SigmaParticle/" + swapName + " && ./deploy.sh claim"
+        return os.popen(claimCMD).read()
+
 
         
 
