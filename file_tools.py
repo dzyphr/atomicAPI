@@ -50,3 +50,13 @@ def wait_for_file(path, tries=None):
                 time.sleep(1)
                 i = i + 1
                 continue
+
+def clean_mkdir(dirpath):
+    if os.path.isdir(dirpath) == True:
+        print("dir already exists!")
+        return False
+    else:
+        os.mkdir(dirpath)
+        return True
+
+    

@@ -43,6 +43,7 @@ def responderClaimAtomicSchnorr(swapName, DEC_finalizationPATH, responderMasterJ
         importBoilerplate = "cp " + SigmaParticlePath + "/AtomicMultiSig/py/main.py " + SigmaParticlePath + swapName + "/py/main.py"
         imp = os.popen(importBoilerplate).read()
         sr = json.loads(clean_file_open(DEC_finalizationPATH, "r"))["sr"]
+
         
 
 
@@ -60,6 +61,7 @@ def checkBoxValue(boxID, boxValPATH):
         cmd = "cd " + SigmaParticlePath + "/boxValue/ && ./deploy.sh " + boxID + " " + "../../../" + boxValPATH
         os.popen(cmd).read()
         response = clean_file_open(boxValPATH, "r")
+        print("response:", response)
         if "error" in str(response) or type(response) == type(None):
             time.sleep(5)
             continue

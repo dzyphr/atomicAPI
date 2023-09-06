@@ -39,16 +39,17 @@ def test():
 
     ############### INITIATOR #####################################################
     clean_file_open(initiatorJSONPath, "w", "{}") #open initiators store file
+    clean_mkdir(testswapname)
     privateInit = initiation(InitiatorEVMAddr, testInitiatorChain, testResponderChain) #create a local initiation
     privateInitPATH = "priv_init_test.json"
     clean_file_open(privateInitPATH, "w", privateInit) #write initiation contents into private file
     initiation_keyValList = json_tools.json_to_keyValList(privateInitPATH) #backup the keys and values from this file
     json_tools.keyVal_list_update(initiation_keyValList, initiatorJSONPath) #update the initiators store file with the values
-
+    swapnamelist = [{"swapName":testswapname}]
+    json_tools.keyVal_list_update(swapnamelist, initiatorJSONPath)
     publicInit = sanitizeInitiation(privateInit) #remove the private variables from the json
     publicInitPATH = "public_init_test.json"
     clean_file_open(publicInitPATH, "w", publicInit) #write the public variables into a public file
-
     encrypt = ElGamal_Encrypt(testkey, testkeypath, publicInitPATH, "ENC_init_test.bin") #encrypt the public file to receiver's pub
     ################################################################################
 
@@ -56,12 +57,15 @@ def test():
     ############## RESPONDER #######################################################
     ENC_Init_PATH = "ENC_init_test.bin"
     DEC_Init_PATH = "DEC_init_test.json"
-    process_initiation(ENC_Init_PATH, DEC_Init_PATH, testkey, testkeypath)
     clean_file_open(responderJSONPath, "w", "{}")
+    clean_mkdir(testswapname)
+    swapnamelist = [{"swapName":testswapname}]
+    json_tools.keyVal_list_update(swapnamelist, responderJSONPath)
+    process_initiation(ENC_Init_PATH, DEC_Init_PATH, testkey, testkeypath)
     r_initiation_keyValList = json_tools.json_to_keyValList(DEC_Init_PATH)
     json_tools.keyVal_list_update(r_initiation_keyValList, responderJSONPath)
     responsePATH = "response_path_test.json"
-    response("TestInitiationDecryptedPath.bin", "sr_path_test.bin", "x_path_test.bin", \
+    response("TestInitiationDecryptedPath.bin", responderJSONPath, \
             responsePATH, testkey, testkeypath)
     #TODO: replace sr and x paths with master json update
     xG = json.loads(clean_file_open(responsePATH, "r"))["xG"]
