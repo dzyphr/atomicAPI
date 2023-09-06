@@ -65,7 +65,7 @@ def test():
     r_initiation_keyValList = json_tools.json_to_keyValList(DEC_Init_PATH)
     json_tools.keyVal_list_update(r_initiation_keyValList, responderJSONPath)
     responsePATH = "response_path_test.json"
-    response("TestInitiationDecryptedPath.bin", responderJSONPath, \
+    response("DEC_init_test.json", responderJSONPath, \
             responsePATH, testkey, testkeypath)
     #TODO: replace sr and x paths with master json update
     xG = json.loads(clean_file_open(responsePATH, "r"))["xG"]
@@ -115,7 +115,7 @@ def test():
     json_tools.keyVal_list_update(finalizeOBJ_LIST, initiatorJSONPath)
     EIP3list = [{"initiatorEIP3Secret":InitiatorEIP3Secret}]
     json_tools.keyVal_list_update(EIP3list, initiatorJSONPath)
-    BuildAtomicSchnorrContract(initiatorJSONPath, 25, testswapname, 0)
+    BuildAtomicSchnorrContract(initiatorJSONPath, 25, testswapname, 123841)
     deployErgoContract(testswapname)
     boxId = getBoxID(testswapname)
     boxIdKeyValList = [{"boxId":boxId}]
@@ -136,6 +136,7 @@ def test():
     if int(boxValue) < int(minBoxValue):
         print("not enough nanoerg in contract")
         exit()
+    updateKeyEnv(testswapname, "responderEnv")  
     responderClaimAtomicSchnorr(testswapname, DEC_finalizationPATH, responderJSONPath, boxValue)
 
 

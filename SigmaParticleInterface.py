@@ -1,4 +1,4 @@
-import json, ast, os, time
+import json, ast, os, time, subprocess
 from file_tools import *
 py = "python3 -u "
 SigmaParticlePath = "Ergo/SigmaParticle/"
@@ -82,6 +82,14 @@ def responderClaimAtomicSchnorr(swapName, DEC_finalizationPATH, responderMasterJ
             else:
                 return response
 
+def updateKeyEnv(swapName, targetKeyEnvDirName):
+    update = clean_file_open(SigmaParticlePath + targetKeyEnvDirName + "/.env", "r")
+    update.replace("[default]", "")
+    cmd = \
+            "echo \"" + update + "\"" + " >> " + SigmaParticlePath + swapName + "/.env"
+    os.popen(cmd).read()
+    
+
 def deployErgoContract(swapName):
     command = "cd " + SigmaParticlePath + swapName + " && ./deploy.sh deposit"
     os.popen(command).read()
@@ -92,7 +100,9 @@ def getBoxID(swapName):
 def checkBoxValue(boxID, boxValPATH):
     while True:
         cmd = "cd " + SigmaParticlePath + "/boxValue/ && ./deploy.sh " + boxID + " " + "../../../" + boxValPATH
-        os.popen(cmd).read()
+        devnull = open(os.devnull, 'wb')
+        pipe = subprocess.Popen(cmd, shell=True, stdout=devnull, stderr=devnull, close_fds=True)
+#        os.popen(cmd).read()
         response = clean_file_open(boxValPATH, "r")
         print("response:", response)
         if "error" in str(response) or type(response) == type(None):
