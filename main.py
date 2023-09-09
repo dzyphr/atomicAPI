@@ -89,9 +89,8 @@ def test():
     encrypted_response = ElGamal_Encrypt(testkey, testkeypath, responsePATH, "ENC_response_path_test.bin")
     ################################################################################
 
-    ############### INITIATOR #####################################################
+    ############### INITIATOR ######################################################
     decrypted_response = ElGamal_Decrypt("ENC_response_path_test.bin", testkey, testkeypath)
-    print("self decrypted response:", decrypted_response)
     DEC_response_PATH = "DEC_response_test.json"
     clean_file_open(DEC_response_PATH, "w", decrypted_response)
     time.sleep(10)
@@ -123,7 +122,7 @@ def test():
     json_tools.keyVal_list_update(boxIdKeyValList, finalizationPATH)
     ENC_finalizationPATH = "ENC_finalization_test.bin"
     ENC_finalization =  ElGamal_Encrypt(testkey, testkeypath, finalizationPATH, ENC_finalizationPATH)
-    ###############################################################################
+    ################################################################################
 
 
     ############## RESPONDER #######################################################
@@ -132,17 +131,19 @@ def test():
     clean_file_open(DEC_finalizationPATH, "w", DEC_finalization)
     boxID = json.loads(DEC_finalization)["boxId"]
     boxValue = checkBoxValue(boxID, "testBoxValPath.bin")
-    minBoxValue = 0 #123841
+    minBoxValue = 1123841 #1123841
     if int(boxValue) < int(minBoxValue):
         print("not enough nanoerg in contract")
         exit()
     updateKeyEnv(testswapname, "responderEnv")  
     responderClaimAtomicSchnorr(testswapname, DEC_finalizationPATH, responderJSONPath, boxValue)
+    ################################################################################
 
-
-
-
-    ###############################################################################
+    ############## INITIATOR #######################################################
+    j = json.loads(clean_file_open(initiatorJSONPath, "r"))
+    boxID = j["boxId"]
+    checkSchnorrTreeForClaim(boxID, testswapname, initiatorJSONPath) 
+    ################################################################################
     print("success!")
 
 if len(args) >= 1:

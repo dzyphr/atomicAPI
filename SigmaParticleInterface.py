@@ -1,4 +1,4 @@
-import json, ast, os, time, subprocess
+import json, ast, os, time, subprocess, json_tools
 from file_tools import *
 py = "python3 -u "
 SigmaParticlePath = "Ergo/SigmaParticle/"
@@ -111,3 +111,28 @@ def checkBoxValue(boxID, boxValPATH):
         else:
             return response #returns box value in nano Ergs (nΣ)
             break
+
+def checkSchnorrTreeForClaim(boxID, swapName, initiatorMasterJSONPath):
+    while True:
+
+        tree = clean_file_open(SigmaParticlePath + swapName + "/ergoTree", "r")
+        treeToAddrCmd = \
+                "cd " + SigmaParticlePath + "treeToAddr && ./deploy.sh " + tree
+        addr = json.loads(os.popen(treeToAddrCmd).read())["address"]
+        boxFilterCmd = \
+                "cd " + SigmaParticlePath + "boxFilter && " + \
+                "./deploy.sh " + addr + " " + boxID + " ../../../" + swapName + "/atomicClaim"
+        os.popen(boxFilterCmd).read()
+        if os.path.isfile(swapName + "/atomicClaim_tx1") == True:
+            j = json.loads(clean_file_open(swapName + "/atomicClaim_tx1", "r"))
+            R4 = j["outputs"][0]["additionalRegisters"]["R4"]
+            sr_list = [{"sr":R4}]
+            json_tools.keyVal_list_update(sr_list, initiatorMasterJSONPath)
+            print("atomic swap was claimed by responder!")
+            return True
+        else:
+            print("no atomic swap claim found!!")
+            time.sleep(5)
+            continue
+            
+
