@@ -18,8 +18,8 @@ def test():
         if os.path.isdir("EVM/Atomicity/testswapname"):
             shutil.rmtree("EVM/Atomicity/testswapname")
     clearPaths()
-    testkey = "688344026718772736449750175203366052782498205293898002465375827258042277361951460658218874759221293994168145022574766874751338527256700500579101512082414055194093613376114567923022297129476978722630282962906957224675125386874494158492157124310481876254258350563100432848938338097941551681473725391869419801716664372453775554757712481751968704577158437846771260413284009770218290762832891954510055886590737"
-    testkeypath = "Key0.ElGamalKey"
+    testElGamalKey = "688344026718772736449750175203366052782498205293898002465375827258042277361951460658218874759221293994168145022574766874751338527256700500579101512082414055194093613376114567923022297129476978722630282962906957224675125386874494158492157124310481876254258350563100432848938338097941551681473725391869419801716664372453775554757712481751968704577158437846771260413284009770218290762832891954510055886590737"
+    testElGamalKeypath = "Key0.ElGamalKey"
     testswapname = "testswapname"
     testInitiatorChain = "Ergo"
     testResponderChain = "Sepolia"
@@ -50,7 +50,7 @@ def test():
     publicInit = sanitizeInitiation(privateInit) #remove the private variables from the json
     publicInitPATH = "public_init_test.json"
     clean_file_open(publicInitPATH, "w", publicInit) #write the public variables into a public file
-    encrypt = ElGamal_Encrypt(testkey, testkeypath, publicInitPATH, "ENC_init_test.bin") #encrypt the public file to receiver's pub
+    encrypt = ElGamal_Encrypt(testElGamalKey, testElGamalKeyPath, publicInitPATH, "ENC_init_test.bin") #encrypt the public file to receiver's pub
     ################################################################################
 
 
@@ -61,12 +61,12 @@ def test():
     clean_mkdir(testswapname)
     swapnamelist = [{"swapName":testswapname}]
     json_tools.keyVal_list_update(swapnamelist, responderJSONPath)
-    process_initiation(ENC_Init_PATH, DEC_Init_PATH, testkey, testkeypath)
+    process_initiation(ENC_Init_PATH, DEC_Init_PATH, testElGamalKey, testElGamalKeyPath)
     r_initiation_keyValList = json_tools.json_to_keyValList(DEC_Init_PATH)
     json_tools.keyVal_list_update(r_initiation_keyValList, responderJSONPath)
     responsePATH = "response_path_test.json"
     response("DEC_init_test.json", responderJSONPath, \
-            responsePATH, testkey, testkeypath)
+            responsePATH, testElGamalKey, testElGamalKeyPath)
     #TODO: replace sr and x paths with master json update
     xG = json.loads(clean_file_open(responsePATH, "r"))["xG"]
     buildScalarContract(testResponderChain, InitiatorEVMAddr,  xG, 100, testswapname)
@@ -86,11 +86,11 @@ def test():
     json_tools.keyVal_list_update(update_response_keyValList, responsePATH)
     responseLIST = json_tools.json_to_keyValList(responsePATH)
     json_tools.keyVal_list_update(responseLIST, responderJSONPath)
-    encrypted_response = ElGamal_Encrypt(testkey, testkeypath, responsePATH, "ENC_response_path_test.bin")
+    encrypted_response = ElGamal_Encrypt(testElGamalKey, testElGamalKeyPath, responsePATH, "ENC_response_path_test.bin")
     ################################################################################
 
     ############### INITIATOR ######################################################
-    decrypted_response = ElGamal_Decrypt("ENC_response_path_test.bin", testkey, testkeypath)
+    decrypted_response = ElGamal_Decrypt("ENC_response_path_test.bin", testElGamalKey, testElGamalKeyPath)
     DEC_response_PATH = "DEC_response_test.json"
     clean_file_open(DEC_response_PATH, "w", decrypted_response)
     time.sleep(10)
@@ -121,12 +121,12 @@ def test():
     json_tools.keyVal_list_update(boxIdKeyValList, initiatorJSONPath)
     json_tools.keyVal_list_update(boxIdKeyValList, finalizationPATH)
     ENC_finalizationPATH = "ENC_finalization_test.bin"
-    ENC_finalization =  ElGamal_Encrypt(testkey, testkeypath, finalizationPATH, ENC_finalizationPATH)
+    ENC_finalization =  ElGamal_Encrypt(testElGamalKey, testElGamalKeyPath, finalizationPATH, ENC_finalizationPATH)
     ################################################################################
 
 
     ############## RESPONDER #######################################################
-    DEC_finalization = ElGamal_Decrypt(ENC_finalizationPATH, testkey, testkeypath)
+    DEC_finalization = ElGamal_Decrypt(ENC_finalizationPATH, testElGamalKey, testElGamalKeyPath)
     DEC_finalizationPATH = "DEC_finalization_test.json"
     clean_file_open(DEC_finalizationPATH, "w", DEC_finalization)
     boxID = json.loads(DEC_finalization)["boxId"]
