@@ -114,7 +114,6 @@ def checkBoxValue(boxID, boxValPATH):
 
 def checkSchnorrTreeForClaim(boxID, swapName, initiatorMasterJSONPath):
     while True:
-
         tree = clean_file_open(SigmaParticlePath + swapName + "/ergoTree", "r")
         treeToAddrCmd = \
                 "cd " + SigmaParticlePath + "treeToAddr && ./deploy.sh " + tree
@@ -131,8 +130,27 @@ def checkSchnorrTreeForClaim(boxID, swapName, initiatorMasterJSONPath):
             print("atomic swap was claimed by responder!")
             return True
         else:
-            print("no atomic swap claim found!!")
+            print("no atomic swap claim found...")
             time.sleep(5)
             continue
             
+def deduceX_fromAtomicSchnorrClaim(initiatorMasterJSONPath, swapName):
+    masterJSON = json.loads(clean_file_open(initiatorMasterJSONPath, "r"))
+    sr_ = masterJSON["sr_"]
+    responderContractAddr = masterJSON["responderContractAddr"] 
+    responderLocalChain = masterJSON["responderLocalChain"]
+    enc_sr = masterJSON["sr"]
+    decode_sr_cmd = \
+            "cd " + SigmaParticlePath + "valFromHex && ./deploy.sh " + enc_sr + " ../../../" + swapName + "/decoded_sr.bin"
+    decode = os.popen(decode_sr_cmd).read()
+    sr = clean_file_open(swapName + "/decoded_sr.bin", "r")
+    deduction_cmd = \
+            "cd " + SigmaParticlePath + "AtomicMultiSigECC && python3 -u py/deploy.py p1Deduce " + sr_ + " " + sr
+    deduction_response = os.popen(deduction_cmd).read()
+    deduction_j = json.loads(deduction_response)
+    x = deduction_j["x"]
+    deduction_list = [{"x":x}]
+    json_tools.keyVal_list_update(deduction_list, initiatorMasterJSONPath)
+    return x
 
+    
