@@ -68,9 +68,8 @@ def Atomicity_compareScalarContractCoords(swapName, contractAddr, expectedX, exp
     else:
         return True
 
-def Atomicity_claimScalarContract(initiatorMasterJSONPath, gas=None, gasMod=None):
+def Atomicity_claimScalarContract(initiatorMasterJSONPath, swapName, gas=None, gasMod=None):
     j_master = json.loads(clean_file_open(initiatorMasterJSONPath, "r"))
-    chain = j_master["responderLocalChain"]
     x = j_master["x"]
     contractAddr = j_master["responderContractAddr"]
     if gas == None or type(gas) != int:
@@ -78,7 +77,7 @@ def Atomicity_claimScalarContract(initiatorMasterJSONPath, gas=None, gasMod=None
     if gasMod == None or type(gasMod) != int:
         gasMod = 1
     claimScript = \
-            "cd " + Atomicity + chain + " && ./deploy.sh claim " + contractAddr + " " + str(x) + " " + str(gas) + " " + str(gasMod)
+            "cd " + Atomicity + swapName + " && ./deploy.sh claim " + contractAddr + " " + str(x) + " " + str(gas) + " " + str(gasMod)
     return os.popen(claimScript).read()
 
 

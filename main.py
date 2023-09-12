@@ -25,8 +25,8 @@ def test():
     testResponderChain = "Sepolia"
     initiatorJSONPath = "initiator_test.json" #initiators local swap session json state
     responderJSONPath = "responder_test.json"
-    InitiatorEVMAddr = "0xFe4cc19ea6472582028641B2633d3adBB7685C69"
-    ResponderEVMAddr = "0x01225869F695b4b7F0af5d75381Fe340A4d27593"
+    ResponderEVMAddr = "0xFe4cc19ea6472582028641B2633d3adBB7685C69"
+    InitiatorEVMAddr = "0x01225869F695b4b7F0af5d75381Fe340A4d27593"
     confParser = configparser.ConfigParser()
     confParser.read("Ergo/SigmaParticle/" + "basic_framework/.env")
     InitiatorEIP3Secret = confParser['default']['senderEIP3Secret']
@@ -144,7 +144,8 @@ def test():
     boxID = j["boxId"]
     checkSchnorrTreeForClaim(boxID, testswapname, initiatorJSONPath) 
     deduceX_fromAtomicSchnorrClaim(initiatorJSONPath, testswapname)
-    Atomicity_claimScalarContract(initiatorJSONPath)
+    Atomicity_updateKeyEnv(testswapname, "p2ENV")
+    Atomicity_claimScalarContract(initiatorJSONPath, testswapname)
     ################################################################################
     print("success!")
 
