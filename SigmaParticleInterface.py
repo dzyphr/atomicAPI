@@ -82,7 +82,7 @@ def responderClaimAtomicSchnorr(swapName, DEC_finalizationPATH, responderMasterJ
             else:
                 return response
 
-def updateKeyEnv(swapName, targetKeyEnvDirName):
+def SigmaParticle_updateKeyEnv(swapName, targetKeyEnvDirName):
     update = clean_file_open(SigmaParticlePath + targetKeyEnvDirName + "/.env", "r")
     update.replace("[default]", "")
     cmd = \
@@ -152,5 +152,7 @@ def deduceX_fromAtomicSchnorrClaim(initiatorMasterJSONPath, swapName):
     deduction_list = [{"x":x}]
     json_tools.keyVal_list_update(deduction_list, initiatorMasterJSONPath)
     return x
+
+
 
     

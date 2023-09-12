@@ -69,9 +69,9 @@ def test():
             responsePATH, testElGamalKey, testElGamalKeyPath)
     #TODO: replace sr and x paths with master json update
     xG = json.loads(clean_file_open(responsePATH, "r"))["xG"]
-    buildScalarContract(testResponderChain, InitiatorEVMAddr,  xG, 100, testswapname)
+    Atomicity_buildScalarContract(testResponderChain, InitiatorEVMAddr,  xG, 100, testswapname)
 
-    addr = deployEVMContract(testswapname, customGasMod=2)
+    addr = Atomicity_deployEVMContract(testswapname, customGasMod=2)
     if addr != "fail":
         #ASSUMING ITS ENDING WITH \n
         addr  =  addr[:-1]
@@ -135,7 +135,7 @@ def test():
     if int(boxValue) < int(minBoxValue):
         print("not enough nanoerg in contract")
         exit()
-    updateKeyEnv(testswapname, "responderEnv")  
+    SigmaParticle_updateKeyEnv(testswapname, "responderEnv")  
     responderClaimAtomicSchnorr(testswapname, DEC_finalizationPATH, responderJSONPath, boxValue)
     ################################################################################
 
@@ -144,6 +144,7 @@ def test():
     boxID = j["boxId"]
     checkSchnorrTreeForClaim(boxID, testswapname, initiatorJSONPath) 
     deduceX_fromAtomicSchnorrClaim(initiatorJSONPath, testswapname)
+    Atomicity_claimScalarContract(initiatorJSONPath)
     ################################################################################
     print("success!")
 
