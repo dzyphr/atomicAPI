@@ -80,6 +80,8 @@ def test():
         print("fail: deployContract() didnt return a contract addr")
         exit()
     #add contract addr and chain name to response here then encrypt 
+    responderFundingAmountWei = 100000000
+    Atomicity_SendFunds(addr, responderFundingAmountWei, testswapname)
     update_response_keyValList = [{"responderLocalChain":testResponderChain}, \
             {"responderContractAddr":addr}, \
             {"responderErgoChainPubKey":ResponderErgoAddr}]

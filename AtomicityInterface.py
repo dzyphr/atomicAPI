@@ -9,6 +9,12 @@ def Atomicity_CheckContractFunds(j_response):
         value = os.popen("cd " + Atomicity + "Sepolia && python3 -u py/deploy.py getBalance " + contractAddr).read()
         return value
 
+def Atomicity_SendFunds(addr, amount_wei, swapName, gas=None, gasMod=None):
+    cmd = "cd " + Atomicity + \
+            swapName + " && ./deploy.sh sendAmount " + \
+            str(amount_wei) + " " + addr
+    return os.popen(cmd).read()
+
 def Atomicity_buildScalarContract(chain, counterpartyChainPub, xG, locktimeDuration, swapName):
     cmd = "cd " + Atomicity + "&& ./new_frame " + swapName + \
             " -M -CA 4 " + "\\\"" + counterpartyChainPub + "\\\" " + \
