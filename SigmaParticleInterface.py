@@ -74,7 +74,7 @@ def responderClaimAtomicSchnorr(swapName, DEC_finalizationPATH, responderMasterJ
                 "cd " + SigmaParticlePath + swapName + " && ./deploy.sh claim"
         while rounds > 0:
             response = os.popen(claimCMD).read()
-            print("response:\n", response)
+ #           print("response:\n", response)
             if response == None:
                 rounds = rounds - 1
                 time.sleep(5)
@@ -102,9 +102,7 @@ def checkBoxValue(boxID, boxValPATH):
         cmd = "cd " + SigmaParticlePath + "/boxValue/ && ./deploy.sh " + boxID + " " + "../../../" + boxValPATH
         devnull = open(os.devnull, 'wb')
         pipe = subprocess.Popen(cmd, shell=True, stdout=devnull, stderr=devnull, close_fds=True)
-#        os.popen(cmd).read()
         response = clean_file_open(boxValPATH, "r")
-        print("response:", response)
         if "error" in str(response) or type(response) == type(None):
             time.sleep(5)
             continue
@@ -127,10 +125,10 @@ def checkSchnorrTreeForClaim(boxID, swapName, initiatorMasterJSONPath):
             R4 = j["outputs"][0]["additionalRegisters"]["R4"]
             sr_list = [{"sr":R4}]
             json_tools.keyVal_list_update(sr_list, initiatorMasterJSONPath)
-            print("atomic swap was claimed by responder!")
+#            print("atomic swap was claimed by responder!")
             return True
         else:
-            print("no atomic swap claim found...")
+#            print("no atomic swap claim found...")
             time.sleep(5)
             continue
             

@@ -19,7 +19,7 @@ def clean_file_open(filepath, readOrWrite, writingContent=None, extraWarn=None, 
                     f.truncate()
                 f.close()
             except:
-                print("cant write ", writingContent, "to:", filePath, "\n", extraWarn)
+                return "cant write " + writingContent + "to:" + filepath + "\n" +  extraWarn
     elif readOrWrite == "r":
         if os.path.isfile(filepath) == True:
             f = open(filepath, "r")
@@ -27,7 +27,7 @@ def clean_file_open(filepath, readOrWrite, writingContent=None, extraWarn=None, 
             f.close()
             return content
         else:
-            print(filepath, "cannot be found!\n", extraWarn)
+            err = filepath + " cannot be found!\n " +  extraWarn
     else:
         print("unknown argument", readOrWrite , "\nfor argument 2 'readOrWrite' enter r or w as a string")
         
@@ -53,7 +53,7 @@ def wait_for_file(path, tries=None):
 
 def clean_mkdir(dirpath):
     if os.path.isdir(dirpath) == True:
-        print("dir already exists!")
+#        print("dir already exists!")
         return False
     else:
         os.mkdir(dirpath)

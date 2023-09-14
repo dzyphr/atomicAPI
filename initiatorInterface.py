@@ -33,7 +33,7 @@ def inspectResponse(DEC_response_filepath):
         return "Error: response does not have expected keys"
     else:
         fundedAmount = Atomicity_CheckContractFunds(j_response)
-        print("contractAmount: ", fundedAmount, " wei")
+#        print("contractAmount: ", fundedAmount, " wei")
         inspectScalarContractObject = {
                 "counterpartyContractFundedAmount": fundedAmount
         }

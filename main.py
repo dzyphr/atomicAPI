@@ -23,8 +23,8 @@ def test():
     testswapname = "testswapname"
     testInitiatorChain = "Ergo"
     testResponderChain = "Sepolia"
-    initiatorJSONPath = "initiator_test.json" #initiators local swap session json state
-    responderJSONPath = "responder_test.json"
+    initiatorJSONPath = testswapname + "/initiator_test.json" #initiators local swap session json state
+    responderJSONPath = testswapname + "/responder_test.json"
     ResponderEVMAddr = "0xFe4cc19ea6472582028641B2633d3adBB7685C69"
     InitiatorEVMAddr = "0x01225869F695b4b7F0af5d75381Fe340A4d27593"
     confParser = configparser.ConfigParser()
@@ -38,25 +38,25 @@ def test():
 
 
     ############### INITIATOR #####################################################
-    clean_file_open(initiatorJSONPath, "w", "{}") #open initiators store file
     clean_mkdir(testswapname)
+    clean_file_open(initiatorJSONPath, "w", "{}") #open initiators store file
     privateInit = initiation(InitiatorEVMAddr, testInitiatorChain, testResponderChain) #create a local initiation
-    privateInitPATH = "priv_init_test.json"
+    privateInitPATH = testswapname + "/priv_init_test.json"
     clean_file_open(privateInitPATH, "w", privateInit) #write initiation contents into private file
     initiation_keyValList = json_tools.json_to_keyValList(privateInitPATH) #backup the keys and values from this file
     json_tools.keyVal_list_update(initiation_keyValList, initiatorJSONPath) #update the initiators store file with the values
     swapnamelist = [{"swapName":testswapname}]
     json_tools.keyVal_list_update(swapnamelist, initiatorJSONPath)
     publicInit = sanitizeInitiation(privateInit) #remove the private variables from the json
-    publicInitPATH = "public_init_test.json"
+    publicInitPATH = testswapname + "/public_init_test.json"
     clean_file_open(publicInitPATH, "w", publicInit) #write the public variables into a public file
-    encrypt = ElGamal_Encrypt(testElGamalKey, testElGamalKeyPath, publicInitPATH, "ENC_init_test.bin") #encrypt the public file to receiver's pub
+    encrypt = ElGamal_Encrypt(testElGamalKey, testElGamalKeyPath, publicInitPATH, testswapname + "/ENC_init_test.bin") #encrypt the public file to receiver's pub
     ################################################################################
 
 
     ############## RESPONDER #######################################################
-    ENC_Init_PATH = "ENC_init_test.bin"
-    DEC_Init_PATH = "DEC_init_test.json"
+    ENC_Init_PATH = testswapname + "/ENC_init_test.bin"
+    DEC_Init_PATH = testswapname + "/DEC_init_test.json"
     clean_file_open(responderJSONPath, "w", "{}")
     clean_mkdir(testswapname)
     swapnamelist = [{"swapName":testswapname}]
@@ -64,8 +64,8 @@ def test():
     process_initiation(ENC_Init_PATH, DEC_Init_PATH, testElGamalKey, testElGamalKeyPath)
     r_initiation_keyValList = json_tools.json_to_keyValList(DEC_Init_PATH)
     json_tools.keyVal_list_update(r_initiation_keyValList, responderJSONPath)
-    responsePATH = "response_path_test.json"
-    response("DEC_init_test.json", responderJSONPath, \
+    responsePATH = testswapname + "/response_path_test.json"
+    response(testswapname + "/DEC_init_test.json", responderJSONPath, \
             responsePATH, testElGamalKey, testElGamalKeyPath)
     #TODO: replace sr and x paths with master json update
     xG = json.loads(clean_file_open(responsePATH, "r"))["xG"]
@@ -75,12 +75,11 @@ def test():
     if addr != "fail":
         #ASSUMING ITS ENDING WITH \n
         addr  =  addr[:-1]
-        clean_file_open("ScalarContractAddrTest.bin", "w", addr.rstrip())
     else:
         print("fail: deployContract() didnt return a contract addr")
         exit()
     #add contract addr and chain name to response here then encrypt 
-    responderFundingAmountWei = 100000000
+    responderFundingAmountWei = 2000000000
     Atomicity_SendFunds(addr, responderFundingAmountWei, testswapname)
     update_response_keyValList = [{"responderLocalChain":testResponderChain}, \
             {"responderContractAddr":addr}, \
@@ -88,29 +87,29 @@ def test():
     json_tools.keyVal_list_update(update_response_keyValList, responsePATH)
     responseLIST = json_tools.json_to_keyValList(responsePATH)
     json_tools.keyVal_list_update(responseLIST, responderJSONPath)
-    encrypted_response = ElGamal_Encrypt(testElGamalKey, testElGamalKeyPath, responsePATH, "ENC_response_path_test.bin")
+    encrypted_response = ElGamal_Encrypt(testElGamalKey, testElGamalKeyPath, responsePATH, testswapname + "/ENC_response_path_test.bin")
     ################################################################################
 
     ############### INITIATOR ######################################################
-    decrypted_response = ElGamal_Decrypt("ENC_response_path_test.bin", testElGamalKey, testElGamalKeyPath)
-    DEC_response_PATH = "DEC_response_test.json"
+    decrypted_response = ElGamal_Decrypt(testswapname + "/ENC_response_path_test.bin", testElGamalKey, testElGamalKeyPath)
+    DEC_response_PATH = testswapname + "/DEC_response_test.json"
     clean_file_open(DEC_response_PATH, "w", decrypted_response)
     time.sleep(10)
     inspect_json = inspectResponse(DEC_response_PATH)
     if inspect_json == "Error: response does not have expected keys":
         print("fail")
         exit()
-    clean_file_open("inspectContractTest.json", "w", inspect_json)
-    inspect_list = json_tools.json_to_keyValList("inspectContractTest.json")
+    clean_file_open(testswapname + "/inspectContractTest.json", "w", inspect_json)
+    inspect_list = json_tools.json_to_keyValList(testswapname + "/inspectContractTest.json")
     json_tools.keyVal_list_update(inspect_list, initiatorJSONPath)
-    response_list = json_tools.json_to_keyValList("DEC_response_test.json")
+    response_list = json_tools.json_to_keyValList(testswapname + "/DEC_response_test.json")
     json_tools.keyVal_list_update(response_list, initiatorJSONPath)
     minimum_wei = 0 #this is practically set for existential transfer calculations due to variable fee rates
     if int(json.loads(clean_file_open(initiatorJSONPath, "r"))["counterpartyContractFundedAmount"]) < int(minimum_wei):
         print("not enough wei in contract, fail")
         exit()
     finalizeOBJ = finalizeSwap(initiatorJSONPath)
-    finalizationPATH = "finalization_test.json"
+    finalizationPATH = testswapname + "/finalization_test.json"
     clean_file_open(finalizationPATH, "w", finalizeOBJ)
     finalizeOBJ_LIST = json_tools.json_to_keyValList(finalizationPATH)
     json_tools.keyVal_list_update(finalizeOBJ_LIST, initiatorJSONPath)
@@ -122,17 +121,17 @@ def test():
     boxIdKeyValList = [{"boxId":boxId}]
     json_tools.keyVal_list_update(boxIdKeyValList, initiatorJSONPath)
     json_tools.keyVal_list_update(boxIdKeyValList, finalizationPATH)
-    ENC_finalizationPATH = "ENC_finalization_test.bin"
+    ENC_finalizationPATH = testswapname + "/ENC_finalization_test.bin"
     ENC_finalization =  ElGamal_Encrypt(testElGamalKey, testElGamalKeyPath, finalizationPATH, ENC_finalizationPATH)
     ################################################################################
 
 
     ############## RESPONDER #######################################################
     DEC_finalization = ElGamal_Decrypt(ENC_finalizationPATH, testElGamalKey, testElGamalKeyPath)
-    DEC_finalizationPATH = "DEC_finalization_test.json"
+    DEC_finalizationPATH = testswapname + "/DEC_finalization_test.json"
     clean_file_open(DEC_finalizationPATH, "w", DEC_finalization)
     boxID = json.loads(DEC_finalization)["boxId"]
-    boxValue = checkBoxValue(boxID, "testBoxValPath.bin")
+    boxValue = checkBoxValue(boxID, testswapname + "/testBoxValPath.bin")
     minBoxValue = 1123841 #1123841
     if int(boxValue) < int(minBoxValue):
         print("not enough nanoerg in contract")
