@@ -7,64 +7,29 @@ from responderInterface import *
 from ElGamalInterface import *
 from AtomicityInterface import * 
 from SigmaParticleInterface import *
-from FT_subroutines import *
 import json_tools
 import time
 
-def clearDirPath(path):
-    if os.path.isdir(path):
-        shutil.rmtree(path)
 
 
-def FT_ErgoToSepolia():
-    #test input data
-    testElGamalKey = "688344026718772736449750175203366052782498205293898002465375827258042277361951460658218874759221293994168145022574766874751338527256700500579101512082414055194093613376114567923022297129476978722630282962906957224675125386874494158492157124310481876254258350563100432848938338097941551681473725391869419801716664372453775554757712481751968704577158437846771260413284009770218290762832891954510055886590737"
-    testElGamalKeyPath = "Key0.ElGamalKey"
-    testswapname = "testswapname"
-    testInitiatorChain = "Ergo"
-    testResponderChain = "Sepolia"
-    initiatorJSONPath = testswapname + "/initiator_test.json" #initiators local swap session json state
-    responderJSONPath = testswapname + "/responder_test.json"
-    ResponderEVMAddr = "0xFe4cc19ea6472582028641B2633d3adBB7685C69"
-    InitiatorEVMAddr = "0x01225869F695b4b7F0af5d75381Fe340A4d27593"
-    confParser = configparser.ConfigParser()
-    confParser.read("Ergo/SigmaParticle/" + "basic_framework/.env")
-    InitiatorEIP3Secret = confParser['default']['senderEIP3Secret']
-    InitiatorErgoAddr = "3WwS8bSAhXuTu5xR5CxCrcfvUemQ7fqoPcNMLd8SagSWbcAbrE1S"
-    confParser = configparser.ConfigParser()
-    confParser.read("Ergo/SigmaParticle/" + "responderEnv/.env") 
-    ResponderEIP3Secret = confParser['default']['senderEIP3Secret']
-    ResponderErgoAddr = "3WwGZfTh3uur3g1dSUdHFXtRfGKtRJUPhiAwNWDuf2LGpcjRzC3y"
-    privateInitPATH = testswapname + "/priv_init_test.json"
-    publicInitPATH = testswapname + "/public_init_test.json"
-    ENC_Init_PATH = testswapname + "/ENC_init_test.bin"
-    DEC_Init_PATH = testswapname + "/DEC_init_test.json"
-    responsePATH = testswapname + "/response_path_test.json"
-    ENC_Response_PATH = testswapname + "/ENC_response_path_test.bin"
-    DEC_Response_PATH = testswapname + "/DEC_response_test.json"
-    finalizationPATH = testswapname + "/finalization_test.json"
-    ENC_finalizationPATH = testswapname + "/ENC_finalization_test.bin"
-    DEC_finalizationPATH = testswapname + "/DEC_finalization_test.json"
-
-    FT_ErgoToSepolia_SUB_ENC_Initiation(\
-            testswapname, initiatorJSONPath, InitiatorEVMAddr, testInitiatorChain, \
-            testResponderChain, publicInitPATH, privateInitPATH, testElGamalKey, testElGamalKeyPath, ENC_Init_PATH  )
-    '''
+def FT_ErgoToSepolia_SUB_ENC_Initiation(\
+        swapname, initiatorJSONPath, InitiatorEVMAddr, initiatorChain, \
+        responderChain, publicInitPATH, privateInitPATH, ElGamalKey, ElGamalKeyPath, ENC_Init_PATH):
     ############### INITIATOR #####################################################
-    clean_mkdir(testswapname)
+    clean_mkdir(swapname)
     clean_file_open(initiatorJSONPath, "w", "{}") #open initiators store file
-    privateInit = initiation(InitiatorEVMAddr, testInitiatorChain, testResponderChain) #create a local initiation
+    privateInit = initiation(InitiatorEVMAddr, initiatorChain, responderChain) #create a local initiation
     clean_file_open(privateInitPATH, "w", privateInit) #write initiation contents into private file
     initiation_keyValList = json_tools.json_to_keyValList(privateInitPATH) #backup the keys and values from this file
     json_tools.keyVal_list_update(initiation_keyValList, initiatorJSONPath) #update the initiators store file with the values
-    swapnamelist = [{"swapName":testswapname}]
+    swapnamelist = [{"swapName":swapname}]
     json_tools.keyVal_list_update(swapnamelist, initiatorJSONPath)
     publicInit = sanitizeInitiation(privateInit) #remove the private variables from the json
     clean_file_open(publicInitPATH, "w", publicInit) #write the public variables into a public file
-    encrypt = ElGamal_Encrypt(testElGamalKey, testElGamalKeyPath, publicInitPATH, ENC_Init_PATH) #encrypt the public file to receiver's pub
+    encrypt = ElGamal_Encrypt(ElGamalKey, ElGamalKeyPath, publicInitPATH, ENC_Init_PATH) #encrypt the public file to receiver's pub
     ################################################################################
-    '''
 
+    '''
     ############## RESPONDER #######################################################
     clean_file_open(responderJSONPath, "w", "{}")
     clean_mkdir(testswapname)
@@ -154,4 +119,5 @@ def FT_ErgoToSepolia():
     Atomicity_claimScalarContract(initiatorJSONPath, testswapname)
     ################################################################################
     print("success!")
+    '''
 
