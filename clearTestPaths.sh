@@ -1,4 +1,4 @@
-rm -r EVM/Atomicity/testswapname 
-rm -r Ergo/SigmaParticle/testswapname 
-rm -r testswapname 
+rm -r EVM/Atomicity/swapName 
+rm -r Ergo/SigmaParticle/swapName 
+rm -r swapName 
 

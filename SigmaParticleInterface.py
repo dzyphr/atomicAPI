@@ -12,7 +12,7 @@ def BuildAtomicSchnorrContract(initiatorMasterJSONPath, refundDuration_BLOCKS, s
     ssG = ast.literal_eval(j["ssG"])
     ksG = ast.literal_eval(j["ksG"])
     responderChainPubKey = j["responderErgoChainPubKey"]
-    initiatorEIP3Secret = j["initiatorEIP3Secret"]
+    initiatorEIP3Secret = j["InitiatorEIP3Secret"]
     cmd = "cd " + str(SigmaParticlePath)  + " && ./new_frame " + str(swapName) + \
         " && cd " + str(swapName) + " && echo " + \
         "'" + \

@@ -22,3 +22,5 @@ def json_to_keyValList(jsonPath):
     except ValueError as e:
         print("Invalid Json")
 
+def ojf(filepath):
+    return json.loads(str(clean_file_open(filepath, "r")))
