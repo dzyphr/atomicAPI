@@ -1,4 +1,5 @@
 import sys
+import ast
 import json
 import shutil
 import configparser
@@ -89,7 +90,13 @@ def FT_ErgoToSepolia_SUB_ENC_Finalization(initiatorJSONPath):
     ENC_finalizationPATH = init_J["ENC_finalizationPATH"]
     decrypted_response = ElGamal_Decrypt(ENC_Response_PATH, ElGamalKey, ElGamalKeyPath)
     clean_file_open(DEC_Response_PATH, "w", decrypted_response)
-    time.sleep(10)
+    response_list = json_tools.json_to_keyValList(DEC_Response_PATH)
+    json_tools.keyVal_list_update(response_list, initiatorJSONPath)
+    init_J = json_tools.ojf(initiatorJSONPath)
+    addr = init_J["responderContractAddr"]
+    xG = ast.literal_eval(init_J["xG"])
+#    time.sleep(1) #wait for file to be built
+#    time.sleep(1)
     inspect_json = inspectResponse(DEC_Response_PATH)
     if inspect_json == "Error: response does not have expected keys":
         print("fail")
@@ -97,11 +104,13 @@ def FT_ErgoToSepolia_SUB_ENC_Finalization(initiatorJSONPath):
     clean_file_open(swapName + "/inspectContractTest.json", "w", inspect_json)
     inspect_list = json_tools.json_to_keyValList(swapName + "/inspectContractTest.json")
     json_tools.keyVal_list_update(inspect_list, initiatorJSONPath)
-    response_list = json_tools.json_to_keyValList(DEC_Response_PATH)
-    json_tools.keyVal_list_update(response_list, initiatorJSONPath)
     minimum_wei = 0 #this is practically set for existential transfer calculations due to variable fee rates
     if int(json.loads(clean_file_open(initiatorJSONPath, "r"))["counterpartyContractFundedAmount"]) < int(minimum_wei):
         print("not enough wei in contract, fail")
+        exit()
+#    print("checkcoords:", Atomicity_compareScalarContractCoords(swapName, addr, xG[0], xG[1]))
+    if Atomicity_compareScalarContractCoords(swapName, addr, xG[0], xG[1]) == False:
+        print("on chain contract does not meet offchain contract spec, do not fulfil this swap!")
         exit()
     finalizeOBJ = finalizeSwap(initiatorJSONPath)
     clean_file_open(finalizationPATH, "w", finalizeOBJ)

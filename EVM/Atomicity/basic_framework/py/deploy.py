@@ -169,6 +169,28 @@ def checkCoords(addr):  #TODO: check curve constants against expected as well as
         #technically this should be checked in the contract's constructor given we are using the same contract coordinated by the
         #contract abi hash, however ultimately its good practice for the counterparty to check curve validity
 
+def getXCoord(addr):
+    f = open("../AtomicMultisig_ABI_0.0.1.json")
+    abi = f.read()
+    f.close()
+    if chain == "Goerli":
+        rpc = Web3(Web3.HTTPProvider(os.getenv('Goerli')))
+    elif chain == "Sepolia":
+        rpc = Web3(Web3.HTTPProvider(os.getenv('Sepolia')))
+    contract = rpc.eth.contract(address=addr, abi=abi)
+    sys.stdout.write(str(contract.functions.gxX().call()))
+
+def getYCoord(addr):
+    f = open("../AtomicMultisig_ABI_0.0.1.json")
+    abi = f.read()
+    f.close()
+    if chain == "Goerli":
+        rpc = Web3(Web3.HTTPProvider(os.getenv('Goerli')))
+    elif chain == "Sepolia":
+        rpc = Web3(Web3.HTTPProvider(os.getenv('Sepolia')))
+    contract = rpc.eth.contract(address=addr, abi=abi)
+    sys.stdout.write(str(contract.functions.gxY().call()))
+
 
 def getAccount():
     if chain == "Goerli":
@@ -504,6 +526,20 @@ if args_n > 1:
     elif sys.argv[1] == "checkCoords":
         if args_n > 2:
             checkCoords(sys.argv[2])
+            exit()
+        else:
+            print("enter the address to check as followup argument")
+            exit()
+    elif sys.argv[1] == "getXCoord":
+        if args_n > 2:
+            getXCoord(sys.argv[2])
+            exit()
+        else:
+            print("enter the address to check as followup argument")
+            exit()
+    elif sys.argv[1] == "getYCoord":
+        if args_n > 2:
+            getYCoord(sys.argv[2])
             exit()
         else:
             print("enter the address to check as followup argument")

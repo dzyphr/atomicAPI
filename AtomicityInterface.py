@@ -67,12 +67,13 @@ def Atomicity_deployEVMContract(swapName, customGas=None, customGasMod=None):
            return "fail"
 
 def Atomicity_compareScalarContractCoords(swapName, contractAddr, expectedX, expectedY):
-    x = os.popen("cd " + Atomicity + swapname + " && python3 -u py/deploy.py getXCoord").read()
-    y = os.popen("cd " + Atomicity + swapname + " && python3 -u py/deploy.py getYCoord").read()
-    if x != expectedX or y != expectedY:
-        return False
-    else:
+    x = os.popen("cd " + Atomicity + swapName + " && python3 -u py/deploy.py getXCoord " + contractAddr).read()
+    y = os.popen("cd " + Atomicity + swapName + " && python3 -u py/deploy.py getYCoord " + contractAddr).read()
+    print("onchain:(", x, " ,", y, ")  offchain:(", expectedX, " ,", expectedY, ")")
+    if int(x) == int(expectedX) and int(y) == int(expectedY):
         return True
+    else:
+        return False
 
 def Atomicity_claimScalarContract(initiatorMasterJSONPath, swapName, gas=None, gasMod=None):
     j_master = json.loads(clean_file_open(initiatorMasterJSONPath, "r"))

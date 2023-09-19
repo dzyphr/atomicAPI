@@ -23,10 +23,11 @@ def valFromConf(confPath, val):
 
 def FT_ErgoToSepolia():
     #test input data
+    swapName = "swapName"
     mi = {
             "ElGamalKey" : "688344026718772736449750175203366052782498205293898002465375827258042277361951460658218874759221293994168145022574766874751338527256700500579101512082414055194093613376114567923022297129476978722630282962906957224675125386874494158492157124310481876254258350563100432848938338097941551681473725391869419801716664372453775554757712481751968704577158437846771260413284009770218290762832891954510055886590737",
             "ElGamalKeyPath" : "Key0.ElGamalKey",
-            "swapName" : "swapName",
+            "swapName" : swapName,
             "InitiatorChain" : "Ergo",
             "ResponderChain" : "Sepolia",
             "initiatorJSONPath" : swapName + "/initiator_test.json", #initiators local swap session json state
@@ -48,9 +49,8 @@ def FT_ErgoToSepolia():
             "ENC_finalizationPATH" : swapName + "/ENC_finalization_test.bin",
             "DEC_finalizationPATH" : swapName + "/DEC_finalization_test.json",        
     }
-
-    clean_mkdir(swapName)
-    clean_file_open(initiatorJSONPath, "w", "{}")
+    clean_mkdir(mi["swapName"])
+    clean_file_open(mi["initiatorJSONPath"], "w", "{}")
     class initiatorInputEnum(Enum):
         ElGamalKey = mi["ElGamalKey"]
         ElGamalKeyPath = mi["ElGamalKeyPath"]
@@ -68,11 +68,11 @@ def FT_ErgoToSepolia():
         DEC_Response_PATH = mi["DEC_Response_PATH"]
         finalizationPATH = mi["finalizationPATH"]
         ENC_finalizationPATH = mi["ENC_finalizationPATH"]
-    json_tools.keyVal_list_update(keynum(initiatorInputEnum), initiatorJSONPath)
-    FT_ErgoToSepolia_SUB_ENC_Initiation(initiatorJSONPath)
+    json_tools.keyVal_list_update(keynum(initiatorInputEnum), mi["initiatorJSONPath"])
+    FT_ErgoToSepolia_SUB_ENC_Initiation(mi["initiatorJSONPath"])
 
     clean_mkdir(swapName) #formality for now, needed for real p2p tests / impls
-    clean_file_open(responderJSONPath, "w", "{}")
+    clean_file_open(mi["responderJSONPath"], "w", "{}")
     class responderInputEnum(Enum):
         swapName = mi["swapName"]
         InitiatorEVMAddr = mi["InitiatorEVMAddr"]
@@ -86,12 +86,12 @@ def FT_ErgoToSepolia():
         ResponderErgoAddr = mi["ResponderErgoAddr"]
         ENC_finalizationPATH = mi["ENC_finalizationPATH"]
         DEC_finalizationPATH = mi["DEC_finalizationPATH"]
-    json_tools.keyVal_list_update(keynum(responderInputEnum), responderJSONPath)
-    FT_ErgoToSepolia_SUB_ENC_Response(responderJSONPath)
+    json_tools.keyVal_list_update(keynum(responderInputEnum), mi["responderJSONPath"])
+    FT_ErgoToSepolia_SUB_ENC_Response(mi["responderJSONPath"])
 
-    FT_ErgoToSepolia_SUB_ENC_Finalization(initiatorJSONPath)
+    FT_ErgoToSepolia_SUB_ENC_Finalization(mi["initiatorJSONPath"])
     
-    FT_ErgoToSepolia_SUB_ENC_ResponderClaim(responderJSONPath)
+    FT_ErgoToSepolia_SUB_ENC_ResponderClaim(mi["responderJSONPath"])
 
-    FT_ErgoToSepolia_SUB_ENC_InitiatorClaim(initiatorJSONPath)
+    FT_ErgoToSepolia_SUB_ENC_InitiatorClaim(mi["initiatorJSONPath"])
 
