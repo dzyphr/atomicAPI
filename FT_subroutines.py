@@ -32,6 +32,7 @@ def FT_ErgoToSepolia_SUB_ENC_Initiation(initiatorJSONPath):
     publicInit = sanitizeInitiation(privateInit) #remove the private variables from the json
     clean_file_open(publicInitPATH, "w", publicInit) #write the public variables into a public file
     encrypt = ElGamal_Encrypt(ElGamalKey, ElGamalKeyPath, publicInitPATH, ENC_Init_PATH) #encrypt the public file to receiver's pub
+    return ENC_Init_PATH
     ################################################################################
 
     #note: the arguments are getting to be a bit much, we will pack pretty much everything into masterJSONs from now on
@@ -69,12 +70,13 @@ def FT_ErgoToSepolia_SUB_ENC_Response(responderJSONPath):
     responderFundingAmountWei = 2000000000
     Atomicity_SendFunds(addr, responderFundingAmountWei, swapname)
     update_response_keyValList = [{"responderLocalChain":ResponderChain}, \
-            {"responderContractAddr":addr}, \
-            {"responderErgoChainPubKey":ResponderErgoAddr}]
+            {"responderContractAddr":addr},\
+            {"ResponderErgoAddr":ResponderErgoAddr}]
     json_tools.keyVal_list_update(update_response_keyValList, responsePATH)
     responseLIST = json_tools.json_to_keyValList(responsePATH)
     json_tools.keyVal_list_update(responseLIST, responderJSONPath)
     encrypted_response = ElGamal_Encrypt(ElGamalKey, ElGamalKeyPath, responsePATH, ENC_Response_PATH)
+    return ENC_Response_PATH
     ################################################################################
 
 def FT_ErgoToSepolia_SUB_ENC_Finalization(initiatorJSONPath):
@@ -88,15 +90,16 @@ def FT_ErgoToSepolia_SUB_ENC_Finalization(initiatorJSONPath):
     finalizationPATH = init_J["finalizationPATH"]
     InitiatorEIP3Secret = init_J["InitiatorEIP3Secret"]
     ENC_finalizationPATH = init_J["ENC_finalizationPATH"]
+    InitiatorErgoAddr = init_J["InitiatorErgoAddr"]
     decrypted_response = ElGamal_Decrypt(ENC_Response_PATH, ElGamalKey, ElGamalKeyPath)
     clean_file_open(DEC_Response_PATH, "w", decrypted_response)
     response_list = json_tools.json_to_keyValList(DEC_Response_PATH)
     json_tools.keyVal_list_update(response_list, initiatorJSONPath)
     init_J = json_tools.ojf(initiatorJSONPath)
     addr = init_J["responderContractAddr"]
+    responderLocalChain = init_J["responderLocalChain"]
     xG = ast.literal_eval(init_J["xG"])
-#    time.sleep(1) #wait for file to be built
-#    time.sleep(1)
+    Atomicity_newFrame(swapName, responderLocalChain)
     inspect_json = inspectResponse(DEC_Response_PATH)
     if inspect_json == "Error: response does not have expected keys":
         print("fail")
@@ -119,10 +122,13 @@ def FT_ErgoToSepolia_SUB_ENC_Finalization(initiatorJSONPath):
     BuildAtomicSchnorrContract(initiatorJSONPath, 25, swapName, 123841)
     deployErgoContract(swapName)
     boxId = getBoxID(swapName)
-    boxIdKeyValList = [{"boxId":boxId}]
-    json_tools.keyVal_list_update(boxIdKeyValList, initiatorJSONPath)
-    json_tools.keyVal_list_update(boxIdKeyValList, finalizationPATH)
+    InitiatorAtomicSchnorrLockHeight = clean_file_open("Ergo/SigmaParticle/" + swapName + "/lockHeight", "r")
+    contractKeyValList = [{"boxId":boxId, "InitiatorAtomicSchnorrLockHeight":InitiatorAtomicSchnorrLockHeight, \
+            "InitiatorErgoAddr":InitiatorErgoAddr}]
+    json_tools.keyVal_list_update(contractKeyValList, initiatorJSONPath)
+    json_tools.keyVal_list_update(contractKeyValList, finalizationPATH)
     ENC_finalization =  ElGamal_Encrypt(ElGamalKey, ElGamalKeyPath, finalizationPATH, ENC_finalizationPATH)
+    return ENC_finalizationPATH
     ################################################################################
     
 def FT_ErgoToSepolia_SUB_ENC_ResponderClaim(responderJSONPath):
@@ -135,6 +141,8 @@ def FT_ErgoToSepolia_SUB_ENC_ResponderClaim(responderJSONPath):
     DEC_finalizationPATH = resp_J["DEC_finalizationPATH"]
     DEC_finalization = ElGamal_Decrypt(ENC_finalizationPATH, ElGamalKey, ElGamalKeyPath)
     clean_file_open(DEC_finalizationPATH, "w", DEC_finalization)
+    finalization_list = json_tools.json_to_keyValList(DEC_finalizationPATH)
+    json_tools.keyVal_list_update(finalization_list, responderJSONPath)
     boxID = json.loads(DEC_finalization)["boxId"]
     boxValue = checkBoxValue(boxID, swapName + "/testBoxValPath.bin")
     #other than just the box value responder should verify the scalars in the contract match those expected 
@@ -142,8 +150,15 @@ def FT_ErgoToSepolia_SUB_ENC_ResponderClaim(responderJSONPath):
     if int(boxValue) < int(minBoxValue):
         print("not enough nanoerg in contract")
         exit()
-    SigmaParticle_updateKeyEnv(swapName, "responderEnv")  
-    responderClaimAtomicSchnorr(swapName, DEC_finalizationPATH, responderJSONPath, boxValue)
+    SigmaParticle_newFrame(swapName)
+    SigmaParticle_updateKeyEnv(swapName, "responderEnv") 
+    responderGenerateAtomicSchnorr(swapName, DEC_finalizationPATH, responderJSONPath, boxValue)
+    expectedErgoTree = SigmaParticle_getTreeFromBox(boxID)
+    if responderVerifyErgoScript(swapName, expectedErgoTree) == False:
+        print("ergoScript verification returned false, wont fulfil swap")
+        exit()
+#    print("ergo contract verification status:", responderVerifyErgoScript(swapName, expectedErgoTree))
+    responderClaimAtomicSchnorr(swapName, 2500)
     ################################################################################
 
 def FT_ErgoToSepolia_SUB_ENC_InitiatorClaim(initiatorJSONPath):

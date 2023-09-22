@@ -59,4 +59,20 @@ def clean_mkdir(dirpath):
         os.mkdir(dirpath)
         return True
 
-    
+   
+def copy(target, dest):
+    command = "cp " + target + " " + dest
+    os.popen(command).read()
+
+def switchdirpath(fullpath, destdir):
+    #changes full dir/path to destdir/path #WILL ONLY CHANGE THE VERY FIRST DIR IF MULTIPLE ARE GIVEN
+    if fullpath.find("/") == -1:
+        print("fullpath does not contain \'/\' , wont modify")
+        return False
+    else:
+        fullpath_splitlist = fullpath.split("/")
+        fullpath_splitlist[0] = destdir
+        separator = "/"
+        newpath = separator.join(fullpath_splitlist)
+        return newpath
+

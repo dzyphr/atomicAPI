@@ -3,3 +3,5 @@
 *.class
 *solidity-flattener
 *.swp
+*Initiator_swapName
+*Responder_swapName

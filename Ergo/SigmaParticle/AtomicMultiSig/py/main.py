@@ -21,10 +21,15 @@ jpype.addClassPath(interpreterClasspath)
 from sigmastate.eval.package import ecPointToGroupElement
 def main(contractName, ergo, wallet_mnemonic, mnemonic_password, senderAddress, args):
     print("Running", contractName)
-    def atomicDeposit():
+    def atomicDeposit(verifyTreeOnly=None):
         sender = senderAddress[0]
         castedSender = ergo.castAddress(senderAddress[0])
-        senderPubkey = Address.create(sender).getPublicKey()
+        senderAddr = ""
+        if verifyTreeOnly != None:
+            if verifyTreeOnly == True:
+                senderPubkey = Address.create(os.getenv('senderAddr')).getPublicKey()
+        else:
+            senderPubkey = Address.create(sender).getPublicKey()
         senderWalletMnemonic = ergo.getMnemonic(wallet_mnemonic, mnemonic_password=mnemonic_password)
         senderEIP3Secret = int(os.getenv('senderEIP3Secret'))
         senderProver = ergo._ctx.newProverBuilder().withMnemonic(senderWalletMnemonic[0]).withEip3Secret(senderEIP3Secret).build()
@@ -57,8 +62,15 @@ def main(contractName, ergo, wallet_mnemonic, mnemonic_password, senderAddress, 
         ssG = dlogGroup().curve().createPoint(ssGX, ssGY)
         GE_ssG = ecPointToGroupElement(ssG)
         receiver = Address.create(os.getenv('receiverAddr'))
-        lockHeight = ergo._ctx.getHeight() + int(os.getenv('refundDuration')) #irl set relatively large height on BOTH sides of swap for max cooperation
-
+        lockHeight = ""
+        if verifyTreeOnly != None:
+            if verifyTreeOnly == True:
+                lockHeight = int(os.getenv('staticLockHeight'))
+        else:
+            lockHeight = ergo._ctx.getHeight() + int(os.getenv('refundDuration')) #irl set relatively large height on BOTH sides of swap for max cooperation
+            f = open("lockHeight", "w")
+            f.write(str(lockHeight))
+            f.close()
         atomicLockScript = \
             "{ \
                 val srBYTES = OUTPUTS(0).R4[Coll[Byte]].get; \
@@ -93,7 +105,10 @@ def main(contractName, ergo, wallet_mnemonic, mnemonic_password, senderAddress, 
         f = open("ergoTree", "w")
         f.write(str(ergoTree))
         f.close()
-        print(dir(ergo))
+        if verifyTreeOnly != None:
+            if verifyTreeOnly == True:
+                exit()
+#        print(dir(ergo))
         inputBoxes = BoxOperations.createForSender(Address.create(sender), ergo._ctx).withAmountToSpend(ergoAmountFeeIncluded).loadTop()
 #        inputBoxes =  ergo.getInputBox(sender_address=castedSender, amount_list=[ergoAmountRaw], tokenList=None)
         AtomicBox = ergo._ctx.newTxBuilder().outBoxBuilder() \
@@ -192,6 +207,10 @@ def main(contractName, ergo, wallet_mnemonic, mnemonic_password, senderAddress, 
 
     if len(args) > 1:
         if args[1] == "deposit":
+            if len(args) > 2:
+                if args[2] == "verifyTreeOnly":
+                    atomicDeposit(verifyTreeOnly=True)
+                    exit()
             atomicDeposit()
         elif args[1] == "claim":
             atomicReceiverClaim()

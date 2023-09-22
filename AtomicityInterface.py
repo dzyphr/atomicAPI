@@ -15,6 +15,18 @@ def Atomicity_SendFunds(addr, amount_wei, swapName, gas=None, gasMod=None):
             str(amount_wei) + " " + addr
     return os.popen(cmd).read()
 
+def Atomicity_newFrame(swapName, chain, multiFile=None, constructorArgs=None):
+    cmd = ""
+    if multiFile == None and constructorArgs == None:
+        cmd = "cd " + Atomicity + "&& ./new_frame " + swapName  
+    specChain = "echo 'CurrentChain=\"" + chain  + "\"' >> " + Atomicity + \
+          swapName + "/.env" 
+
+    os.popen(cmd).read()
+    os.popen(specChain).read()
+
+
+
 def Atomicity_buildScalarContract(chain, counterpartyChainPub, xG, locktimeDuration, swapName):
     cmd = "cd " + Atomicity + "&& ./new_frame " + swapName + \
             " -M -CA 4 " + "\\\"" + counterpartyChainPub + "\\\" " + \

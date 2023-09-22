@@ -5,13 +5,17 @@ SigmaParticlePath = "Ergo/SigmaParticle/"
 AtomicSwapECCPath = "Ergo/SigmaParticle/AtomicMultiSigECC/py/deploy.py " #TODO Ergo Specific
 AtomicSwapPath = "Ergo/SigmaParticle/AtomicMultiSig/"
 
+def SigmaParticle_newFrame(swapName):
+    cmd = "cd " + str(SigmaParticlePath)  + " && ./new_frame " + str(swapName)
+    os.popen(cmd).read()
+
 def BuildAtomicSchnorrContract(initiatorMasterJSONPath, refundDuration_BLOCKS, swapName, valueERGO):
     j = json.loads(clean_file_open(initiatorMasterJSONPath, "r"))
     krG = ast.literal_eval(j["krG"])
     srG = ast.literal_eval(j["srG"])
     ssG = ast.literal_eval(j["ssG"])
     ksG = ast.literal_eval(j["ksG"])
-    responderChainPubKey = j["responderErgoChainPubKey"]
+    responderChainPubKey = j["ResponderErgoAddr"]
     initiatorEIP3Secret = j["InitiatorEIP3Secret"]
     cmd = "cd " + str(SigmaParticlePath)  + " && ./new_frame " + str(swapName) + \
         " && cd " + str(swapName) + " && echo " + \
@@ -34,26 +38,24 @@ def BuildAtomicSchnorrContract(initiatorMasterJSONPath, refundDuration_BLOCKS, s
     employScriptsCMD = "cp " + AtomicSwapPath + "py/main.py " + SigmaParticlePath + swapName + "/py/main.py"
     os.popen(employScriptsCMD).read()
 
-def responderClaimAtomicSchnorr(swapName, DEC_finalizationPATH, responderMasterJSONPATH, boxValue, tries=None):
+
+def responderGenerateAtomicSchnorr(swapName, DEC_finalizationPATH, responderMasterJSONPATH, boxValue):
     if os.path.isfile(DEC_finalizationPATH) == False:
         print("finalization path is not a file! check filepath")
     else:
-        rounds = 0
-        if tries == None:
-            rounds = 60
-        elif type(tries) != int:
-            print("tries must be int! defaulting to 60 tries")
-            rounds = 60
-        else:
-            rounds = tries
         claimContractGeneration = "cd " + SigmaParticlePath + " && ./new_frame " + swapName
         gen = os.popen(claimContractGeneration).read()
         importBoilerplate = "cp " + SigmaParticlePath + "/AtomicMultiSig/py/main.py " + SigmaParticlePath + swapName + "/py/main.py"
         imp = os.popen(importBoilerplate).read()
         finalization = json.loads(clean_file_open(DEC_finalizationPATH, "r"))
         master = json.loads(clean_file_open(responderMasterJSONPATH, "r"))
+        responderChainPubKey = master["ResponderErgoAddr"]
+        initiatorChainPubKey = master["InitiatorErgoAddr"]
+        lockHeight = master["InitiatorAtomicSchnorrLockHeight"]
         ss = finalization["ss"]
         sr = master["sr"]
+        srG = ast.literal_eval(master["srG"])
+        ssG = ast.literal_eval(master["ssG"])
         krG = master["krG"]
         ksG = master["ksG"]
         boxID = finalization["boxId"]
@@ -62,25 +64,60 @@ def responderClaimAtomicSchnorr(swapName, DEC_finalizationPATH, responderMasterJ
             "echo \"" + \
             "sr=" + sr + "\n" + \
             "ss=" + ss + "\n" + \
+            "srGX=" + str(srG[0]) + "\n" +\
+            "srGY=" + str(srG[1]) + "\n" +\
+            "ssGX=" + str(ssG[0]) + "\n" +\
+            "ssGY=" + str(ssG[1]) + "\n" +\
+            "receiverAddr=\"" + str(responderChainPubKey) + "\"\n" + \
+            "senderAddr=\"" + str(initiatorChainPubKey) + "\"\n" + \
             "ksGX=" + str(ast.literal_eval(ksG)[0]) + "\n" + \
             "ksGY=" + str(ast.literal_eval(ksG)[1]) + "\n" + \
             "krGX=" + str(ast.literal_eval(krG)[0]) + "\n" + \
             "krGY=" + str(ast.literal_eval(krG)[1]) + "\n" + \
             "atomicBox=" + "\"" + boxID + "\"\n" + \
             "ergoAmount=" + str(nanoErgs) + "\n" + \
+            "staticLockHeight=" + str(lockHeight) + "\n" + \
             "\" >> " + SigmaParticlePath + swapName + "/.env"
         os.popen(echoVariablesCMD).read()
-        claimCMD = \
-                "cd " + SigmaParticlePath + swapName + " && ./deploy.sh claim"
-        while rounds > 0:
-            response = os.popen(claimCMD).read()
- #           print("response:\n", response)
-            if response == None:
-                rounds = rounds - 1
-                time.sleep(5)
-                continue
-            else:
-                return response
+
+
+
+def responderVerifyErgoScript(swapName, expectedErgoTree):
+    verifyCMD = \
+        "cd " + SigmaParticlePath + swapName + " && ./deploy.sh deposit verifyTreeOnly"
+    os.popen(verifyCMD).read() 
+    ergoTreePath = SigmaParticlePath + swapName + "/ergoTree"
+    ergoTree = clean_file_open(ergoTreePath, "r")
+    fmt = "onchain:", expectedErgoTree, "offchain:", ergoTree
+    print(fmt)
+    clean_file_open(swapName + "/ergoTreeCompareTest", "w", fmt)
+    if expectedErgoTree.strip() == ergoTree.strip():
+        return True
+    else:
+        return False
+       
+
+def responderClaimAtomicSchnorr(swapName, tries=None):
+    rounds = 0
+    if tries == None:
+        rounds = 60
+    elif type(tries) != int:
+        print("tries must be int! defaulting to 60 tries")
+        rounds = 60
+    else:
+        rounds = tries
+    claimCMD = \
+            "cd " + SigmaParticlePath + swapName + " && ./deploy.sh claim"
+    while rounds > 0:
+        response = os.popen(claimCMD).read()
+        if response == None:
+            rounds = rounds - 1
+            time.sleep(5)
+            continue
+        else:
+            return response
+        break
+
 
 def SigmaParticle_updateKeyEnv(swapName, targetKeyEnvDirName):
     update = clean_file_open(SigmaParticlePath + targetKeyEnvDirName + "/.env", "r")
@@ -89,6 +126,11 @@ def SigmaParticle_updateKeyEnv(swapName, targetKeyEnvDirName):
             "echo \"" + update + "\"" + " >> " + SigmaParticlePath + swapName + "/.env"
     os.popen(cmd).read()
     
+
+def SigmaParticle_getTreeFromBox(boxID):
+    cmd = \
+            "cd " + SigmaParticlePath + "getTreeFromBox && ./deploy.sh " + boxID
+    return os.popen(cmd).read()
 
 def deployErgoContract(swapName):
     command = "cd " + SigmaParticlePath + swapName + " && ./deploy.sh deposit"
