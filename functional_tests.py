@@ -13,9 +13,6 @@ import time
 from enum import Enum
 from enum_tools import *
 import file_tools
-def clearDirPath(path):
-    if os.path.isdir(path):
-        shutil.rmtree(path)
 
 def valFromConf(confPath, val):
     confParser = configparser.ConfigParser()
@@ -24,9 +21,9 @@ def valFromConf(confPath, val):
 
 def FT_ErgoToSepolia():
     #test input data
-    fileTransferProtocols = (
+    fileTransferProtocols = [
         "localCopy-linux"
-    )
+    ]
     fileTransferProtocol = fileTransferProtocols[fileTransferProtocols.index("localCopy-linux")]
     swapName = "swapName"
     mi = {
@@ -79,8 +76,9 @@ def FT_ErgoToSepolia():
         ENC_finalizationPATH = "Initiator_" + mi["ENC_finalizationPATH"]
     json_tools.keyVal_list_update(keynum(initiatorInputEnum), "Initiator_" + mi["initiatorJSONPath"])
     initPath = FT_ErgoToSepolia_SUB_ENC_Initiation("Initiator_" + mi["initiatorJSONPath"])
-    sendToPath = file_tools.switchdirpath(initPath, "Responder_" + mi["swapName"])
-    file_tools.copy(initPath, file_tools.switchdirpath(initPath, "Responder_" + mi["swapName"])) 
+    
+    if fileTransferProtocol == 'localCopy-linux':
+        file_tools.copy(initPath, file_tools.switchdirpath(initPath, "Responder_" + mi["swapName"])) 
 
     clean_file_open( "Responder_" + mi["responderJSONPath"], "w", "{}")
     class responderInputEnum(Enum):
@@ -98,9 +96,13 @@ def FT_ErgoToSepolia():
         DEC_finalizationPATH = "Responder_" + mi["DEC_finalizationPATH"]
     json_tools.keyVal_list_update(keynum(responderInputEnum), "Responder_" + mi["responderJSONPath"])
     responsePath = FT_ErgoToSepolia_SUB_ENC_Response("Responder_" + mi["responderJSONPath"])
-    file_tools.copy(responsePath, file_tools.switchdirpath(responsePath, "Initiator_" + mi["swapName"]))
+
+    if fileTransferProtocol == 'localCopy-linux':
+        file_tools.copy(responsePath, file_tools.switchdirpath(responsePath, "Initiator_" + mi["swapName"]))
+
     finalizationPath = FT_ErgoToSepolia_SUB_ENC_Finalization("Initiator_" + mi["initiatorJSONPath"])
-    file_tools.copy(finalizationPath, file_tools.switchdirpath(finalizationPath, "Responder_" + mi["swapName"]))
+    if fileTransferProtocol == 'localCopy-linux':
+        file_tools.copy(finalizationPath, file_tools.switchdirpath(finalizationPath, "Responder_" + mi["swapName"]))
     
     FT_ErgoToSepolia_SUB_ENC_ResponderClaim("Responder_" + mi["responderJSONPath"])
 

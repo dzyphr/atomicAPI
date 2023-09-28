@@ -59,6 +59,10 @@ def clean_mkdir(dirpath):
         os.mkdir(dirpath)
         return True
 
+def clearDirPath(path):
+    if os.path.isdir(path):
+        shutil.rmtree(path)
+
    
 def copy(target, dest):
     command = "cp " + target + " " + dest
