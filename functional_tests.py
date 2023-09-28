@@ -34,12 +34,12 @@ def FT_ErgoToSepolia():
             "ResponderChain" : "Sepolia",
             "initiatorJSONPath" : swapName + "/initiator_test.json", #initiators local swap session json state
             "responderJSONPath" : swapName + "/responder_test.json",
-            "ResponderEVMAddr" : "0xFe4cc19ea6472582028641B2633d3adBB7685C69",
-            "InitiatorEVMAddr" : "0x01225869F695b4b7F0af5d75381Fe340A4d27593",
-            "InitiatorEIP3Secret" : valFromConf("Ergo/SigmaParticle/" + "basic_framework/.env", 'senderEIP3Secret'),
-            "InitiatorErgoAddr" : "3WwS8bSAhXuTu5xR5CxCrcfvUemQ7fqoPcNMLd8SagSWbcAbrE1S",
-            "ResponderEIP3Secret" : valFromConf("Ergo/SigmaParticle/" + "responderEnv/.env", 'senderEIP3Secret'),
-            "ResponderErgoAddr" : "3WwGZfTh3uur3g1dSUdHFXtRfGKtRJUPhiAwNWDuf2LGpcjRzC3y",
+            "ResponderEVMAddr" : valFromConf("EVM/Atomicity/basic_framework/.env", 'SepoliaSenderAddr').replace('"', ''),
+            "InitiatorEVMAddr" : valFromConf("EVM/Atomicity/p2ENV/.env", 'SepoliaSenderAddr').replace('"', ''),
+            "InitiatorEIP3Secret" : valFromConf("Ergo/SigmaParticle/" + "basic_framework/.env", 'senderEIP3Secret').replace('"', ''),
+            "InitiatorErgoAddr" : valFromConf("Ergo/SigmaParticle/" + "basic_framework/.env", 'senderPubKey').replace('"', ''),
+            "ResponderEIP3Secret" : valFromConf("Ergo/SigmaParticle/" + "responderEnv/.env", 'senderEIP3Secret').replace('"', ''),
+            "ResponderErgoAddr" : valFromConf("Ergo/SigmaParticle/" + "responderEnv/.env", 'senderPubKey').replace('"', ''),
             "privateInitPATH" : swapName + "/priv_init_test.json",
             "publicInitPATH" : swapName + "/public_init_test.json",
             "ENC_Init_PATH" : swapName + "/ENC_init_test.bin",
@@ -79,7 +79,6 @@ def FT_ErgoToSepolia():
     
     if fileTransferProtocol == 'localCopy-linux':
         file_tools.copy(initPath, file_tools.switchdirpath(initPath, "Responder_" + mi["swapName"])) 
-
     clean_file_open( "Responder_" + mi["responderJSONPath"], "w", "{}")
     class responderInputEnum(Enum):
         swapName = "Responder_" + mi["swapName"]
@@ -103,8 +102,7 @@ def FT_ErgoToSepolia():
     finalizationPath = FT_ErgoToSepolia_SUB_ENC_Finalization("Initiator_" + mi["initiatorJSONPath"])
     if fileTransferProtocol == 'localCopy-linux':
         file_tools.copy(finalizationPath, file_tools.switchdirpath(finalizationPath, "Responder_" + mi["swapName"]))
-    
+
     FT_ErgoToSepolia_SUB_ENC_ResponderClaim("Responder_" + mi["responderJSONPath"])
 
     FT_ErgoToSepolia_SUB_ENC_InitiatorClaim("Initiator_" + mi["initiatorJSONPath"])
-

@@ -6,7 +6,7 @@ def Atomicity_CheckContractFunds(j_response):
     chain = j_response["responderLocalChain"]
     contractAddr = j_response["responderContractAddr"]
     if chain == "Sepolia":
-        value = os.popen("cd " + Atomicity + "Sepolia && python3 -u py/deploy.py getBalance " + contractAddr).read()
+        value = os.popen("cd " + Atomicity  + chain + "  && python3 -u py/deploy.py getBalance " + contractAddr).read()
         return value
 
 def Atomicity_SendFunds(addr, amount_wei, swapName, gas=None, gasMod=None):
