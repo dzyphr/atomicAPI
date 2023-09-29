@@ -10,12 +10,112 @@ from SigmaParticleInterface import *
 from functional_tests import *
 import json_tools
 import time
+import file_tools
 args = sys.argv
+
+def initializeAccount(accountName, chain): #interactive command line function to setup .env files
+    implemented_chains = ["Ergo", "Sepolia"]
+    chain_framework_path = ""
+    def create(fulldirpath, fullenvpath, envFormat):
+        if file_tools.clean_mkdir(fulldirpath) == False:
+            if os.path.isfile(fullenvpath):
+                while True:
+                    print("account with this name already exists, overwrite? (y / n)")
+                    yn = input()
+                    if yn == "y":
+                        clean_file_open(fullenvpath, "w", envFormat)
+                        print("Account: ", accountName, " created!")
+                        exit()
+                    if yn == "n": #add a rename option here to make this ux more useful
+                        print("aborting")
+                        exit()
+                    else:
+                        print("unknown: ", yn)
+                        continue
+            else:
+                clean_file_open(fullenvpath, "w", envFormat)
+                print("Account: ", accountName, " created!")
+                exit()
+
+    if chain in implemented_chains:
+        if chain == "Ergo":
+            chain_framework_path = "Ergo/SigmaParticle/"
+            print("Chain chosen:", chain, "\nAccount Name chosen:", accountName)
+            print("Setting up .env file which will include typing in private data, \n" + 
+                    "You may disconnect internet while doing this if concerned about any connected applications.")
+            print("Enter the http address of the ", chain, " node you want to connect to. (May be testnet or mainnet):")
+            testnetNode = input()
+            print("(REMINDER: You may disconnect internet while doing this if concerned about any connected applications.)", \
+                    "\nEnter your Ergo private mnemonic seed words:")
+            mnemonic = input()
+            print("Enter your Ergo mnemonic password:")
+            mnemonicPass = input()
+            print("Enter your EIP3 Secret:")
+            senderEIP3Secret = input()
+            print("Enter your Ergo PubKey:")
+            senderPubKey = input()
+            print("Enter your explorer api URL (default: https://tn-ergo-explorer.anetabtc.io/)")
+            apiURL = input()
+
+            envFormat = \
+                "[default]\n" +\
+                "testnetNode=\"" + testnetNode + "\"\n" +\
+                "mnemonic=\"" + mnemonic + "\"\n" +\
+                "mnemonicPass=\"" + mnemonicPass + "\"\n" +\
+                "senderEIP3Secret=" + senderEIP3Secret + "\n" +\
+                "senderPubKey=\"" + senderPubKey + "\"\n" +\
+                "apiURL=\"" + apiURL + "\"\n" 
+
+            fulldirpath = chain_framework_path + accountName
+            fullenvpath = fulldirpath + "/.env"
+            create(fulldirpath, fullenvpath, envFormat)
+
+                
+        elif chain == "Sepolia":
+            chain_framework_path = "EVM/Atomicity/"
+            print("Chain chosen:", chain, "\nAccount Name chosen:", accountName)
+            print("Setting up .env file which will include typing in private data, \n" +
+                    "You may disconnect internet while doing this if concerned about any connected applications.")
+            print("Enter the Public " + chain +" Address that you wish to add:")
+            SepoliaSenderAddr = input()
+            print("(REMINDER: You may disconnect internet while doing this if concerned about any connected applications.)")
+            print("Enter the Private Key of this address:")
+            SepoliaPrivKey = input()
+            print("Enter the RPC http address you wish to submit your transactions to:")
+            Sepolia = input()
+            SepoliaID = "11155111" #chain id
+            SepoliaScan = "https://api-sepolia.etherscan.io/api" #block explorer
+            SolidityCompilerVersion = "0.8.0" #solidity version 
+            #EtherscanAPIKey = input() #contract verification stuff goes here if we need it
+
+            envFormat = \
+                "[default]\n" +\
+                "SepoliaSenderAddr=\"" + SepoliaSenderAddr + "\"\n" + \
+                "SepoliaPrivKey=\"" + SepoliaPrivKey + "\"\n"  + \
+                "Sepolia=\"" + Sepolia + "\"\n" + \
+                "SepoliaID=\"" + SepoliaID + "\"\n" + \
+                "SepoliaScan=\"" + SepoliaScan + "\"\n" + \
+               " SolidityCompilerVersion=\"" + SolidityCompilerVersion + "\"\n" 
+
+            fulldirpath = chain_framework_path + accountName
+            fullenvpath = fulldirpath + "/.env"
+            create(fulldirpath, fullenvpath, envFormat)
+
+
+    else:
+        print(chain, " is not currently implemented into this framework")
 
 
 def test():
     FT_ErgoToSepolia()
 
-if len(args) >= 1:
+if len(args) == 2:
     if args[1] == "test":
         test()
+        exit()
+elif len(args) == 4:
+    if args[1] == "init":
+        accountName = args[2]
+        chain = args[3]
+        initializeAccount(accountName, chain)
+
