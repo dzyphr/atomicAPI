@@ -5,3 +5,6 @@
 *.swp
 *Initiator_swapName
 *Responder_swapName
+*ElGamal
+*new_frame
+Ergo/SigmaParticle/responderEnv

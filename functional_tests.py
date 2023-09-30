@@ -19,7 +19,7 @@ def valFromConf(confPath, val):
     confParser.read(confPath)
     return confParser['default'][val]
 
-def FT_ErgoToSepolia():
+def FT_ErgoToSepolia(initiatorErgoAccountName, initiatorSepoliaAccountName, responderErgoAccountName, responderSepoliaAccountName):
     #test input data
     fileTransferProtocols = [
         "localCopy-linux"
@@ -34,12 +34,18 @@ def FT_ErgoToSepolia():
             "ResponderChain" : "Sepolia",
             "initiatorJSONPath" : swapName + "/initiator_test.json", #initiators local swap session json state
             "responderJSONPath" : swapName + "/responder_test.json",
-            "ResponderEVMAddr" : valFromConf("EVM/Atomicity/basic_framework/.env", 'SepoliaSenderAddr').replace('"', ''),
-            "InitiatorEVMAddr" : valFromConf("EVM/Atomicity/p2ENV/.env", 'SepoliaSenderAddr').replace('"', ''),
-            "InitiatorEIP3Secret" : valFromConf("Ergo/SigmaParticle/" + "basic_framework/.env", 'senderEIP3Secret').replace('"', ''),
-            "InitiatorErgoAddr" : valFromConf("Ergo/SigmaParticle/" + "basic_framework/.env", 'senderPubKey').replace('"', ''),
-            "ResponderEIP3Secret" : valFromConf("Ergo/SigmaParticle/" + "responderEnv/.env", 'senderEIP3Secret').replace('"', ''),
-            "ResponderErgoAddr" : valFromConf("Ergo/SigmaParticle/" + "responderEnv/.env", 'senderPubKey').replace('"', ''),
+            "ResponderEVMAddr" : \
+                    valFromConf("EVM/Atomicity/" + responderSepoliaAccountName + "/.env", 'SepoliaSenderAddr').replace('"', ''),
+            "InitiatorEVMAddr" : \
+                    valFromConf("EVM/Atomicity/" + initiatorSepoliaAccountName + "/.env", 'SepoliaSenderAddr').replace('"', ''),
+            "InitiatorEIP3Secret" : \
+                    valFromConf("Ergo/SigmaParticle/" + initiatorErgoAccountName  + "/.env", 'senderEIP3Secret').replace('"', ''),
+            "InitiatorErgoAddr" : \
+                    valFromConf("Ergo/SigmaParticle/" + initiatorErgoAccountName + "/.env", 'senderPubKey').replace('"', ''),
+            "ResponderEIP3Secret" : \
+                    valFromConf("Ergo/SigmaParticle/" + responderErgoAccountName + "/.env", 'senderEIP3Secret').replace('"', ''),
+            "ResponderErgoAddr" : \
+                    valFromConf("Ergo/SigmaParticle/" + responderErgoAccountName + "/.env", 'senderPubKey').replace('"', ''),
             "privateInitPATH" : swapName + "/priv_init_test.json",
             "publicInitPATH" : swapName + "/public_init_test.json",
             "ENC_Init_PATH" : swapName + "/ENC_init_test.bin",

@@ -43,7 +43,7 @@ def initializeAccount(accountName, chain): #interactive command line function to
             print("Chain chosen:", chain, "\nAccount Name chosen:", accountName)
             print("Setting up .env file which will include typing in private data, \n" + 
                     "You may disconnect internet while doing this if concerned about any connected applications.")
-            print("Enter the http address of the ", chain, " node you want to connect to. (May be testnet or mainnet):")
+            print("Enter the URL address of the ", chain, " node you want to connect to. (May be testnet or mainnet):")
             testnetNode = input()
             print("(REMINDER: You may disconnect internet while doing this if concerned about any connected applications.)", \
                     "\nEnter your Ergo private mnemonic seed words:")
@@ -81,7 +81,7 @@ def initializeAccount(accountName, chain): #interactive command line function to
             print("(REMINDER: You may disconnect internet while doing this if concerned about any connected applications.)")
             print("Enter the Private Key of this address:")
             SepoliaPrivKey = input()
-            print("Enter the RPC http address you wish to submit your transactions to:")
+            print("Enter the RPC URL address you wish to submit your transactions to:")
             Sepolia = input()
             SepoliaID = "11155111" #chain id
             SepoliaScan = "https://api-sepolia.etherscan.io/api" #block explorer
@@ -106,12 +106,12 @@ def initializeAccount(accountName, chain): #interactive command line function to
         print(chain, " is not currently implemented into this framework")
 
 
-def test():
-    FT_ErgoToSepolia()
+def test2pAtomicSwap(p1Chain1, p1Chain2, p2Chain1, p2Chain2):
+    FT_ErgoToSepolia("basic_framework", "p2ENV", "responderEnv", "basic_framework") 
 
-if len(args) == 2:
-    if args[1] == "test":
-        test()
+if len(args) == 6:
+    if args[1] == "test2pAtomicSwap":
+        test2pAtomicSwap(args[2], args[3], args[4], args[5])
         exit()
 elif len(args) == 4:
     if args[1] == "init":

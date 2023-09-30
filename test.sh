@@ -1,1 +1,1 @@
-python3 main.py test
+python3 main.py test2pAtomicSwap basic_framework p2ENV responderEnv basic_framework
