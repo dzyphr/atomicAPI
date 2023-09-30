@@ -1,1 +1,1 @@
-python3 main.py test2pAtomicSwap basic_framework p2ENV responderEnv basic_framework
+python3 main.py test2pAtomicSwap $1 $2 $3 $4

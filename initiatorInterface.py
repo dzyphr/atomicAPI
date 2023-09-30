@@ -56,7 +56,7 @@ def finalizeSwap(initiatorMasterJSONPath):
 
 def generalizedENCInitiationSubroutine(swapName, AccountName, ElGamalKey, ElGamalKeyPath, InitiatorChain, ResponderChain): #generalized function to create initiation commitments
     mi = {} #master input json
-    if InitiatorChain == "Ergo" && ResponderChain == "Sepolia"
+    if InitiatorChain == "Ergo" and ResponderChain == "Sepolia":
         mi = {
             "ElGamalKey" : ElGamalKey,
             "ElGamalKeyPath" : ElGamalKeyPath,
