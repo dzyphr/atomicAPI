@@ -13,6 +13,22 @@ import time
 import file_tools
 args = sys.argv
 
+def firstRunCheck():
+    userjsonpath = "user.json"
+    if os.path.isfile(userjsonpath) == False:
+        userjson = \
+        {
+            "Chains": {
+                "Ergo": "True",
+                "Sepolia": "True"
+            }
+        }
+        clean_file_open(userjsonpath, "w", json.dumps(userjson, indent=4))
+    ChainsList = json.loads(clean_file_open(userjsonpath, "r"))["Chains"]
+    for chain in ChainsList:
+        if ChainsList[chain] == "True":
+            initializeAccount("basic_framework", chain)
+
 def initializeAccount(accountName, chain): #interactive command line function to setup .env files
     implemented_chains = ["Ergo", "Sepolia"]
     chain_framework_path = ""
@@ -20,15 +36,15 @@ def initializeAccount(accountName, chain): #interactive command line function to
         if file_tools.clean_mkdir(fulldirpath) == False:
             if os.path.isfile(fullenvpath):
                 while True:
-                    print("account with this name already exists, overwrite? (y / n)")
+                    print("A(n)", chain, "Account named ", accountName, "was already found, overwrite?") #we added an upfront check for this, should we double check?
                     yn = input()
                     if yn == "y":
                         clean_file_open(fullenvpath, "w", envFormat)
                         print("Account: ", accountName, " created!")
-                        exit()
+                        return False
                     if yn == "n": #add a rename option here to make this ux more useful
                         print("aborting")
-                        exit()
+                        return False
                     else:
                         print("unknown: ", yn)
                         continue
@@ -40,6 +56,19 @@ def initializeAccount(accountName, chain): #interactive command line function to
     if chain in implemented_chains:
         if chain == "Ergo":
             chain_framework_path = "Ergo/SigmaParticle/"
+            fulldirpath = chain_framework_path + accountName
+            fullenvpath = fulldirpath + "/.env"
+            if os.path.isfile(fullenvpath):
+                while True:
+                    print("A(n)", chain, "Account named ", accountName, "was already found, overwrite?") #we added an upfront check for this, should we double check?
+                    yn = input()
+                    if yn == "n":
+                        return False
+                    if yn == "y":
+                        break
+                    else:
+                        print("unknown response: ", yn)
+                        continue
             print("Chain chosen:", chain, "\nAccount Name chosen:", accountName)
             print("Setting up .env file which will include typing in private data, \n" + 
                     "You may disconnect internet while doing this if concerned about any connected applications.")
@@ -66,13 +95,24 @@ def initializeAccount(accountName, chain): #interactive command line function to
                 "senderPubKey=\"" + senderPubKey + "\"\n" +\
                 "apiURL=\"" + apiURL + "\"\n" 
 
-            fulldirpath = chain_framework_path + accountName
-            fullenvpath = fulldirpath + "/.env"
             create(fulldirpath, fullenvpath, envFormat)
 
                 
         elif chain == "Sepolia":
             chain_framework_path = "EVM/Atomicity/"
+            fulldirpath = chain_framework_path + accountName
+            fullenvpath = fulldirpath + "/.env"
+            if os.path.isfile(fullenvpath):
+                while True:
+                    print("A(n)", chain, "Account named ", accountName, "was already found, overwrite?") #we added an upfront check for this, should we double check?
+                    yn = input()
+                    if yn == "n":
+                        return False
+                    if yn == "y":
+                        break
+                    else:
+                        print("unknown response: ", yn)
+                        continue
             print("Chain chosen:", chain, "\nAccount Name chosen:", accountName)
             print("Setting up .env file which will include typing in private data, \n" +
                     "You may disconnect internet while doing this if concerned about any connected applications.")
@@ -97,8 +137,6 @@ def initializeAccount(accountName, chain): #interactive command line function to
                 "SepoliaScan=\"" + SepoliaScan + "\"\n" + \
                " SolidityCompilerVersion=\"" + SolidityCompilerVersion + "\"\n" 
 
-            fulldirpath = chain_framework_path + accountName
-            fullenvpath = fulldirpath + "/.env"
             create(fulldirpath, fullenvpath, envFormat)
 
 
@@ -118,4 +156,9 @@ elif len(args) == 4:
         accountName = args[2]
         chain = args[3]
         initializeAccount(accountName, chain)
+        exit()
+elif len(args) == 2:
+    if args[1] == "firstRunCheck":
+        firstRunCheck()
+        exit()
 
