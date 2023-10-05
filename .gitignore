@@ -11,3 +11,4 @@ ElGamal
 Ergo/SigmaParticle/responderEnv
 personal-test-script.sh
 *.ElGamalKey
+user.json
