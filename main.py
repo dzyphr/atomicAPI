@@ -51,7 +51,7 @@ def initializeAccount(accountName, chain): #interactive command line function to
             else:
                 clean_file_open(fullenvpath, "w", envFormat)
                 print("Account: ", accountName, " created!")
-                exit()
+                return True
 
     if chain in implemented_chains:
         if chain == "Ergo":
