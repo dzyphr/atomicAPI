@@ -34,7 +34,7 @@ def inspectResponse(DEC_response_filepath):
     else:
         fundedAmount = Atomicity_CheckContractFunds(j_response)
         if fundedAmount == "" or fundedAmount == None:
-            fundedAmount == 0
+            fundedAmount = 0
 #        print("contractAmount: ", fundedAmount, " wei")
         inspectScalarContractObject = {
                 "counterpartyContractFundedAmount": fundedAmount
