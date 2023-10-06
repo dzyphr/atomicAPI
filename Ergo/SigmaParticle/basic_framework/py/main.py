@@ -16,7 +16,7 @@ from sigmastate.interpreter.CryptoConstants import *
 import scala.math.BigInt as BigInt
 from java.math import BigInteger
 interpreterClasspath = \
-    "/home/" + os.getlogin() + "/Downloads/sigmastate-interpreter-5.0.7/target/scala-2.12/sigma-state_2.12-HEAD-20230423-1639.jar"
+    "/home/" + os.getlogin() + "/Downloads/sigmastate-interpreter/target/scala-2.12/sigma-state-assembly-5.0.7.jar"
 jpype.addClassPath(interpreterClasspath)
 from sigmastate.eval.package import ecPointToGroupElement
 def main(contractName, ergo, wallet_mnemonic, mnemonic_password, senderAddress, args):
