@@ -48,6 +48,11 @@ def initializeAccount(accountName, chain): #interactive command line function to
                     else:
                         print("unknown: ", yn)
                         continue
+            else:
+                clean_file_open(fullenvpath, "w", envFormat)
+                print("Account: ", accountName, " created!")
+                return True
+
         else:
             clean_file_open(fullenvpath, "w", envFormat)
             print("Account: ", accountName, " created!")
