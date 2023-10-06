@@ -150,7 +150,7 @@ def initializeAccount(accountName, chain): #interactive command line function to
 
 
 def test2pAtomicSwap(p1Chain1, p1Chain2, p2Chain1, p2Chain2):
-    FT_ErgoToSepolia("basic_framework", "p2ENV", "responderEnv", "basic_framework") 
+    FT_ErgoToSepolia(p1Chain1, p1Chain2, p2Chain1, p2Chain2) 
 
 if len(args) == 6:
     if args[1] == "test2pAtomicSwap":
