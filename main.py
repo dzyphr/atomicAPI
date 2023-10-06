@@ -50,12 +50,12 @@ def initializeAccount(accountName, chain): #interactive command line function to
                         continue
             else:
                 clean_file_open(fullenvpath, "w", envFormat)
-                print("Account: ", accountName, " created!")
+                print(chain, "Account: ", accountName, " created!")
                 return True
 
         else:
             clean_file_open(fullenvpath, "w", envFormat)
-            print("Account: ", accountName, " created!")
+            print(chain, "Account: ", accountName, " created!")
             return True
 
     if chain in implemented_chains:
