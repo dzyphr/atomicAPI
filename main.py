@@ -28,6 +28,18 @@ def firstRunCheck():
     for chain in ChainsList:
         if ChainsList[chain] == "True":
             initializeAccount("basic_framework", chain)
+            chain_framework_path = ""
+            if chain == "Ergo":
+                chain_framework_path = "Ergo/SigmaParticle/"
+            if chain == "Sepolia":
+                chain_framework_path = "EVM/Atomicity/"
+            for dirs in os.listdir(chain_framework_path):
+                if os.path.isdir(chain_framework_path + dirs):
+                    if ".env" not in os.listdir(chain_framework_path + dirs):
+                        cmd = "cp " + chain_framework_path + "basic_framework/.env " + chain_framework_path + dirs + "/.env"
+                        os.popen(cmd).read()
+
+
 
 def initializeAccount(accountName, chain): #interactive command line function to setup .env files
     implemented_chains = ["Ergo", "Sepolia"]
