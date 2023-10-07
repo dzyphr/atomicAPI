@@ -1,4 +1,8 @@
 *.env
+*lib
+*bin
+lib64
+pyvenv.cfg
 *__pycache__
 *.class
 *solidity-flattener
