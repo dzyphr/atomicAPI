@@ -139,6 +139,7 @@ def FT_ErgoToSepolia_SUB_ENC_ResponderClaim(responderJSONPath):
     ElGamalKey = resp_J["ElGamalKey"]
     ElGamalKeyPath = resp_J["ElGamalKeyPath"]
     DEC_finalizationPATH = resp_J["DEC_finalizationPATH"]
+    responderErgoAccountName = resp_J["responderErgoAccountName"]
     DEC_finalization = ElGamal_Decrypt(ENC_finalizationPATH, ElGamalKey, ElGamalKeyPath)
     clean_file_open(DEC_finalizationPATH, "w", DEC_finalization)
     finalization_list = json_tools.json_to_keyValList(DEC_finalizationPATH)
@@ -151,7 +152,7 @@ def FT_ErgoToSepolia_SUB_ENC_ResponderClaim(responderJSONPath):
         print("not enough nanoerg in contract")
         exit()
     SigmaParticle_newFrame(swapName)
-    SigmaParticle_updateKeyEnv(swapName, "responderEnv") 
+    SigmaParticle_updateKeyEnv(swapName, responderErgoAccountName) 
     responderGenerateAtomicSchnorr(swapName, DEC_finalizationPATH, responderJSONPath, boxValue)
     expectedErgoTree = SigmaParticle_getTreeFromBox(boxID)
     if responderVerifyErgoScript(swapName, expectedErgoTree) == False:
@@ -166,9 +167,10 @@ def FT_ErgoToSepolia_SUB_ENC_InitiatorClaim(initiatorJSONPath):
     init_J = json.loads(clean_file_open(initiatorJSONPath, "r"))
     swapName = init_J["swapName"]
     boxID = init_J["boxId"]
+    initiatorSepoliaAccountName = init_J["initiatorSepoliaAccountName"]
     checkSchnorrTreeForClaim(boxID, swapName, initiatorJSONPath) 
     deduceX_fromAtomicSchnorrClaim(initiatorJSONPath, swapName)
-    Atomicity_updateKeyEnv(swapName, "p2ENV")
+    Atomicity_updateKeyEnv(swapName, initiatorSepoliaAccountName)
     Atomicity_claimScalarContract(initiatorJSONPath, swapName)
     ################################################################################
 #    print("success!")

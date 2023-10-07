@@ -27,6 +27,10 @@ def FT_ErgoToSepolia(initiatorErgoAccountName, initiatorSepoliaAccountName, resp
     fileTransferProtocol = fileTransferProtocols[fileTransferProtocols.index("localCopy-linux")]
     swapName = "swapName"
     mi = {
+            "initiatorErgoAccountName": initiatorErgoAccountName,
+            "initiatorSepoliaAccountName": initiatorSepoliaAccountName,
+            "responderErgoAccountName": responderErgoAccountName,
+            "responderSepoliaAccountName": responderSepoliaAccountName,
             "ElGamalKey" : "688344026718772736449750175203366052782498205293898002465375827258042277361951460658218874759221293994168145022574766874751338527256700500579101512082414055194093613376114567923022297129476978722630282962906957224675125386874494158492157124310481876254258350563100432848938338097941551681473725391869419801716664372453775554757712481751968704577158437846771260413284009770218290762832891954510055886590737",
             "ElGamalKeyPath" : "Key0.ElGamalKey",
             "swapName" : swapName,
@@ -64,6 +68,8 @@ def FT_ErgoToSepolia(initiatorErgoAccountName, initiatorSepoliaAccountName, resp
     #this will make it easy to change the file transfer protocol agnostically of test-cases
     clean_file_open("Initiator_" + mi["initiatorJSONPath"], "w", "{}")
     class initiatorInputEnum(Enum):
+        initiatorErgoAccountName = mi["initiatorErgoAccountName"]
+        initiatorSepoliaAccountName = mi["initiatorSepoliaAccountName"]
         ElGamalKey = mi["ElGamalKey"]
         ElGamalKeyPath = mi["ElGamalKeyPath"]
         swapName = "Initiator_" + mi["swapName"]
@@ -87,6 +93,8 @@ def FT_ErgoToSepolia(initiatorErgoAccountName, initiatorSepoliaAccountName, resp
         file_tools.copy(initPath, file_tools.switchdirpath(initPath, "Responder_" + mi["swapName"])) 
     clean_file_open( "Responder_" + mi["responderJSONPath"], "w", "{}")
     class responderInputEnum(Enum):
+        responderErgoAccountName = mi["responderErgoAccountName"]
+        responderSepoliaAccountName = mi["responderSepoliaAccountName"]
         swapName = "Responder_" + mi["swapName"]
         InitiatorEVMAddr = mi["InitiatorEVMAddr"]
         ENC_Init_PATH = "Responder_" + mi["ENC_Init_PATH"]
