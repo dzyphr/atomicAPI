@@ -8,7 +8,7 @@ if bool(os.getenv('localErgpy')) == True:
     sys.path.insert(0, '../ergpy/ergpy') #prefer local version
 from ergpy import appkit, helper_functions
 def connect():
-    load_dotenv()
+    load_dotenv("../basic_framework")
     node_url = os.getenv('testnetNode') # MainNet or TestNet
     api_url = os.getenv('apiURL')
     ergo = appkit.ErgoAppKit(node_url=node_url, api_url=api_url)
