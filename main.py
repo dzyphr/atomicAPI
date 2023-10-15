@@ -152,7 +152,7 @@ def initializeAccount(accountName, chain): #interactive command line function to
                 "Sepolia=\"" + Sepolia + "\"\n" + \
                 "SepoliaID=\"" + SepoliaID + "\"\n" + \
                 "SepoliaScan=\"" + SepoliaScan + "\"\n" + \
-               " SolidityCompilerVersion=\"" + SolidityCompilerVersion + "\"\n" 
+                "SolidityCompilerVersion=\"" + SolidityCompilerVersion + "\"\n" 
 
             create(fulldirpath, fullenvpath, envFormat)
 
@@ -161,8 +161,44 @@ def initializeAccount(accountName, chain): #interactive command line function to
         print(chain, " is not currently implemented into this framework")
 
 
+
+def publishNewOrderType_ServerEndpoint(url, CoinA, CoinB, CoinA_price, CoinB_price, MaxVolCoinA, auth):
+    import requests, uuid
+    ID = str(uuid.uuid4())
+    headers = {"Authorization": "Bearer " + auth}
+    requestobj = {
+        "id": ID,
+        "request_type": "publishNewOrderType",
+        "OrderTypeUUID": ID,
+        "CoinA": CoinA,
+        "CoinB": CoinB,
+        "CoinA_price": CoinA_price,
+        "CoinB_price": CoinB_price,
+        "MaxVolCoinA": MaxVolCoinA
+    }
+    print(requests.post(url, headers=headers,  json = requestobj).text)
+
+
+def requestEncryptedInitiation_ClientEndpoint(url, OrderTypeUUID, ElGamalPubkey):
+    import requests, uuid
+    ID = str(uuid.uuid4())
+    headers = {"Authorization": "None"}
+    requestobj = {
+        "id": ID,
+        "request_type":"requestEncryptedInitiation",
+        "OrderTypeUUID":OrderTypeUUID,
+        "ElGamalKey":ElGamalPubkey,
+    }
+    respStr = requests.post(url, headers=headers, json = requestobj).text
+    respObj = json.loads(respStr[1:-1].encode().decode('unicode_escape'))
+    swapname = respObj["SwapTicketID"]
+    clean_mkdir(swapname) #swapname
+    clean_file_open(respObj["SwapTicketID"] + "/ENC_init.bin", "w", respObj["ENC_init.bin"])
+
+
 def test2pAtomicSwap(p1Chain1, p1Chain2, p2Chain1, p2Chain2):
     FT_ErgoToSepolia(p1Chain1, p1Chain2, p2Chain1, p2Chain2) 
+
 
 if len(args) == 6:
     if args[1] == "test2pAtomicSwap":
@@ -174,8 +210,30 @@ elif len(args) == 4:
         chain = args[3]
         initializeAccount(accountName, chain)
         exit()
+elif len(args) == 5:
+    if args[1] == "requestEncryptedInitiation_ClientEndpoint":
+        requestEncryptedInitiation_ClientEndpoint(args[2], args[3], args[4])
 elif len(args) == 2:
     if args[1] == "firstRunCheck":
         firstRunCheck()
         exit()
+elif len(args) == 9:
+    if args[1] == "GeneralizedENCInitiationSubroutine":
+        GeneralizedENC_InitiationSubroutine(\
+                args[2], args[3], args[4], args[5], args[6], args[7], args[8])
+    if args[1] == "publishNewOrderType_ServerEndpoint":
+        publishNewOrderType_ServerEndpoint(args[2], args[3], args[4], args[5], args[6], args[7], args[8])
+elif len(args) == 8:
+    if args[1] == "GeneralizeENC_ResponseSubroutine":
+        GeneralizeENC_ResponseSubroutine(args[2], args[3], args[4], args[5], args[6], args[7])
+        #start refund timelock checking as soon as contracts are funded. responder starts here
+    if args[1] == "publishNewOrderType_ServerEndpoint":
+        publishNewOrderType_ServerEndpoint(args[2], args[3], args[4], args[5], args[6], args[7], args[8])
+elif len(args) == 3:
+    if args[1] == "GeneralizedENC_FinalizationSubroutine":#initiator refund checking starts here
+        GeneralizedENC_FinalizationSubroutine(args[2])
+    if args[1] == "GeneralizedENC_ResponderClaimSubroutine":
+        GeneralizedENC_ResponderClaimSubroutine(args[2])
+    if args[1] == "GeneralizedENC_InitiatorClaimSubroutine":
+        GeneralizedENC_InitiatorClaimSubroutine(args[2])
 

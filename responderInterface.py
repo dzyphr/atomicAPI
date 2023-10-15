@@ -34,4 +34,104 @@ def response(DEC_initiation_filepath, responderMasterJSONPATH, response_filepath
     secretslist = [{"sr":sr}, {"x":x}]
     json_tools.keyVal_list_update(secretslist, responderMasterJSONPATH)
 
+def GeneralizeENC_ResponseSubroutine(\
+        swapName, responderCrossChainAccountName, responderLocalChainAccountName, \
+        ElGamalKey, ElGamalKeyPath, InitiatorChain, ResponderChain):
+    mi = {}
+    if InitiatorChain == "Ergo" and ResponderChain == "Sepolia":
+        mi = {
+                "responderErgoAccountName": responderErgoAccountName,
+                "responderSepoliaAccountName": responderSepoliaAccountName,
+                "ElGamalKey" : ElGamalKey,
+                "ElGamalKeyPath" : ElGamalKeyPath,
+                "swapName" : swapName,
+                "InitiatorChain" : "Ergo",
+                "ResponderChain" : "Sepolia",
+                "responderJSONPath" : swapName + "/responder.json",
+                "ResponderEVMAddr" : \
+                        valFromConf("EVM/Atomicity/" + responderSepoliaAccountName + "/.env", 'SepoliaSenderAddr').replace('"', ''),
+                "ResponderEIP3Secret" : \
+                        valFromConf("Ergo/SigmaParticle/" + responderErgoAccountName + "/.env", 'senderEIP3Secret').replace('"', ''),
+                "ResponderErgoAddr" : \
+                        valFromConf("Ergo/SigmaParticle/" + responderErgoAccountName + "/.env", 'senderPubKey').replace('"', ''),
+                "ENC_Init_PATH" : swapName + "/ENC_init.bin", #responder needs to save ENC init to this path to proceed
+                "DEC_Init_PATH" : swapName + "/DEC_init.json",
+                "responsePATH" : swapName + "/response_path.json",
+                "ENC_Response_PATH" : swapName + "/ENC_response_path.bin",
+                "ENC_finalizationPATH" : swapName + "/ENC_finalization.bin",
+                "DEC_finalizationPATH" : swapName + "/DEC_finalization.json",
+            }
+    clean_mkdir(mi["swapName"])
+    clean_file_open(mi["responderJSONPath"], "w", json.dumps(mi))
+    resp_J = json_tools.ojf(responderJSONPath)
+    swapname = resp_J["swapName"]
+    ENC_Init_PATH = resp_J["ENC_Init_PATH"]
+    DEC_Init_PATH = resp_J["DEC_Init_PATH"]
+    ElGamalKey = resp_J["ElGamalKey"]
+    ElGamalKeyPath = resp_J["ElGamalKeyPath"]
+    responsePATH = resp_J["responsePATH"]
+    ENC_Response_PATH = resp_J["ENC_Response_PATH"]
+    ResponderChain = resp_J["ResponderChain"]
+    ResponderErgoAddr = resp_J["ResponderErgoAddr"]
+
+    process_initiation(ENC_Init_PATH, DEC_Init_PATH, ElGamalKey, ElGamalKeyPath)
+    r_initiation_keyValList = json_tools.json_to_keyValList(DEC_Init_PATH)
+    json_tools.keyVal_list_update(r_initiation_keyValList, responderJSONPath)
+    resp_J = json_tools.ojf(responderJSONPath)
+    InitiatorEVMAddr = resp_J["InitiatorEVMAddr"]
+    response(DEC_Init_PATH, responderJSONPath, \
+            responsePATH, ElGamalKey, ElGamalKeyPath)
+    #TODO: replace sr and x paths with master json update
+    xG = json.loads(clean_file_open(responsePATH, "r"))["xG"]
+    Atomicity_buildScalarContract(ResponderChain, InitiatorEVMAddr,  xG, 100, swapname)
+    addr = Atomicity_deployEVMContract(swapname, customGasMod=2)
+    if addr != "fail":
+        #ASSUMING ITS ENDING WITH \n
+        addr  =  addr[:-1]
+    else:
+        print("fail: deployContract() didnt return a contract addr")
+        exit()
+    #add contract addr and chain name to response here then encrypt
+    responderFundingAmountWei = 2000000000
+    Atomicity_SendFunds(addr, responderFundingAmountWei, swapname)
+    update_response_keyValList = [{"responderLocalChain":ResponderChain}, \
+            {"responderContractAddr":addr},\
+            {"ResponderErgoAddr":ResponderErgoAddr}]
+    json_tools.keyVal_list_update(update_response_keyValList, responsePATH)
+    responseLIST = json_tools.json_to_keyValList(responsePATH)
+    json_tools.keyVal_list_update(responseLIST, responderJSONPath)
+    encrypted_response = ElGamal_Encrypt(ElGamalKey, ElGamalKeyPath, responsePATH, ENC_Response_PATH)
+    return ENC_Response_PATH
+
+def GeneralizedENC_ResponderClaimSubroutine(responderJSONPath):
+ ############## RESPONDER #######################################################
+    resp_J = json_tools.ojf(responderJSONPath)
+    swapName = resp_J["swapName"]
+    ENC_finalizationPATH = resp_J["ENC_finalizationPATH"]
+    ElGamalKey = resp_J["ElGamalKey"]
+    ElGamalKeyPath = resp_J["ElGamalKeyPath"]
+    DEC_finalizationPATH = resp_J["DEC_finalizationPATH"]
+    responderErgoAccountName = resp_J["responderErgoAccountName"]
+    DEC_finalization = ElGamal_Decrypt(ENC_finalizationPATH, ElGamalKey, ElGamalKeyPath)
+    clean_file_open(DEC_finalizationPATH, "w", DEC_finalization)
+    finalization_list = json_tools.json_to_keyValList(DEC_finalizationPATH)
+    json_tools.keyVal_list_update(finalization_list, responderJSONPath)
+    boxID = json.loads(DEC_finalization)["boxId"]
+    boxValue = checkBoxValue(boxID, swapName + "/testBoxValPath.bin")
+    #other than just the box value responder should verify the scalars in the contract match those expected
+    minBoxValue = 1123841 #1123841
+    if int(boxValue) < int(minBoxValue):
+        print("not enough nanoerg in contract")
+        exit()
+    SigmaParticle_newFrame(swapName)
+    SigmaParticle_updateKeyEnv(swapName, responderErgoAccountName)
+    responderGenerateAtomicSchnorr(swapName, DEC_finalizationPATH, responderJSONPath, boxValue)
+    expectedErgoTree = SigmaParticle_getTreeFromBox(boxID)
+    if responderVerifyErgoScript(swapName, expectedErgoTree) == False:
+        print("ergoScript verification returned false, wont fulfil swap")
+        exit()
+#    print("ergo contract verification status:", responderVerifyErgoScript(swapName, expectedErgoTree))
+    responderClaimAtomicSchnorr(swapName, 2500)
+    ################################################################################
+
 

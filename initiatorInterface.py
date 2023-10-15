@@ -1,10 +1,33 @@
+import sys
+import json
+import shutil
+from ElGamalInterface import *
+from AtomicityInterface import *
+from SigmaParticleInterface import *
+import json_tools
+import time
+from enum import Enum
+from enum_tools import *
+import file_tools
+
+
 import os
+from enum import Enum
+from enum_tools import *
+
+import configparser
 import json
 from file_tools import *
 from AtomicityInterface import *
 py = "python3 -u "
 AtomicSwapECCPath = "Ergo/SigmaParticle/AtomicMultiSigECC/py/deploy.py " #TODO Ergo Specific
 s_ = " "
+
+def valFromConf(confPath, val):
+    confParser = configparser.ConfigParser()
+    confParser.read(confPath)
+    return confParser['default'][val]
+
 
 def initiation(crossChainPubKey, initiatorChain, crossChain): #returns an initiation JSON object #TODO link between selected chain and atomic ECC
     return os.popen(py + AtomicSwapECCPath + "p1Initiate " + crossChainPubKey + s_ + initiatorChain + s_ + crossChain).read()
@@ -56,29 +79,31 @@ def finalizeSwap(initiatorMasterJSONPath):
     return finalizeJSON
 
 
-def generalizedENCInitiationSubroutine(swapName, AccountName, ElGamalKey, ElGamalKeyPath, InitiatorChain, ResponderChain): #generalized function to create initiation commitments
+def GeneralizedENC_InitiationSubroutine(swapName, LocalChainAccountName, CrossChainAccountName, ElGamalKey, ElGamalKeyPath, InitiatorChain, ResponderChain): #generalized function to create initiation commitments
+#    print("InitiatorChain:", InitiatorChain)
+#    print("ResponderChain:", ResponderChain)
     mi = {} #master input json
-    if InitiatorChain == "Ergo" and ResponderChain == "Sepolia":
+    if InitiatorChain.strip("\"") == "Ergo" and ResponderChain.strip("\"") == "Sepolia":
         mi = {
-            "ElGamalKey" : ElGamalKey,
-            "ElGamalKeyPath" : ElGamalKeyPath,
-            "swapName" : swapName,
-            "InitiatorChain" : InitiatorChain,
-            "ResponderChain" : ResponderChain,
-            "initiatorJSONPath" : swapName + "/initiator.json", #initiators local swap session json state
+            "ElGamalKey" : ElGamalKey.strip("\"").rstrip(),
+            "ElGamalKeyPath" : ElGamalKeyPath.strip("\"").rstrip(),
+            "swapName" : swapName.strip("\"").rstrip(),
+            "InitiatorChain" : InitiatorChain.strip("\"").rstrip(),
+            "ResponderChain" : ResponderChain.strip("\"").rstrip(),
+            "initiatorJSONPath" : swapName.strip("\"").rstrip() + "/initiator.json", #initiators local swap session json state
             "InitiatorEVMAddr" : \
-            valFromConf("EVM/Atomicity/" + AccountName + "/.env", 'SepoliaSenderAddr').replace('"', ''),
+            valFromConf("EVM/Atomicity/" + CrossChainAccountName + "/.env", 'SepoliaSenderAddr'),
             "InitiatorEIP3Secret" : \
-            valFromConf("Ergo/SigmaParticle/" + AccountName  + "/.env", 'senderEIP3Secret').replace('"', ''),
+            valFromConf("Ergo/SigmaParticle/" + LocalChainAccountName.strip("\"").rstrip()  + "/.env", 'senderEIP3Secret').replace('"', '').rstrip(),
                 "InitiatorErgoAddr" : \
-            valFromConf("Ergo/SigmaParticle/" + AccountName + "/.env", 'senderPubKey').replace('"', ''),
-            "privateInitPATH" : swapName + "/priv_init.json",
-            "publicInitPATH" : swapName + "/public_init.json",
-            "ENC_Init_PATH" : swapName + "/ENC_init.bin",
-            "ENC_Response_PATH" : swapName + "/ENC_response_path.bin",
-            "DEC_Response_PATH" : swapName + "/DEC_response.json",
-            "finalizationPATH" : swapName + "/finalization.json",
-            "ENC_finalizationPATH" : swapName + "/ENC_finalization.bin",
+            valFromConf("Ergo/SigmaParticle/" + LocalChainAccountName.strip("\"").rstrip() + "/.env", 'senderPubKey').replace('"', '').rstrip(),
+            "privateInitPATH" : swapName.strip("\"").rstrip() + "/priv_init.json",
+            "publicInitPATH" : swapName.strip("\"").rstrip() + "/public_init.json",
+            "ENC_Init_PATH" : swapName.strip("\"").rstrip()+ "/ENC_init.bin",
+            "ENC_Response_PATH" : swapName.strip("\"").rstrip() + "/ENC_response_path.bin",
+            "DEC_Response_PATH" : swapName.strip("\"").rstrip() + "/DEC_response.json",
+            "finalizationPATH" : swapName.strip("\"").rstrip() + "/finalization.json",
+            "ENC_finalizationPATH" : swapName.strip("\"").rstrip() + "/ENC_finalization.bin",
         }
     clean_mkdir(mi["swapName"])
     clean_file_open(mi["initiatorJSONPath"], "w", "{}")
@@ -105,9 +130,70 @@ def generalizedENCInitiationSubroutine(swapName, AccountName, ElGamalKey, ElGama
     initiation_keyValList = json_tools.json_to_keyValList(mi["privateInitPATH"])
     json_tools.keyVal_list_update(initiation_keyValList, mi["initiatorJSONPath"])
     publicInit = sanitizeInitiation(privateInit)
-    clean_file_open(publicInitPATH, "w", publicInit)
-    encrypt = ElGamal_Encrypt(ElGamalKey, ElGamalKeyPath, mi["publicInitPATH"], mi["ENC_Init_PATH"])
+    clean_file_open(mi["publicInitPATH"], "w", publicInit)
+    encrypt = ElGamal_Encrypt(mi["ElGamalKey"], mi["ElGamalKeyPath"], mi["publicInitPATH"], mi["ENC_Init_PATH"])
     return mi["ENC_Init_PATH"]
 
 
+def GeneralizedENC_FinalizationSubroutine(initiatorJSONPath):
+    init_J = json_tools.ojf(initiatorJSONPath)
+    swapName = init_J["swapName"]
+    ENC_Response_PATH = init_J["ENC_Response_PATH"]
+    ElGamalKey = init_J["ElGamalKey"]
+    ElGamalKeyPath = init_J["ElGamalKeyPath"]
+    DEC_Response_PATH = init_J["DEC_Response_PATH"]
+    finalizationPATH = init_J["finalizationPATH"]
+    InitiatorEIP3Secret = init_J["InitiatorEIP3Secret"]
+    ENC_finalizationPATH = init_J["ENC_finalizationPATH"]
+    InitiatorErgoAddr = init_J["InitiatorErgoAddr"]
+    decrypted_response = ElGamal_Decrypt(ENC_Response_PATH, ElGamalKey, ElGamalKeyPath)
+    clean_file_open(DEC_Response_PATH, "w", decrypted_response)
+    response_list = json_tools.json_to_keyValList(DEC_Response_PATH)
+    json_tools.keyVal_list_update(response_list, initiatorJSONPath)
+    init_J = json_tools.ojf(initiatorJSONPath)
+    addr = init_J["responderContractAddr"]
+    responderLocalChain = init_J["responderLocalChain"]
+    xG = ast.literal_eval(init_J["xG"])
+    Atomicity_newFrame(swapName, responderLocalChain)
+    inspect_json = inspectResponse(DEC_Response_PATH)
+    if inspect_json == "Error: response does not have expected keys":
+        print("fail")
+        exit()
+    clean_file_open(swapName + "/inspectContractTest.json", "w", inspect_json)
+    inspect_list = json_tools.json_to_keyValList(swapName + "/inspectContractTest.json")
+    json_tools.keyVal_list_update(inspect_list, initiatorJSONPath)
+    minimum_wei = 0 #this is practically set for existential transfer calculations due to variable fee rates
+    if int(json.loads(clean_file_open(initiatorJSONPath, "r"))["counterpartyContractFundedAmount"]) < int(minimum_wei):
+        print("not enough wei in contract, fail")
+        exit()
+#    print("checkcoords:", Atomicity_compareScalarContractCoords(swapName, addr, xG[0], xG[1]))
+    if Atomicity_compareScalarContractCoords(swapName, addr, xG[0], xG[1]) == False:
+        print("on chain contract does not meet offchain contract spec, do not fulfil this swap!")
+        exit()
+    finalizeOBJ = finalizeSwap(initiatorJSONPath)
+    clean_file_open(finalizationPATH, "w", finalizeOBJ)
+    finalizeOBJ_LIST = json_tools.json_to_keyValList(finalizationPATH)
+    json_tools.keyVal_list_update(finalizeOBJ_LIST, initiatorJSONPath)
+    BuildAtomicSchnorrContract(initiatorJSONPath, 25, swapName, 123841)
+    deployErgoContract(swapName)
+    boxId = getBoxID(swapName)
+    InitiatorAtomicSchnorrLockHeight = clean_file_open("Ergo/SigmaParticle/" + swapName + "/lockHeight", "r")
+    contractKeyValList = [{"boxId":boxId, "InitiatorAtomicSchnorrLockHeight":InitiatorAtomicSchnorrLockHeight, \
+            "InitiatorErgoAddr":InitiatorErgoAddr}]
+    json_tools.keyVal_list_update(contractKeyValList, initiatorJSONPath)
+    json_tools.keyVal_list_update(contractKeyValList, finalizationPATH)
+    ENC_finalization =  ElGamal_Encrypt(ElGamalKey, ElGamalKeyPath, finalizationPATH, ENC_finalizationPATH)
+    return ENC_finalizationPATH
+
+def GeneralizedENC_InitiatorClaimSubroutine(initiatorJSONPath):
+    ############## INITIATOR #######################################################
+    init_J = json.loads(clean_file_open(initiatorJSONPath, "r"))
+    swapName = init_J["swapName"]
+    boxID = init_J["boxId"]
+    initiatorSepoliaAccountName = init_J["initiatorSepoliaAccountName"]
+    checkSchnorrTreeForClaim(boxID, swapName, initiatorJSONPath)
+    deduceX_fromAtomicSchnorrClaim(initiatorJSONPath, swapName)
+    Atomicity_updateKeyEnv(swapName, initiatorSepoliaAccountName)
+    Atomicity_claimScalarContract(initiatorJSONPath, swapName)
+    ################################################################################
 
