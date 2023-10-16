@@ -1,5 +1,7 @@
-import json, os, json_tools
+import json, os, json_tools, configparser
 from datetime import datetime
+from AtomicityInterface import *
+from SigmaParticleInterface import *
 from ElGamalInterface import *
 from file_tools import *
 py = "python3 -u "
@@ -15,6 +17,10 @@ def process_initiation(ENC_filepath, DEC_filepath, SenderPubKey, UserKeyFileName
     decrypt = ElGamal_Decrypt(ENC_filepath, SenderPubKey, UserKeyFileName) #TODO verify initiation details including json sanity
     clean_file_open(DEC_filepath, "w", decrypt)
 
+def valFromConf(confPath, val):
+    confParser = configparser.ConfigParser()
+    confParser.read(confPath)
+    return confParser['default'][val]
 
 def response(DEC_initiation_filepath, responderMasterJSONPATH, response_filepath, SenderPubKey, UserKeyFileName):
     j_init = json.loads(clean_file_open(DEC_initiation_filepath, "r"))
@@ -40,8 +46,8 @@ def GeneralizeENC_ResponseSubroutine(\
     mi = {}
     if InitiatorChain == "Ergo" and ResponderChain == "Sepolia":
         mi = {
-                "responderErgoAccountName": responderErgoAccountName,
-                "responderSepoliaAccountName": responderSepoliaAccountName,
+                "responderErgoAccountName": responderCrossChainAccountName,
+                "responderSepoliaAccountName": responderLocalChainAccountName,
                 "ElGamalKey" : ElGamalKey,
                 "ElGamalKeyPath" : ElGamalKeyPath,
                 "swapName" : swapName,
@@ -49,11 +55,11 @@ def GeneralizeENC_ResponseSubroutine(\
                 "ResponderChain" : "Sepolia",
                 "responderJSONPath" : swapName + "/responder.json",
                 "ResponderEVMAddr" : \
-                        valFromConf("EVM/Atomicity/" + responderSepoliaAccountName + "/.env", 'SepoliaSenderAddr').replace('"', ''),
+                        valFromConf("EVM/Atomicity/" + responderLocalChainAccountName + "/.env", 'SepoliaSenderAddr').replace('"', ''),
                 "ResponderEIP3Secret" : \
-                        valFromConf("Ergo/SigmaParticle/" + responderErgoAccountName + "/.env", 'senderEIP3Secret').replace('"', ''),
+                        valFromConf("Ergo/SigmaParticle/" + responderCrossChainAccountName + "/.env", 'senderEIP3Secret').replace('"', ''),
                 "ResponderErgoAddr" : \
-                        valFromConf("Ergo/SigmaParticle/" + responderErgoAccountName + "/.env", 'senderPubKey').replace('"', ''),
+                        valFromConf("Ergo/SigmaParticle/" + responderCrossChainAccountName + "/.env", 'senderPubKey').replace('"', ''),
                 "ENC_Init_PATH" : swapName + "/ENC_init.bin", #responder needs to save ENC init to this path to proceed
                 "DEC_Init_PATH" : swapName + "/DEC_init.json",
                 "responsePATH" : swapName + "/response_path.json",
@@ -63,7 +69,7 @@ def GeneralizeENC_ResponseSubroutine(\
             }
     clean_mkdir(mi["swapName"])
     clean_file_open(mi["responderJSONPath"], "w", json.dumps(mi))
-    resp_J = json_tools.ojf(responderJSONPath)
+    resp_J = json_tools.ojf(mi["responderJSONPath"])
     swapname = resp_J["swapName"]
     ENC_Init_PATH = resp_J["ENC_Init_PATH"]
     DEC_Init_PATH = resp_J["DEC_Init_PATH"]
@@ -73,11 +79,15 @@ def GeneralizeENC_ResponseSubroutine(\
     ENC_Response_PATH = resp_J["ENC_Response_PATH"]
     ResponderChain = resp_J["ResponderChain"]
     ResponderErgoAddr = resp_J["ResponderErgoAddr"]
-
+    responderJSONPath = mi["responderJSONPath"]
     process_initiation(ENC_Init_PATH, DEC_Init_PATH, ElGamalKey, ElGamalKeyPath)
     r_initiation_keyValList = json_tools.json_to_keyValList(DEC_Init_PATH)
-    json_tools.keyVal_list_update(r_initiation_keyValList, responderJSONPath)
-    resp_J = json_tools.ojf(responderJSONPath)
+    json_tools.keyVal_list_update(r_initiation_keyValList, mi["responderJSONPath"])
+    resp_J = json_tools.ojf(mi["responderJSONPath"])
+#    InitiatorEVMAddr = resp_J["InitiatorEVMAddr"] TODO generalize this
+    temprenamelist = [{"InitiatorEVMAddr": resp_J["SepoliaChainPubkey"]}]
+    json_tools.keyVal_list_update(temprenamelist, mi["responderJSONPath"])
+    resp_J = json_tools.ojf(mi["responderJSONPath"])
     InitiatorEVMAddr = resp_J["InitiatorEVMAddr"]
     response(DEC_Init_PATH, responderJSONPath, \
             responsePATH, ElGamalKey, ElGamalKeyPath)

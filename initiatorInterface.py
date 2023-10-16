@@ -91,9 +91,9 @@ def GeneralizedENC_InitiationSubroutine(swapName, LocalChainAccountName, CrossCh
             "InitiatorChain" : InitiatorChain.strip("\"").rstrip(),
             "ResponderChain" : ResponderChain.strip("\"").rstrip(),
             "initiatorJSONPath" : swapName.strip("\"").rstrip() + "/initiator.json", #initiators local swap session json state
-            "InitiatorEVMAddr" : \
+            "initiatorEVMAddr" : \
             valFromConf("EVM/Atomicity/" + CrossChainAccountName + "/.env", 'SepoliaSenderAddr'),
-            "InitiatorEIP3Secret" : \
+            "InitiatorEIP3Secret".replace('"', '').rstrip() : \
             valFromConf("Ergo/SigmaParticle/" + LocalChainAccountName.strip("\"").rstrip()  + "/.env", 'senderEIP3Secret').replace('"', '').rstrip(),
                 "InitiatorErgoAddr" : \
             valFromConf("Ergo/SigmaParticle/" + LocalChainAccountName.strip("\"").rstrip() + "/.env", 'senderPubKey').replace('"', '').rstrip(),
@@ -104,6 +104,7 @@ def GeneralizedENC_InitiationSubroutine(swapName, LocalChainAccountName, CrossCh
             "DEC_Response_PATH" : swapName.strip("\"").rstrip() + "/DEC_response.json",
             "finalizationPATH" : swapName.strip("\"").rstrip() + "/finalization.json",
             "ENC_finalizationPATH" : swapName.strip("\"").rstrip() + "/ENC_finalization.bin",
+            "InitiatorEVMAccountName": CrossChainAccountName
         }
     clean_mkdir(mi["swapName"])
     clean_file_open(mi["initiatorJSONPath"], "w", "{}")
@@ -114,7 +115,7 @@ def GeneralizedENC_InitiationSubroutine(swapName, LocalChainAccountName, CrossCh
         InitiatorChain = mi["InitiatorChain"]
         ResponderChain = mi["ResponderChain"]
         initiatorJSONPath = mi["initiatorJSONPath"] #initiators local swap session json state
-        InitiatorEVMAddr = mi["InitiatorEVMAddr"]
+        InitiatorEVMAddr = mi["initiatorEVMAddr"]
         InitiatorEIP3Secret = mi["InitiatorEIP3Secret"]
         InitiatorErgoAddr = mi["InitiatorErgoAddr"]
         privateInitPATH = mi["privateInitPATH"]
@@ -124,8 +125,9 @@ def GeneralizedENC_InitiationSubroutine(swapName, LocalChainAccountName, CrossCh
         DEC_Response_PATH = mi["DEC_Response_PATH"]
         finalizationPATH = mi["finalizationPATH"]
         ENC_finalizationPATH = mi["ENC_finalizationPATH"]
+        InitiatorEVMAccountName = mi["InitiatorEVMAccountName"]
     json_tools.keyVal_list_update(keynum(initiatorInputEnum), mi["initiatorJSONPath"])
-    privateInit = initiation(mi["InitiatorEVMAddr"], InitiatorChain, ResponderChain)
+    privateInit = initiation(mi["initiatorEVMAddr"], InitiatorChain, ResponderChain)
     clean_file_open(mi["privateInitPATH"], "w", privateInit)
     initiation_keyValList = json_tools.json_to_keyValList(mi["privateInitPATH"])
     json_tools.keyVal_list_update(initiation_keyValList, mi["initiatorJSONPath"])
@@ -175,7 +177,7 @@ def GeneralizedENC_FinalizationSubroutine(initiatorJSONPath):
     finalizeOBJ_LIST = json_tools.json_to_keyValList(finalizationPATH)
     json_tools.keyVal_list_update(finalizeOBJ_LIST, initiatorJSONPath)
     BuildAtomicSchnorrContract(initiatorJSONPath, 25, swapName, 123841)
-    deployErgoContract(swapName)
+    deployErgoContract(swapName) #TODO generalize based on chain
     boxId = getBoxID(swapName)
     InitiatorAtomicSchnorrLockHeight = clean_file_open("Ergo/SigmaParticle/" + swapName + "/lockHeight", "r")
     contractKeyValList = [{"boxId":boxId, "InitiatorAtomicSchnorrLockHeight":InitiatorAtomicSchnorrLockHeight, \
@@ -183,17 +185,18 @@ def GeneralizedENC_FinalizationSubroutine(initiatorJSONPath):
     json_tools.keyVal_list_update(contractKeyValList, initiatorJSONPath)
     json_tools.keyVal_list_update(contractKeyValList, finalizationPATH)
     ENC_finalization =  ElGamal_Encrypt(ElGamalKey, ElGamalKeyPath, finalizationPATH, ENC_finalizationPATH)
-    return ENC_finalizationPATH
+   
+    #GeneralizedENC_InitiatorClaimSubroutine(init_J["initiatorJSONPath"])
 
 def GeneralizedENC_InitiatorClaimSubroutine(initiatorJSONPath):
     ############## INITIATOR #######################################################
     init_J = json.loads(clean_file_open(initiatorJSONPath, "r"))
     swapName = init_J["swapName"]
     boxID = init_J["boxId"]
-    initiatorSepoliaAccountName = init_J["initiatorSepoliaAccountName"]
+    initiatorEVMAccountName = init_J["InitiatorEVMAccountName"] 
     checkSchnorrTreeForClaim(boxID, swapName, initiatorJSONPath)
     deduceX_fromAtomicSchnorrClaim(initiatorJSONPath, swapName)
-    Atomicity_updateKeyEnv(swapName, initiatorSepoliaAccountName)
+    Atomicity_updateKeyEnv(swapName, initiatorEVMAccountName)
     Atomicity_claimScalarContract(initiatorJSONPath, swapName)
     ################################################################################
 

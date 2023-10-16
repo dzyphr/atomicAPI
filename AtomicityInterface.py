@@ -10,6 +10,7 @@ def Atomicity_CheckContractFunds(j_response):
         return value
 
 def Atomicity_SendFunds(addr, amount_wei, swapName, gas=None, gasMod=None):
+    swapName = "Swap_" + swapName.replace("-", "")
     cmd = "cd " + Atomicity + \
             swapName + " && ./deploy.sh sendAmount " + \
             str(amount_wei) + " " + addr
@@ -28,6 +29,7 @@ def Atomicity_newFrame(swapName, chain, multiFile=None, constructorArgs=None):
 
 
 def Atomicity_buildScalarContract(chain, counterpartyChainPub, xG, locktimeDuration, swapName):
+    swapName = "Swap_" + swapName.replace("-", "")
     cmd = "cd " + Atomicity + "&& ./new_frame " + swapName + \
             " -M -CA 4 " + "\\\"" + counterpartyChainPub + "\\\" " + \
             str(ast.literal_eval(xG)[0]) + " " + str(ast.literal_eval(xG)[1]) + " " + str(locktimeDuration)
@@ -47,6 +49,7 @@ def Atomicity_buildScalarContract(chain, counterpartyChainPub, xG, locktimeDurat
 
 def Atomicity_deployEVMContract(swapName, customGas=None, customGasMod=None):
     custom = False
+    swapName = "Swap_" + swapName.replace("-", "")
     gas = "9000000"
     if customGas != None:
         if type(customGas) != int:
@@ -81,6 +84,7 @@ def Atomicity_deployEVMContract(swapName, customGas=None, customGasMod=None):
 def Atomicity_compareScalarContractCoords(swapName, contractAddr, expectedX, expectedY):
     x = os.popen("cd " + Atomicity + swapName + " && python3 -u py/deploy.py getXCoord " + contractAddr).read()
     y = os.popen("cd " + Atomicity + swapName + " && python3 -u py/deploy.py getYCoord " + contractAddr).read()
+    swapName = "Swap_" + swapName.replace("-", "")
     print("onchain:(", x, " ,", y, ")  offchain:(", expectedX, " ,", expectedY, ")")
     if int(x) == int(expectedX) and int(y) == int(expectedY):
         return True
@@ -88,6 +92,7 @@ def Atomicity_compareScalarContractCoords(swapName, contractAddr, expectedX, exp
         return False
 
 def Atomicity_claimScalarContract(initiatorMasterJSONPath, swapName, gas=None, gasMod=None):
+    swapName = "Swap_" + swapName.replace("-", "")
     j_master = json.loads(clean_file_open(initiatorMasterJSONPath, "r"))
     x = j_master["x"]
     contractAddr = j_master["responderContractAddr"]
@@ -101,6 +106,7 @@ def Atomicity_claimScalarContract(initiatorMasterJSONPath, swapName, gas=None, g
 
 
 def Atomicity_updateKeyEnv(swapName, targetKeyEnvDirName):
+    swapName = "Swap_" + swapName.replace("-", "")
     update = clean_file_open(Atomicity + targetKeyEnvDirName + "/.env", "r")
     update.replace("[default]", "")
     cmd = \

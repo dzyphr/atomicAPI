@@ -178,6 +178,22 @@ def publishNewOrderType_ServerEndpoint(url, CoinA, CoinB, CoinA_price, CoinB_pri
     }
     print(requests.post(url, headers=headers,  json = requestobj).text)
 
+def submitEncryptedResponse_ClientEndpoint(url, SwapTicketID, ENC_response_path):
+    import requests, uuid
+    ID = str(uuid.uuid4())
+    headers = {"Authorization": "None"}
+    resp = clean_file_open(ENC_response_path, "r")
+    requestobj = {
+        "id": ID,
+        "request_type":"submitEncryptedResponse",
+        "SwapTicketID":SwapTicketID,
+        "encryptedResponseBIN":  resp
+    }
+    respStr = requests.post(url, headers=headers, json = requestobj).text.replace("\"", "").replace("\\", "\n").replace("n", "")
+    clean_file_open(SwapTicketID + "/ENC_finalization.bin", "w", respStr)
+    responderJSONPath = SwapTicketID + "/responder.json"
+    GeneralizedENC_ResponderClaimSubroutine(responderJSONPath)
+    print(respStr)
 
 def requestEncryptedInitiation_ClientEndpoint(url, OrderTypeUUID, ElGamalPubkey):
     import requests, uuid
@@ -213,20 +229,24 @@ elif len(args) == 4:
 elif len(args) == 5:
     if args[1] == "requestEncryptedInitiation_ClientEndpoint":
         requestEncryptedInitiation_ClientEndpoint(args[2], args[3], args[4])
+    if args[1] == "submitEncryptedResponse_ClientEndpoint":
+        submitEncryptedResponse_ClientEndpoint(args[2], args[3], args[4])
 elif len(args) == 2:
     if args[1] == "firstRunCheck":
         firstRunCheck()
         exit()
 elif len(args) == 9:
     if args[1] == "GeneralizedENCInitiationSubroutine":
+        
         GeneralizedENC_InitiationSubroutine(\
                 args[2], args[3], args[4], args[5], args[6], args[7], args[8])
     if args[1] == "publishNewOrderType_ServerEndpoint":
         publishNewOrderType_ServerEndpoint(args[2], args[3], args[4], args[5], args[6], args[7], args[8])
-elif len(args) == 8:
     if args[1] == "GeneralizeENC_ResponseSubroutine":
-        GeneralizeENC_ResponseSubroutine(args[2], args[3], args[4], args[5], args[6], args[7])
+        print("response")
+        GeneralizeENC_ResponseSubroutine(args[2], args[3], args[4], args[5], args[6], args[7], args[8])
         #start refund timelock checking as soon as contracts are funded. responder starts here
+elif len(args) == 8:
     if args[1] == "publishNewOrderType_ServerEndpoint":
         publishNewOrderType_ServerEndpoint(args[2], args[3], args[4], args[5], args[6], args[7], args[8])
 elif len(args) == 3:
