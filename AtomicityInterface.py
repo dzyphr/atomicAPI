@@ -82,9 +82,9 @@ def Atomicity_deployEVMContract(swapName, customGas=None, customGasMod=None):
            return "fail"
 
 def Atomicity_compareScalarContractCoords(swapName, contractAddr, expectedX, expectedY):
+    swapName = "Swap_" + swapName.replace("-", "")
     x = os.popen("cd " + Atomicity + swapName + " && python3 -u py/deploy.py getXCoord " + contractAddr).read()
     y = os.popen("cd " + Atomicity + swapName + " && python3 -u py/deploy.py getYCoord " + contractAddr).read()
-    swapName = "Swap_" + swapName.replace("-", "")
     print("onchain:(", x, " ,", y, ")  offchain:(", expectedX, " ,", expectedY, ")")
     if int(x) == int(expectedX) and int(y) == int(expectedY):
         return True
