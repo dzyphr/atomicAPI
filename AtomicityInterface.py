@@ -17,6 +17,7 @@ def Atomicity_SendFunds(addr, amount_wei, swapName, gas=None, gasMod=None):
     return os.popen(cmd).read()
 
 def Atomicity_newFrame(swapName, chain, multiFile=None, constructorArgs=None):
+    swapName = "Swap_" + swapName.replace("-", "")
     cmd = ""
     if multiFile == None and constructorArgs == None:
         cmd = "cd " + Atomicity + "&& ./new_frame " + swapName  
