@@ -162,7 +162,7 @@ def initializeAccount(accountName, chain): #interactive command line function to
 
 
 
-def publishNewOrderType_ServerEndpoint(url, CoinA, CoinB, CoinA_price, CoinB_price, MaxVolCoinA, auth):
+def publishNewOrderType_ServerEndpoint(url, CoinA, CoinB, CoinA_price, CoinB_price, MaxVolCoinA, MinVolCoinA, auth):
     import requests, uuid
     ID = str(uuid.uuid4())
     headers = {"Authorization": "Bearer " + auth}
@@ -174,7 +174,8 @@ def publishNewOrderType_ServerEndpoint(url, CoinA, CoinB, CoinA_price, CoinB_pri
         "CoinB": CoinB,
         "CoinA_price": CoinA_price,
         "CoinB_price": CoinB_price,
-        "MaxVolCoinA": MaxVolCoinA
+        "MaxVolCoinA": MaxVolCoinA,
+        "MinVolCoinA": MinVolCoinA
     }
     print(requests.post(url, headers=headers,  json = requestobj).text)
 
@@ -231,6 +232,8 @@ elif len(args) == 5:
         requestEncryptedInitiation_ClientEndpoint(args[2], args[3], args[4])
     if args[1] == "submitEncryptedResponse_ClientEndpoint":
         submitEncryptedResponse_ClientEndpoint(args[2], args[3], args[4])
+    if args[1] == "GeneralizedENC_FinalizationSubroutine":#initiator refund checking starts here
+        GeneralizedENC_FinalizationSubroutine(args[2], args[3], args[4])
 elif len(args) == 2:
     if args[1] == "firstRunCheck":
         firstRunCheck()
@@ -240,20 +243,15 @@ elif len(args) == 9:
         
         GeneralizedENC_InitiationSubroutine(\
                 args[2], args[3], args[4], args[5], args[6], args[7], args[8])
-    if args[1] == "publishNewOrderType_ServerEndpoint":
-        publishNewOrderType_ServerEndpoint(args[2], args[3], args[4], args[5], args[6], args[7], args[8])
-    if args[1] == "GeneralizeENC_ResponseSubroutine":
-        print("response")
-        GeneralizeENC_ResponseSubroutine(args[2], args[3], args[4], args[5], args[6], args[7], args[8])
-        #start refund timelock checking as soon as contracts are funded. responder starts here
-elif len(args) == 8:
-    if args[1] == "publishNewOrderType_ServerEndpoint":
-        publishNewOrderType_ServerEndpoint(args[2], args[3], args[4], args[5], args[6], args[7], args[8])
 elif len(args) == 3:
-    if args[1] == "GeneralizedENC_FinalizationSubroutine":#initiator refund checking starts here
-        GeneralizedENC_FinalizationSubroutine(args[2])
     if args[1] == "GeneralizedENC_ResponderClaimSubroutine":
         GeneralizedENC_ResponderClaimSubroutine(args[2])
     if args[1] == "GeneralizedENC_InitiatorClaimSubroutine":
         GeneralizedENC_InitiatorClaimSubroutine(args[2])
+elif len(args) == 10:
+    if args[1] == "publishNewOrderType_ServerEndpoint":
+        publishNewOrderType_ServerEndpoint(args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9])
+    if args[1] == "GeneralizeENC_ResponseSubroutine":
+        print("response")
+        GeneralizeENC_ResponseSubroutine(args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9])
 

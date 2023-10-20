@@ -14,7 +14,7 @@ import file_tools
 import os
 from enum import Enum
 from enum_tools import *
-
+from price_tools import *
 import configparser
 import json
 from file_tools import *
@@ -82,8 +82,9 @@ def finalizeSwap(initiatorMasterJSONPath):
 def GeneralizedENC_InitiationSubroutine(swapName, LocalChainAccountName, CrossChainAccountName, ElGamalKey, ElGamalKeyPath, InitiatorChain, ResponderChain): #generalized function to create initiation commitments
 #    print("InitiatorChain:", InitiatorChain)
 #    print("ResponderChain:", ResponderChain)
+#    print("swapName:", swapName)
     mi = {} #master input json
-    if InitiatorChain.strip("\"") == "Ergo" and ResponderChain.strip("\"") == "Sepolia":
+    if InitiatorChain.strip("\"") == "TestnetErgo" and ResponderChain.strip("\"") == "Sepolia":
         mi = {
             "ElGamalKey" : ElGamalKey.strip("\"").rstrip(),
             "ElGamalKeyPath" : ElGamalKeyPath.strip("\"").rstrip(),
@@ -106,6 +107,7 @@ def GeneralizedENC_InitiationSubroutine(swapName, LocalChainAccountName, CrossCh
             "ENC_finalizationPATH" : swapName.strip("\"").rstrip() + "/ENC_finalization.bin",
             "InitiatorEVMAccountName": CrossChainAccountName
         }
+    print("swapName:", mi["swapName"]);
     clean_mkdir(mi["swapName"])
     clean_file_open(mi["initiatorJSONPath"], "w", "{}")
     class initiatorInputEnum(Enum):
@@ -137,7 +139,8 @@ def GeneralizedENC_InitiationSubroutine(swapName, LocalChainAccountName, CrossCh
     return mi["ENC_Init_PATH"]
 
 
-def GeneralizedENC_FinalizationSubroutine(initiatorJSONPath):
+
+def GeneralizedENC_FinalizationSubroutine(initiatorJSONPath, CoinA_Price, CoinB_Price):
     init_J = json_tools.ojf(initiatorJSONPath)
     swapName = init_J["swapName"]
     ENC_Response_PATH = init_J["ENC_Response_PATH"]
@@ -165,18 +168,20 @@ def GeneralizedENC_FinalizationSubroutine(initiatorJSONPath):
     inspect_list = json_tools.json_to_keyValList(swapName + "/inspectContractTest.json")
     json_tools.keyVal_list_update(inspect_list, initiatorJSONPath)
     minimum_wei = 0 #this is practically set for existential transfer calculations due to variable fee rates
-    if int(json.loads(clean_file_open(initiatorJSONPath, "r"))["counterpartyContractFundedAmount"]) < int(minimum_wei):
+    contractFunds = json.loads(clean_file_open(initiatorJSONPath, "r"))["counterpartyContractFundedAmount"]
+    if int(contractFunds) < int(minimum_wei):
         print("not enough wei in contract, fail")
         exit()
 #    print("checkcoords:", Atomicity_compareScalarContractCoords(swapName, addr, xG[0], xG[1]))
     if Atomicity_compareScalarContractCoords(swapName, addr, xG[0], xG[1]) == False:
         print("on chain contract does not meet offchain contract spec, do not fulfil this swap!")
         exit()
+    convList = getPriceConversions(weiToEth(contractFunds), CoinA_Price, CoinB_Price)
     finalizeOBJ = finalizeSwap(initiatorJSONPath)
     clean_file_open(finalizationPATH, "w", finalizeOBJ)
     finalizeOBJ_LIST = json_tools.json_to_keyValList(finalizationPATH)
     json_tools.keyVal_list_update(finalizeOBJ_LIST, initiatorJSONPath)
-    BuildAtomicSchnorrContract(initiatorJSONPath, 25, swapName, 123841)
+    BuildAtomicSchnorrContract(initiatorJSONPath, 25, swapName, ErgToNanoErg(convList[1]))
     deployErgoContract(swapName) #TODO generalize based on chain
     boxId = getBoxID(swapName)
     InitiatorAtomicSchnorrLockHeight = clean_file_open("Ergo/SigmaParticle/" + swapName + "/lockHeight", "r")
@@ -197,6 +202,6 @@ def GeneralizedENC_InitiatorClaimSubroutine(initiatorJSONPath):
     checkSchnorrTreeForClaim(boxID, swapName, initiatorJSONPath)
     deduceX_fromAtomicSchnorrClaim(initiatorJSONPath, swapName)
     Atomicity_updateKeyEnv(swapName, initiatorEVMAccountName)
-    Atomicity_claimScalarContract(initiatorJSONPath, swapName)
+    Atomicity_claimScalarContract(initiatorJSONPath, swapName, gasMod=3)
     ################################################################################
 

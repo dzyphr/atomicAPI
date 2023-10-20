@@ -42,7 +42,7 @@ def response(DEC_initiation_filepath, responderMasterJSONPATH, response_filepath
 
 def GeneralizeENC_ResponseSubroutine(\
         swapName, responderCrossChainAccountName, responderLocalChainAccountName, \
-        ElGamalKey, ElGamalKeyPath, InitiatorChain, ResponderChain):
+        ElGamalKey, ElGamalKeyPath, InitiatorChain, ResponderChain, swapAmount):
     mi = {}
     if InitiatorChain == "Ergo" and ResponderChain == "Sepolia":
         mi = {
@@ -102,7 +102,9 @@ def GeneralizeENC_ResponseSubroutine(\
         print("fail: deployContract() didnt return a contract addr")
         exit()
     #add contract addr and chain name to response here then encrypt
-    responderFundingAmountWei = 2000000000
+    #convert swap amount to wei
+    #0.00059eth
+    responderFundingAmountWei = EthToWei(swapAmount)
     Atomicity_SendFunds(addr, responderFundingAmountWei, swapname)
     update_response_keyValList = [{"responderLocalChain":ResponderChain}, \
             {"responderContractAddr":addr},\
