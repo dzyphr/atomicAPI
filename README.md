@@ -5,10 +5,17 @@
 
 
 
-## NOTE: Project is in Alpha / Testnet Phase | Actively Seeking Contributions and Feedback
+## NOTE: Project is in Alpha / Testnet Phase 
+## Actively Seeking Contributions and Feedback
 
 ## Key Features
 
+* Generalized Atomic Swap Function Endpoints
+  - Commit initiations
+  - Finalize swaps 
+  - Claim atomic swaps from derived secrets
+  - Response commitments
+  - Claim from finalization commitments
 * Functional Testing Scripts
   - Test Atomic Swaps across different chains with specific setups and modular swap metadata
 * REST-API Testing Endpoints
@@ -54,7 +61,10 @@ $ chmod +x build-ubuntu.sh && ./build-ubuntu
 
 GPL3
 
-Discord [AtomicAnalogs](https://discord.gg/VDJGszpW58)
+## Contact
+
+Discord:
+[AtomicAnalogs](https://discord.gg/VDJGszpW58)  | [Ergo](https://discord.gg/ergo-platform-668903786361651200)
 
 
 
