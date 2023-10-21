@@ -8,6 +8,15 @@
 ## NOTE: Project is in Alpha / Testnet Phase 
 ## Actively Seeking Contributions and Feedback
 
+## Atomic Swap Implementation Details
+
+* Pedersen + Schnorr Atomic Swaps 
+  - Formula Described here: [Grin Docs](https://github.com/mimblewimble/grin/blob/master/doc/contracts.md#atomic-swap)
+  - Ergo Atomic Schnorr Contract: [Atomic Schnorr ErgoScript](https://github.com/dzyphr/atomicAPI/blob/main/Ergo/SigmaParticle/AtomicMultiSig/py/main.py#L74)
+  - Solidity Atomic Scalar Contract: [Atomic Scalar Solidity](https://github.com/dzyphr/atomicAPI/blob/main/EVM/Atomicity/AtomicMultiSigSecp256k1/contracts/AtomicMultiSigSecp256k1.sol)
+
+
+
 ## Key Features
 
 * Generalized Atomic Swap Function Endpoints
