@@ -160,6 +160,8 @@ def GeneralizedENC_FinalizationSubroutine(initiatorJSONPath, CoinA_Price, CoinB_
     responderLocalChain = init_J["responderLocalChain"]
     xG = ast.literal_eval(init_J["xG"])
     Atomicity_newFrame(swapName, responderLocalChain)
+    print("wait for contract upload and funding")
+    time.sleep(30)
     inspect_json = inspectResponse(DEC_Response_PATH)
     if inspect_json == "Error: response does not have expected keys":
         print("fail")

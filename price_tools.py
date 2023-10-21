@@ -1,8 +1,8 @@
 import decimal
 def getPriceConversions(amountMod, CoinA_Price, CoinB_Price):
-    ConversionCoinA = decimal.Decimal(amountMod) * decimal.Decimal(CoinA_Price.replace("\"", "")) / decimal.Decimal(CoinB_Price.replace("\"", ""))
-    ConversionCoinB = (decimal.Decimal(amountMod) * decimal.Decimal(CoinB_Price.replace("\"", ""))) / decimal.Decimal(CoinA_Price.replace("\"", ""))
-    print(ConversionCoinA, ConversionCoinB)
+    ConversionCoinA = decimal.Decimal(decimal.Decimal(amountMod) * decimal.Decimal(CoinA_Price.replace("\"", "")) / decimal.Decimal(CoinB_Price.replace("\"", "")))
+    ConversionCoinB = decimal.Decimal((decimal.Decimal(amountMod) * decimal.Decimal(CoinB_Price.replace("\"", ""))) / decimal.Decimal(CoinA_Price.replace("\"", "")))
+    print("{:,f}".format(ConversionCoinA), "{:,f}".format(ConversionCoinB))
     return [ConversionCoinA, ConversionCoinB]
 
 def EthToWei(Eth):

@@ -44,22 +44,22 @@ def GeneralizeENC_ResponseSubroutine(\
         swapName, responderCrossChainAccountName, responderLocalChainAccountName, \
         ElGamalKey, ElGamalKeyPath, InitiatorChain, ResponderChain, swapAmount):
     mi = {}
-    if InitiatorChain == "Ergo" and ResponderChain == "Sepolia":
+    if InitiatorChain == "TestnetErgo" and ResponderChain == "Sepolia":
         mi = {
                 "responderErgoAccountName": responderCrossChainAccountName,
                 "responderSepoliaAccountName": responderLocalChainAccountName,
                 "ElGamalKey" : ElGamalKey,
                 "ElGamalKeyPath" : ElGamalKeyPath,
                 "swapName" : swapName,
-                "InitiatorChain" : "Ergo",
-                "ResponderChain" : "Sepolia",
+                "InitiatorChain" : InitiatorChain,
+                "ResponderChain" : ResponderChain,
                 "responderJSONPath" : swapName + "/responder.json",
                 "ResponderEVMAddr" : \
-                        valFromConf("EVM/Atomicity/" + responderLocalChainAccountName + "/.env", 'SepoliaSenderAddr').replace('"', ''),
+                        valFromConf("EVM/Atomicity/" + responderLocalChainAccountName.replace('"', '') + "/.env", 'SepoliaSenderAddr').replace('"', ''),
                 "ResponderEIP3Secret" : \
-                        valFromConf("Ergo/SigmaParticle/" + responderCrossChainAccountName + "/.env", 'senderEIP3Secret').replace('"', ''),
+                        valFromConf("Ergo/SigmaParticle/" + responderCrossChainAccountName.replace('"', '') + "/.env", 'senderEIP3Secret').replace('"', ''),
                 "ResponderErgoAddr" : \
-                        valFromConf("Ergo/SigmaParticle/" + responderCrossChainAccountName + "/.env", 'senderPubKey').replace('"', ''),
+                        valFromConf("Ergo/SigmaParticle/" + responderCrossChainAccountName.replace('"', '') + "/.env", 'senderPubKey').replace('"', ''),
                 "ENC_Init_PATH" : swapName + "/ENC_init.bin", #responder needs to save ENC init to this path to proceed
                 "DEC_Init_PATH" : swapName + "/DEC_init.json",
                 "responsePATH" : swapName + "/response_path.json",
@@ -94,7 +94,7 @@ def GeneralizeENC_ResponseSubroutine(\
     #TODO: replace sr and x paths with master json update
     xG = json.loads(clean_file_open(responsePATH, "r"))["xG"]
     Atomicity_buildScalarContract(ResponderChain, InitiatorEVMAddr,  xG, 100, swapname)
-    addr = Atomicity_deployEVMContract(swapname, customGasMod=2)
+    addr = Atomicity_deployEVMContract(swapname, customGasMod=3)
     if addr != "fail":
         #ASSUMING ITS ENDING WITH \n
         addr  =  addr[:-1]
@@ -104,8 +104,10 @@ def GeneralizeENC_ResponseSubroutine(\
     #add contract addr and chain name to response here then encrypt
     #convert swap amount to wei
     #0.00059eth
-    responderFundingAmountWei = EthToWei(swapAmount)
-    Atomicity_SendFunds(addr, responderFundingAmountWei, swapname)
+    oneWei = 1000000000000000000
+    responderFundingAmountWei = int(float(swapAmount) * oneWei)
+
+    Atomicity_SendFunds(addr, responderFundingAmountWei, swapname, gasMod=3)
     update_response_keyValList = [{"responderLocalChain":ResponderChain}, \
             {"responderContractAddr":addr},\
             {"ResponderErgoAddr":ResponderErgoAddr}]
