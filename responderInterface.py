@@ -29,9 +29,10 @@ def response(DEC_initiation_filepath, responderMasterJSONPATH, response_filepath
     swapName = j_master["swapName"]
     sr_filepath = swapName + "/sr"
     x_filepath = swapName + "/x"
+    responderMessageContent = str(datetime.now())
     command = \
         py + AtomicSwapECCPath + "p2Respond " +\
-        "'" + ksG  + "' " + "'" + str(datetime.now()) + "' " + \
+        "'" + ksG  + "' " + "'" + responderMessageContent  + "' " + \
         sr_filepath + s_ + x_filepath 
     response = os.popen(command).read()
     clean_file_open(response_filepath, "w", response)
