@@ -3,13 +3,13 @@ import ast
 import json
 import shutil
 import configparser
+import json_tools
+import time
 from initiatorInterface import *
 from responderInterface import *
 from ElGamalInterface import *
 from AtomicityInterface import * 
 from SigmaParticleInterface import *
-import json_tools
-import time
 
 
 

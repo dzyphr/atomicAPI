@@ -2,6 +2,7 @@ import sys
 import json
 import shutil
 import configparser
+from configparser import *
 from initiatorInterface import *
 from responderInterface import *
 from ElGamalInterface import *
@@ -47,7 +48,6 @@ def submitEncryptedResponse_ClientEndpoint(url, SwapTicketID, ENC_response_path)
     clean_file_open(SwapTicketID + "/ENC_finalization.bin", "w", respStr)
     responderJSONPath = SwapTicketID + "/responder.json"
     GeneralizedENC_ResponderClaimSubroutine(responderJSONPath)
-#    print(respStr)
 
 def requestEncryptedInitiation_ClientEndpoint(url, OrderTypeUUID, ElGamalPubkey):
     import requests, uuid

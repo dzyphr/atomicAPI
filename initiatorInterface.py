@@ -1,24 +1,17 @@
 import sys
-import json
-import shutil
-from ElGamalInterface import *
-from AtomicityInterface import *
-from SigmaParticleInterface import *
-import json_tools
-import time
-from enum import Enum
-from enum_tools import *
-import file_tools
-
-
-import os
-from enum import Enum
-from enum_tools import *
-from price_tools import *
 import configparser
 import json
-from file_tools import *
+import shutil
+import json_tools
+import time
+import os
+from enum import Enum
+from ElGamalInterface import *
+from SigmaParticleInterface import *
 from AtomicityInterface import *
+from enum_tools import *
+from price_tools import *
+from file_tools import *
 py = "python3 -u "
 AtomicSwapECCPath = "Ergo/SigmaParticle/AtomicMultiSigECC/py/deploy.py " #TODO Ergo Specific
 s_ = " "

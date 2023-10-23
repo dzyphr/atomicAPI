@@ -7,7 +7,8 @@ def keyVal_list_update(keyValList, jsonPath):
     try:
         j = json.loads(str(clean_file_open(jsonPath, "r")))
         for keyVal in keyValList:
-            j.update(keyVal)
+            if keyVal not in json_to_keyValList(jsonPath): #overwrite protection
+                j.update(keyVal)
         clean_file_open(jsonPath, "w", str(json.dumps(j, indent=4)))
     except ValueError as e:
         print("Invalid Json")
