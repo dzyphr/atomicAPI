@@ -12,14 +12,11 @@ from AtomicityInterface import *
 from enum_tools import *
 from price_tools import *
 from file_tools import *
+from config_tools import *
 py = "python3 -u "
 AtomicSwapECCPath = "Ergo/SigmaParticle/AtomicMultiSigECC/py/deploy.py " #TODO Ergo Specific
 s_ = " "
 
-def valFromConf(confPath, val):
-    confParser = configparser.ConfigParser()
-    confParser.read(confPath)
-    return confParser['default'][val]
 
 
 def initiation(crossChainPubKey, initiatorChain, crossChain): #returns an initiation JSON object #TODO link between selected chain and atomic ECC

@@ -13,6 +13,12 @@ import time
 import file_tools
 args = sys.argv
 
+def valFromConf(confPath, val):
+    confParser = configparser.ConfigParser()
+    confParser.read(confPath)
+    return confParser['default'][val]
+
+
 def firstRunCheck():
     userjsonpath = "user.json"
     if os.path.isfile(userjsonpath) == False:

@@ -4,6 +4,7 @@ from AtomicityInterface import *
 from SigmaParticleInterface import *
 from ElGamalInterface import *
 from file_tools import *
+from config_tools import *
 py = "python3 -u "
 AtomicSwapECCPath = "Ergo/SigmaParticle/AtomicMultiSigECC/py/deploy.py " #TODO Ergo Specific
 s_ = " "
@@ -17,10 +18,6 @@ def process_initiation(ENC_filepath, DEC_filepath, SenderPubKey, UserKeyFileName
     decrypt = ElGamal_Decrypt(ENC_filepath, SenderPubKey, UserKeyFileName) #TODO verify initiation details including json sanity
     clean_file_open(DEC_filepath, "w", decrypt)
 
-def valFromConf(confPath, val):
-    confParser = configparser.ConfigParser()
-    confParser.read(confPath)
-    return confParser['default'][val]
 
 def response(DEC_initiation_filepath, responderMasterJSONPATH, response_filepath, SenderPubKey, UserKeyFileName):
     j_init = json.loads(clean_file_open(DEC_initiation_filepath, "r"))
