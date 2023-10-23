@@ -55,7 +55,7 @@ $ cd atomicAPI
 # If you have suggestions on better ways to build the project please leave feedback in Issues or through Discord.
 
 # Run the Ubuntu build script:
-$ chmod +x build-ubuntu.sh && ./build-ubuntu
+$ chmod +x build-ubuntu.sh && ./build-ubuntu.sh
 
 # If it is your first time building, you will need to run through the initial account setup.
 # This simply builds a local file that stores the account data you use to perform atomic swaps.
