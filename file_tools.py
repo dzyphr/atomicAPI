@@ -2,15 +2,15 @@ import os, time
 
 def clean_file_open(filepath, readOrWrite, writingContent=None, extraWarn=None, truncate=None):
     if type(readOrWrite) != str:
-        print("for argument 2 'readOrWrite' enter r or w as a STRING")
+        print("For argument 2 'readOrWrite' enter r or w as a STRING")
     if extraWarn != None:
         if type(extraWarn) != str:
-            print("for OPTIONAL argument 4 `extraWarn` enter your warning as a STRING")
+            print("For OPTIONAL argument 4 `extraWarn` enter your warning as a STRING")
     else:
         extraWarn  = ""
     if readOrWrite == "w":
         if writingContent == None:
-            print("you must provide writingContent argument if using w as 2nd argument")
+            print("You must provide writingContent argument if using w as 2nd argument")
         else:
             try:
                 f = open(filepath, "w")
@@ -19,7 +19,9 @@ def clean_file_open(filepath, readOrWrite, writingContent=None, extraWarn=None, 
                     f.truncate()
                 f.close()
             except:
-                return "cant write " + writingContent + "to:" + filepath + "\n" +  extraWarn
+                err = "Can't write " + writingContent + "to:" + filepath + "\n" +  extraWarn
+                print(err)
+                return err
     elif readOrWrite == "r":
         if os.path.isfile(filepath) == True:
             f = open(filepath, "r")
@@ -28,8 +30,9 @@ def clean_file_open(filepath, readOrWrite, writingContent=None, extraWarn=None, 
             return content
         else:
             err = filepath + " cannot be found!\n " +  extraWarn
+            print(err)
     else:
-        print("unknown argument", readOrWrite , "\nfor argument 2 'readOrWrite' enter r or w as a string")
+        print("Unknown argument", readOrWrite , "\nfor argument 2 'readOrWrite' enter r or w as a string")
         
 def wait_for_file(path, tries=None):
     if tries == None:
@@ -50,10 +53,11 @@ def wait_for_file(path, tries=None):
                 time.sleep(1)
                 i = i + 1
                 continue
+        print("Function wait_for_file() has exhausted attempts looking for this file: ", path)
 
 def clean_mkdir(dirpath):
     if os.path.isdir(dirpath) == True:
-#        print("dir already exists!")
+#       print("dir already exists,")
         return False
     else:
         os.mkdir(dirpath)
@@ -62,6 +66,8 @@ def clean_mkdir(dirpath):
 def clearDirPath(path):
     if os.path.isdir(path):
         shutil.rmtree(path)
+    else:
+        print("Attempted to remove path:", path, "\nThis path does not exist.")
 
    
 def copy(target, dest):
