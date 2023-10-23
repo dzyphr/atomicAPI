@@ -2,6 +2,7 @@ import sys
 import json
 import shutil
 import configparser
+from config_tools import *
 from initiatorInterface import *
 from responderInterface import *
 from ElGamalInterface import *
@@ -14,10 +15,6 @@ from enum import Enum
 from enum_tools import *
 import file_tools
 
-def valFromConf(confPath, val):
-    confParser = configparser.ConfigParser()
-    confParser.read(confPath)
-    return confParser['default'][val]
 
 def FT_ErgoToSepolia(initiatorErgoAccountName, initiatorSepoliaAccountName, responderErgoAccountName, responderSepoliaAccountName):
     #test input data
