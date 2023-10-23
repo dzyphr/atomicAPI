@@ -70,16 +70,23 @@ def test2pAtomicSwap(p1Chain1, p1Chain2, p2Chain1, p2Chain2):
     FT_ErgoToSepolia(p1Chain1, p1Chain2, p2Chain1, p2Chain2) 
 
 
-if len(args) == 6:
-    if args[1] == "test2pAtomicSwap":
-        test2pAtomicSwap(args[2], args[3], args[4], args[5])
-        exit()
+
+if len(args) == 2:
+    if args[1] == "firstRunCheck":
+        firstRunCheck()
+    exit()
+elif len(args) == 3:
+    if args[1] == "GeneralizedENC_ResponderClaimSubroutine":
+        GeneralizedENC_ResponderClaimSubroutine(args[2])
+    if args[1] == "GeneralizedENC_InitiatorClaimSubroutine":
+        GeneralizedENC_InitiatorClaimSubroutine(args[2])
+    exit()
 elif len(args) == 4:
     if args[1] == "init":
         accountName = args[2]
         chain = args[3]
         initializeAccount(accountName, chain)
-        exit()
+    exit()
 elif len(args) == 5:
     if args[1] == "requestEncryptedInitiation_ClientEndpoint":
         requestEncryptedInitiation_ClientEndpoint(args[2], args[3], args[4])
@@ -87,24 +94,20 @@ elif len(args) == 5:
         submitEncryptedResponse_ClientEndpoint(args[2], args[3], args[4])
     if args[1] == "GeneralizedENC_FinalizationSubroutine":#initiator refund checking starts here
         GeneralizedENC_FinalizationSubroutine(args[2], args[3], args[4])
-elif len(args) == 2:
-    if args[1] == "firstRunCheck":
-        firstRunCheck()
-        exit()
+    exit()
+elif len(args) == 6:
+    if args[1] == "test2pAtomicSwap":
+        test2pAtomicSwap(args[2], args[3], args[4], args[5])
+    exit()
 elif len(args) == 9:
-    if args[1] == "GeneralizedENCInitiationSubroutine":
-        
-        GeneralizedENC_InitiationSubroutine(\
-                args[2], args[3], args[4], args[5], args[6], args[7], args[8])
-elif len(args) == 3:
-    if args[1] == "GeneralizedENC_ResponderClaimSubroutine":
-        GeneralizedENC_ResponderClaimSubroutine(args[2])
-    if args[1] == "GeneralizedENC_InitiatorClaimSubroutine":
-        GeneralizedENC_InitiatorClaimSubroutine(args[2])
+    if args[1] == "GeneralizedENCInitiationSubroutine":    
+        GeneralizedENC_InitiationSubroutine(args[2], args[3], args[4], args[5], args[6], args[7], args[8])
+    exit()
 elif len(args) == 10:
     if args[1] == "publishNewOrderType_ServerEndpoint":
         publishNewOrderType_ServerEndpoint(args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9])
     if args[1] == "GeneralizeENC_ResponseSubroutine":
         print("response")
         GeneralizeENC_ResponseSubroutine(args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9])
+    exit()
 
