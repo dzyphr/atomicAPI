@@ -37,6 +37,18 @@
   - Sepolia
 * Compatible with other DLCs
 
+## Future Plans
+
+* Port to faster (and more type safe)languages
+  - Rust, CPP, etc...
+* Integrate more Cryptocurrency Networks
+  - Bitcoin / Lightning, Grin, Monero
+* Integrate more optimized atomic swap protocols
+  - Adaptor Swaps: 
+    - [Adaptor Schnorr Swap | Blockstream](https://github.com/BlockstreamResearch/scriptless-scripts/blob/master/md/atomic-swap.md)
+    - [Adaptor Pedersen Swap | Blockstream](https://github.com/BlockstreamResearch/scriptless-scripts/blob/master/md/pedersen-swap.md)
+* Standardization and Detailed Documentation
+
 ## How To Build
 
 #### Ubuntu:
