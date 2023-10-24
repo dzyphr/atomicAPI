@@ -9,6 +9,7 @@ def SigmaParticle_newFrame(swapName):
     cmd = "cd " + str(SigmaParticlePath)  + " && ./new_frame " + str(swapName)
     os.popen(cmd).read()
 
+#This function should be used for building an INITIATOR's atomic schnorr contract.
 def BuildAtomicSchnorrContract(initiatorMasterJSONPath, refundDuration_BLOCKS, swapName, valueERGO):
     j = json.loads(clean_file_open(initiatorMasterJSONPath, "r"))
     krG = ast.literal_eval(j["krG"])
@@ -38,7 +39,7 @@ def BuildAtomicSchnorrContract(initiatorMasterJSONPath, refundDuration_BLOCKS, s
     employScriptsCMD = "cp " + AtomicSwapPath + "py/main.py " + SigmaParticlePath + swapName + "/py/main.py"
     os.popen(employScriptsCMD).read()
 
-
+#This function should be used for RE-CONSTRUCTING the ErgoTree Address by the RESPONDER ONLY.
 def responderGenerateAtomicSchnorr(swapName, DEC_finalizationPATH, responderMasterJSONPATH, boxValue):
     if os.path.isfile(DEC_finalizationPATH) == False:
         print("finalization path is not a file! check filepath")
@@ -174,6 +175,10 @@ def checkSchnorrTreeForClaim(boxID, swapName, initiatorMasterJSONPath):
             time.sleep(5)
             continue
             
+
+#This function takes a Register from the Responder's claim transaction from the Atomic Schnorr contract.
+#It applies a subtraction against a previously known partial equation
+#which allows Initiator to learn x (responders ephemoral secret).
 def deduceX_fromAtomicSchnorrClaim(initiatorMasterJSONPath, swapName):
     masterJSON = json.loads(clean_file_open(initiatorMasterJSONPath, "r"))
     sr_ = masterJSON["sr_"]
