@@ -1,20 +1,20 @@
-import decimal
+from decimal import Decimal
 def getPriceConversions(amountMod, CoinA_Price, CoinB_Price):
-    ConversionFromCoinA = decimal.Decimal(\
-            decimal.Decimal(\
+    ConversionFromCoinA = Decimal(\
+            Decimal(\
                 amountMod\
-            ) * decimal.Decimal(\
+            ) * Decimal(\
             CoinA_Price.replace("\"", "")\
-            ) / decimal.Decimal(\
+            ) / Decimal(\
             CoinB_Price.replace("\"", "")\
             )\
     )
-    ConversionFromCoinB = decimal.Decimal(\
-            decimal.Decimal(\
+    ConversionFromCoinB = Decimal(\
+            Decimal(\
                 amountMod\
-            ) * decimal.Decimal(\
+            ) * Decimal(\
             CoinB_Price.replace("\"", "")\
-            ) / decimal.Decimal(\
+            ) / Decimal(\
             CoinA_Price.replace("\"", "")\
             )\
     )
@@ -23,17 +23,17 @@ def getPriceConversions(amountMod, CoinA_Price, CoinB_Price):
 
 def EthToWei(Eth):
     oneEthInWei = 1000000000000000000
-    return int(decimal.Decimal(Eth) * oneEthInWei)
+    return int(Decimal(Eth) * oneEthInWei)
 
 def weiToEth(wei):
     oneEthInWei = 1000000000000000000
-    return decimal.Decimal(decimal.Decimal(wei) / oneEthInWei)
+    return Decimal(Decimal(wei) / oneEthInWei)
 
 def ErgToNanoErg(Erg):
     oneErgInNanoErg = 1000000000
-    return int(decimal.Decimal(Erg) * oneErgInNanoErg)
+    return int(Decimal(Erg) * oneErgInNanoErg)
 
 def NanoErgToErg(NanoErg):
     oneErgInNanoErg = 1000000000
-    return decimal.Decimal(NanoErg / oneErgIneNanoErg)
+    return Decimal(NanoErg / oneErgIneNanoErg)
 

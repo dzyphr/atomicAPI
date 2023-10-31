@@ -18,6 +18,8 @@ AtomicSwapECCPath = "Ergo/SigmaParticle/AtomicMultiSigECC/py/deploy.py " #TODO E
 s_ = " "
 
 
+MINIMUM_CLAIM_LOCKTIME_SEPOLIA = 50 #TODO fine tuning
+
 
 def initiation(crossChainPubKey, initiatorChain, crossChain): #returns an initiation JSON object #TODO link between selected chain and atomic ECC
     return os.popen(py + AtomicSwapECCPath + "p1Initiate " + crossChainPubKey + s_ + initiatorChain + s_ + crossChain).read()
@@ -39,18 +41,20 @@ def sanitizeInitiation(initiationJSON): #this can be done at the SigmaParticle f
             .rstrip()
     return strip1
 
-def inspectResponse(DEC_response_filepath):
+def inspectResponse(DEC_response_filepath, swapName):
     j_response = json.loads(clean_file_open(DEC_response_filepath, "r"))
     if "responderLocalChain" not in j_response or "responderContractAddr" not in j_response:
         print("Error: response does not have expected keys")
         return "Error: response does not have expected keys"
     else:
         fundedAmount = Atomicity_CheckContractFunds(j_response)
+        remainingLockTime = Atomicity_RemainingLockTimeAtomicMultisig_v_002(j_response, swapName)
         if fundedAmount == "" or fundedAmount == None:
             fundedAmount = 0
 #        print("contractAmount: ", fundedAmount, " wei")
         inspectScalarContractObject = {
-                "counterpartyContractFundedAmount": fundedAmount
+                "counterpartyContractFundedAmount": fundedAmount,
+                "remainingLockTime": remainingLockTime
         }
         return json.dumps(inspectScalarContractObject)
 
@@ -153,7 +157,7 @@ def GeneralizedENC_FinalizationSubroutine(initiatorJSONPath, CoinA_Price, CoinB_
         Atomicity_newFrame(swapName, responderLocalChain)
         print("wait for contract upload and funding")
         time.sleep(30)
-        inspect_json = inspectResponse(DEC_Response_PATH)
+        inspect_json = inspectResponse(DEC_Response_PATH, init_J["swapName"])
         if inspect_json == "Error: response does not have expected keys":
             print("fail")
             exit()
@@ -162,6 +166,11 @@ def GeneralizedENC_FinalizationSubroutine(initiatorJSONPath, CoinA_Price, CoinB_
         json_tools.keyVal_list_update(inspect_list, initiatorJSONPath)
         minimum_wei = 0 #this is practically set for existential transfer calculations due to variable fee rates
         contractFunds = json.loads(clean_file_open(initiatorJSONPath, "r"))["counterpartyContractFundedAmount"]
+        remainingLockTime = json.loads(clean_file_open(initiatorJSONPath, "r"))["remainingLockTime"]
+        if int(remainingLockTime) < int(MINIMUM_CLAIM_LOCKTIME_SEPOLIA):
+            print("remaining locktime is lower than", MINIMUM_CLAIM_LOCKTIME_SEPOLIA, "swap is at risk of double spending")
+            exit()
+
         if int(contractFunds) < int(minimum_wei):
             print("not enough wei in contract, fail")
             exit()

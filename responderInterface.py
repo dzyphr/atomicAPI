@@ -102,8 +102,9 @@ def GeneralizeENC_ResponseSubroutine(\
         #add contract addr and chain name to response here then encrypt
         #convert swap amount to wei
         #0.00059eth
-        oneWei = 1000000000000000000
-        responderFundingAmountWei = int(float(swapAmount) * oneWei)
+#        oneWei = 1000000000000000000
+#        responderFundingAmountWei = int(float(swapAmount) * oneWei)
+        responderFundingAmountWei = EthToWei(swapAmount)
 
         Atomicity_SendFunds(addr, responderFundingAmountWei, swapname, gasMod=3)
         update_response_keyValList = [{"responderLocalChain":ResponderChain}, \

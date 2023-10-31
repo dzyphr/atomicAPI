@@ -38,7 +38,7 @@ def wait_for_file(path, tries=None):
     if tries == None:
         while True:
             if os.path.isfile(path):
-                return
+                return True
             else:
                 time.sleep(1)
                 continue
@@ -48,11 +48,11 @@ def wait_for_file(path, tries=None):
         i = 0
         while i < tries:
             if os.path.isfile(path):
-                return
+                return True
             else:
                 time.sleep(1)
                 i = i + 1
-                continue
+                continue 
         print("Function wait_for_file() has exhausted attempts looking for this file: ", path)
 
 def clean_mkdir(dirpath):

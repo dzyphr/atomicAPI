@@ -1,9 +1,27 @@
 import json, ast, os, time, subprocess, json_tools
 from file_tools import *
+from config_tools import *
 py = "python3 -u "
 SigmaParticlePath = "Ergo/SigmaParticle/"
 AtomicSwapECCPath = "Ergo/SigmaParticle/AtomicMultiSigECC/py/deploy.py " #TODO Ergo Specific
 AtomicSwapPath = "Ergo/SigmaParticle/AtomicMultiSig/"
+
+
+'''
+def SigmaParticle_addNodeEndpoint(nodeurl, accountName):
+    nodesmax = 64 #arbitrary limit
+    filepath = SigmaParticlePath + accountName + "/.env"
+    apiURL_label = "apiURL"
+    index = 0
+    while index < nodesmax
+        if os.path.isfile(filepath):
+            if valFromConf(filepath, apiURL_label) == None:
+                cmd  = \
+                        "echo " + "\'\""
+        else:
+'''
+
+    
 
 def SigmaParticle_newFrame(swapName):
     cmd = "cd " + str(SigmaParticlePath)  + " && ./new_frame " + str(swapName)

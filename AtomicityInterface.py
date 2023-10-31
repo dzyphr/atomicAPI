@@ -1,6 +1,7 @@
-import os, ast, json, json_tools
+import os, ast, json, json_tools, subprocess
 from file_tools import *
 Atomicity = "EVM/Atomicity/"
+
 
 def Atomicity_CheckContractFunds(j_response):
     chain = j_response["responderLocalChain"]
@@ -27,6 +28,26 @@ def Atomicity_newFrame(swapName, chain, multiFile=None, constructorArgs=None):
     os.popen(cmd).read()
     os.popen(specChain).read()
 
+def Atomicity_RemainingLockTimeAtomicMultisig_v_002(j_response, swapName):
+    resp_j = j_response
+    responderChain = resp_j["responderLocalChain"]
+    if responderChain == "Sepolia":
+        addr = resp_j["responderContractAddr"]
+        cmd = \
+                "cd " + Atomicity + "Swap_" + swapName.replace("-", "") + " && ./deploy.sh lockTime " + \
+                addr + " ../../../" + swapName + "/remainingLockTime"
+        print(os.popen(cmd).read())
+#        devnull = open(os.devnull, 'wb')
+#        response = subprocess.Popen(cmd, shell=True,
+#                        stdout=devnull, stderr=devnull,close_fds=True)
+#        print(response)
+        if wait_for_file(swapName + "/remainingLockTime"):
+            remainingLockTime = clean_file_open(swapName + "/remainingLockTime", "r")
+            return remainingLockTime
+        else:
+            print("failed to create or find remainingLockTime file")
+    else:
+        print("chain un-handled:", responderChain)
 
 
 def Atomicity_buildScalarContract(chain, counterpartyChainPub, xG, locktimeDuration, swapName):
