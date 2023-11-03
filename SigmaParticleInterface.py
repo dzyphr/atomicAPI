@@ -27,25 +27,26 @@ def SigmaParticle_newFrame(swapName):
     cmd = "cd " + str(SigmaParticlePath)  + " && ./new_frame " + str(swapName)
     os.popen(cmd).read()
 
-def SigmaParticle_CheckLockTimeAtomicSchnorr(swapName):
-    boxId = clean_file_open(SigmaParticlePath + swapName + "/boxId", "r")
+def SigmaParticle_CheckLockTimeAtomicSchnorr(swapName, boxId):
     lockHeightCMD = \
                             "cd " + SigmaParticlePath + "boxConstantByIndex && ./deploy.sh " + boxId + \
-                            " 7 ../../../" + swapName + "/localChain_lockHeight"
+                            " 8 ../../../" + swapName + "/localChain_lockHeight"
     devnull = open(os.devnull, 'wb')
-    response = subprocess.Popen(lockHeightCMD, shell=True,
-                         stdout=devnull, stderr=devnull,
-                         close_fds=True)
+#    response = subprocess.Popen(lockHeightCMD, shell=True,
+#                         stdout=devnull, stderr=devnull,
+#                         close_fds=True)
+    print(os.popen(lockHeightCMD).read())
     currentHeightCMD = \
                     "cd " + SigmaParticlePath + "currentHeight && ./deploy.sh ../../../" + \
                     swapName + "/localChain_currentHeight"
 
-    response = subprocess.Popen(currentHeightCMD, shell=True,
-                         stdout=devnull, stderr=devnull,
-                         close_fds=True)
+#    response = subprocess.Popen(currentHeightCMD, shell=True,
+#                         stdout=devnull, stderr=devnull,
+#                         close_fds=True)
+    print(os.popen(currentHeightCMD).read())
     if os.path.isfile(swapName + "/localChain_lockHeight") == True and os.path.isfile(swapName + "/localChain_currentHeight") == True:
         lockHeight = clean_file_open(swapName + "/localChain_lockHeight", "r")
-        currentHeight = clean_file_open(swapName + + "/localChain_currentHeight", "r")
+        currentHeight = clean_file_open(swapName + "/localChain_currentHeight", "r")
         if currentHeight.isnumeric() == True and lockHeight.isnumeric() == True:
             if int(currentHeight) <= int(lockHeight):
                 return int(lockHeight) - int(currentHeight) + 1 #plus 1 because currently contract checks for GREATER THAN lock height
@@ -54,9 +55,10 @@ def SigmaParticle_CheckLockTimeAtomicSchnorr(swapName):
                 return 0
         else:
             print("error: currentHeight or lockHeight is not numeric.\n currentHeight:", currentHeight, "lockHeight:", lockHeight)
-            return None
+            return "error: currentHeight or lockHeight is not numeric.\n currentHeight:" +  currentHeight +  "lockHeight:" +  lockHeight
     else:
         print("/localChain_lockHeight or /localChain_currentHeight files not found")
+        return "/localChain_lockHeight or /localChain_currentHeight files not found"
 
 
 

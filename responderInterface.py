@@ -1,9 +1,12 @@
 import json, os, json_tools, configparser
 from datetime import datetime
 from AtomicityInterface import *
+import SigmaParticleInterface
 from SigmaParticleInterface import *
 from ElGamalInterface import *
 from file_tools import *
+from price_tools import *
+import config_tools
 from config_tools import *
 py = "python3 -u "
 AtomicSwapECCPath = "Ergo/SigmaParticle/AtomicMultiSigECC/py/deploy.py " #TODO Ergo Specific
@@ -53,11 +56,11 @@ def GeneralizeENC_ResponseSubroutine(\
                 "ResponderChain" : ResponderChain,
                 "responderJSONPath" : swapName + "/responder.json",
                 "ResponderEVMAddr" : \
-                        valFromConf("EVM/Atomicity/" + responderLocalChainAccountName.replace('"', '') + "/.env", 'SepoliaSenderAddr').replace('"', ''),
+                        config_tools.valFromConf("EVM/Atomicity/" + responderLocalChainAccountName.replace('"', '') + "/.env", 'SepoliaSenderAddr').replace('"', ''),
                 "ResponderEIP3Secret" : \
-                        valFromConf("Ergo/SigmaParticle/" + responderCrossChainAccountName.replace('"', '') + "/.env", 'senderEIP3Secret').replace('"', ''),
+                        config_tools.valFromConf("Ergo/SigmaParticle/" + responderCrossChainAccountName.replace('"', '') + "/.env", 'senderEIP3Secret').replace('"', ''),
                 "ResponderErgoAddr" : \
-                        valFromConf("Ergo/SigmaParticle/" + responderCrossChainAccountName.replace('"', '') + "/.env", 'senderPubKey').replace('"', ''),
+                        config_tools.valFromConf("Ergo/SigmaParticle/" + responderCrossChainAccountName.replace('"', '') + "/.env", 'senderPubKey').replace('"', ''),
                 "ENC_Init_PATH" : swapName + "/ENC_init.bin", #responder needs to save ENC init to this path to proceed
                 "DEC_Init_PATH" : swapName + "/DEC_init.json",
                 "responsePATH" : swapName + "/response_path.json",
@@ -131,9 +134,9 @@ def GeneralizedENC_ResponderClaimSubroutine(responderJSONPath):
         finalization_list = json_tools.json_to_keyValList(DEC_finalizationPATH)
         json_tools.keyVal_list_update(finalization_list, responderJSONPath)
         boxID = json.loads(DEC_finalization)["boxId"]
-        boxValue = checkBoxValue(boxID, swapName + "/testBoxValPath.bin")
+        boxValue = SigmaParticleInterface.checkBoxValue(boxID, swapName + "/testBoxValPath.bin")
         #other than just the box value responder should verify the scalars in the contract match those expected
-        remoteLockTime = SigmaParticle_CheckLockTimeAtomicSchnorr(swapName)
+        remoteLockTime = SigmaParticleInterface.SigmaParticle_CheckLockTimeAtomicSchnorr(swapName, boxID)
         if remoteLockTime < MIN_LOCKTIME_ERGOTESTNET:
             print("lock time is below safe minimum for claiming, aborting swap")
             exit()
@@ -141,15 +144,15 @@ def GeneralizedENC_ResponderClaimSubroutine(responderJSONPath):
         if int(boxValue) < int(minBoxValue):
             print("not enough nanoerg in contract")
             exit()
-        SigmaParticle_newFrame(swapName)
-        SigmaParticle_updateKeyEnv(swapName, responderErgoAccountName)
-        responderGenerateAtomicSchnorr(swapName, DEC_finalizationPATH, responderJSONPath, boxValue)
-        expectedErgoTree = SigmaParticle_getTreeFromBox(boxID)
-        if responderVerifyErgoScript(swapName, expectedErgoTree) == False:
+        SigmaParticleInterface.SigmaParticle_newFrame(swapName)
+        SigmaParticleInterface.SigmaParticle_updateKeyEnv(swapName, responderErgoAccountName)
+        SigmaParticleInterface.responderGenerateAtomicSchnorr(swapName, DEC_finalizationPATH, responderJSONPath, boxValue)
+        expectedErgoTree = SigmaParticleInterface.SigmaParticle_getTreeFromBox(boxID)
+        if SigmaParticleInterface.responderVerifyErgoScript(swapName, expectedErgoTree) == False:
             print("ergoScript verification returned false, wont fulfil swap")
             exit()
     #    print("ergo contract verification status:", responderVerifyErgoScript(swapName, expectedErgoTree))
-        responderClaimAtomicSchnorr(swapName, 2500)
+        SigmaParticleInterface.responderClaimAtomicSchnorr(swapName, 2500)
     ################################################################################
 
 
