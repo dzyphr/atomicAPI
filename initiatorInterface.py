@@ -170,7 +170,6 @@ def GeneralizedENC_FinalizationSubroutine(initiatorJSONPath, CoinA_Price, CoinB_
         if int(remainingLockTime) < int(MINIMUM_CLAIM_LOCKTIME_SEPOLIA):
             print("remaining locktime is lower than", MINIMUM_CLAIM_LOCKTIME_SEPOLIA, "swap is at risk of double spending")
             exit()
-
         if int(contractFunds) < int(minimum_wei):
             print("not enough wei in contract, fail")
             exit()

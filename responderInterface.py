@@ -9,7 +9,7 @@ py = "python3 -u "
 AtomicSwapECCPath = "Ergo/SigmaParticle/AtomicMultiSigECC/py/deploy.py " #TODO Ergo Specific
 s_ = " "
 
-
+MIN_LOCKTIME_ERGOTESTNET = 10
 
 
 # we need to assume we have the ENC file saved already
@@ -133,6 +133,10 @@ def GeneralizedENC_ResponderClaimSubroutine(responderJSONPath):
         boxID = json.loads(DEC_finalization)["boxId"]
         boxValue = checkBoxValue(boxID, swapName + "/testBoxValPath.bin")
         #other than just the box value responder should verify the scalars in the contract match those expected
+        remoteLockTime = SigmaParticle_CheckLockTimeAtomicSchnorr(swapName)
+        if remoteLockTime < MIN_LOCKTIME_ERGOTESTNET:
+            print("lock time is below safe minimum for claiming, aborting swap")
+            exit()
         minBoxValue = 1123841 #1123841
         if int(boxValue) < int(minBoxValue):
             print("not enough nanoerg in contract")
