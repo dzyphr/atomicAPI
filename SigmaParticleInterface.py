@@ -148,6 +148,7 @@ def responderVerifyErgoScript(swapName, expectedErgoTree):
     if expectedErgoTree.strip() == ergoTree.strip():
         return True
     else:
+        SigmaParticle_CheckLockTimeAtomicSchnorr()
         return False
        
 
@@ -225,8 +226,20 @@ def checkSchnorrTreeForClaim(boxID, swapName, initiatorMasterJSONPath):
             return True
         else:
 #            print("no atomic swap claim found...")
-            time.sleep(5)
-            continue
+            #check contract lock time here for refund
+            remainingLocalLockTime = SigmaParticle_CheckLockTimeAtomicSchnorr(swapName, boxID)
+            if type(remainingLocalLockTime) == int:
+                if remainingLocalLockTime <= 0:
+                    #claim refund here
+                    echoBoxIdCMD = \
+                            "echo '\natomicBox=" + boxID + "' >> " + SigmaParticlePath + swapName + "/.env"
+                    os.popen(echoBoxIdCMD).read()
+
+                    cmd =  "cd " + SigmaParticlePath + swapName  + " && ./deploy.sh refund"
+                    print(os.popen(cmd).read()) #TODO check for success
+                    return False
+                time.sleep(5)
+                continue
             
 
 #This function takes a Register from the Responder's claim transaction from the Atomic Schnorr contract.

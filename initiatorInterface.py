@@ -181,7 +181,7 @@ def GeneralizedENC_FinalizationSubroutine(initiatorJSONPath, CoinA_Price, CoinB_
         clean_file_open(finalizationPATH, "w", finalizeOBJ)
         finalizeOBJ_LIST = json_tools.json_to_keyValList(finalizationPATH)
         json_tools.keyVal_list_update(finalizeOBJ_LIST, initiatorJSONPath)
-        BuildAtomicSchnorrContract(initiatorJSONPath, 25, swapName, ErgToNanoErg(convList[1]))
+        BuildAtomicSchnorrContract(initiatorJSONPath, 5, swapName, ErgToNanoErg(convList[1]))
         deployErgoContract(swapName) #TODO generalize based on chain
         boxId = getBoxID(swapName)
         InitiatorAtomicSchnorrLockHeight = clean_file_open("Ergo/SigmaParticle/" + swapName + "/lockHeight", "r")
@@ -200,7 +200,9 @@ def GeneralizedENC_InitiatorClaimSubroutine(initiatorJSONPath):
         swapName = init_J["swapName"]
         boxID = init_J["boxId"]
         initiatorEVMAccountName = init_J["InitiatorEVMAccountName"] 
-        checkSchnorrTreeForClaim(boxID, swapName, initiatorJSONPath)
+        if checkSchnorrTreeForClaim(boxID, swapName, initiatorJSONPath) == False:
+            print("refund attempted due to timelock expiry")
+            exit()
         deduceX_fromAtomicSchnorrClaim(initiatorJSONPath, swapName)
         Atomicity_updateKeyEnv(swapName, initiatorEVMAccountName)
         Atomicity_claimScalarContract(initiatorJSONPath, swapName, gasMod=3)
