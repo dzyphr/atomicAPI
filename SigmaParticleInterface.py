@@ -1,6 +1,7 @@
 import json, ast, os, time, subprocess, json_tools
 from file_tools import *
 from config_tools import *
+import AtomicityInterface
 py = "python3 -u "
 SigmaParticlePath = "Ergo/SigmaParticle/"
 AtomicSwapECCPath = "Ergo/SigmaParticle/AtomicMultiSigECC/py/deploy.py " #TODO Ergo Specific
@@ -31,18 +32,11 @@ def SigmaParticle_CheckLockTimeAtomicSchnorr(swapName, boxId):
     lockHeightCMD = \
                             "cd " + SigmaParticlePath + "boxConstantByIndex && ./deploy.sh " + boxId + \
                             " 8 ../../../" + swapName + "/localChain_lockHeight"
-    devnull = open(os.devnull, 'wb')
-#    response = subprocess.Popen(lockHeightCMD, shell=True,
-#                         stdout=devnull, stderr=devnull,
-#                         close_fds=True)
     print(os.popen(lockHeightCMD).read())
     currentHeightCMD = \
                     "cd " + SigmaParticlePath + "currentHeight && ./deploy.sh ../../../" + \
                     swapName + "/localChain_currentHeight"
 
-#    response = subprocess.Popen(currentHeightCMD, shell=True,
-#                         stdout=devnull, stderr=devnull,
-#                         close_fds=True)
     print(os.popen(currentHeightCMD).read())
     if os.path.isfile(swapName + "/localChain_lockHeight") == True and os.path.isfile(swapName + "/localChain_currentHeight") == True:
         lockHeight = clean_file_open(swapName + "/localChain_lockHeight", "r")
@@ -194,13 +188,23 @@ def deployErgoContract(swapName):
 def getBoxID(swapName):
     return clean_file_open(SigmaParticlePath + swapName + "/boxId", "r")
 
-def checkBoxValue(boxID, boxValPATH):
+def checkBoxValue(boxID, boxValPATH, swapName, role):
     while True:
         cmd = "cd " + SigmaParticlePath + "/boxValue/ && ./deploy.sh " + boxID + " " + "../../../" + boxValPATH
         devnull = open(os.devnull, 'wb')
         pipe = subprocess.Popen(cmd, shell=True, stdout=devnull, stderr=devnull, close_fds=True)
         response = clean_file_open(boxValPATH, "r")
         if "error" in str(response) or type(response) == type(None):
+            if role == "responder":
+                masterjsonpath = swapName + "/responder.json"
+                responderChain = json_tools.ojf(masterjsonpath)["ResponderChain"]
+                if responderChain == "Sepolia":
+                    responsepath = swapName + "/response_path.json"
+                    j_response = json_tools.ojf(responsepath)
+                    if AtomicityInterface.Atomicity_RemainingLockTimeAtomicMultisig_v_002(j_response, swapName) == 0:
+                        AtomicityInterface.Atomicity_Refund(swapName, "responder")
+                        return 0
+                        break
             time.sleep(5)
             continue
         else:

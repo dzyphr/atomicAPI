@@ -28,6 +28,16 @@ def Atomicity_newFrame(swapName, chain, multiFile=None, constructorArgs=None):
     os.popen(cmd).read()
     os.popen(specChain).read()
 
+def Atomicity_Refund(swapName, role):
+    formattedSwapName = "Swap_" + swapName.replace("-", "")
+    if role == "responder":
+        addr = json_tools.ojf(swapName + "/response_path.json")["responderContractAddr"]
+        refundCMD = \
+                "cd " + Atomicity + formattedSwapName + " && ./deploy.sh refund " + addr
+        return os.popen(refundCMD).read()
+        
+
+
 def Atomicity_RemainingLockTimeAtomicMultisig_v_002(j_response, swapName):
     resp_j = j_response
     responderChain = resp_j["responderLocalChain"]
@@ -43,12 +53,11 @@ def Atomicity_RemainingLockTimeAtomicMultisig_v_002(j_response, swapName):
 #        print(response)
         if wait_for_file(swapName + "/remainingLockTime"):
             remainingLockTime = clean_file_open(swapName + "/remainingLockTime", "r")
-            return remainingLockTime
+            return int(remainingLockTime)
         else:
             print("failed to create or find remainingLockTime file")
     else:
         print("chain un-handled:", responderChain)
-
 
 def Atomicity_buildScalarContract(chain, counterpartyChainPub, xG, locktimeDuration, swapName):
     swapName = "Swap_" + swapName.replace("-", "")

@@ -1,5 +1,6 @@
 import json, os, json_tools, configparser
 from datetime import datetime
+import AtomicityInterface
 from AtomicityInterface import *
 import SigmaParticleInterface
 from SigmaParticleInterface import *
@@ -94,7 +95,7 @@ def GeneralizeENC_ResponseSubroutine(\
                 responsePATH, ElGamalKey, ElGamalKeyPath)
         #TODO: replace sr and x paths with master json update
         xG = json.loads(clean_file_open(responsePATH, "r"))["xG"]
-        Atomicity_buildScalarContract(ResponderChain, InitiatorEVMAddr,  xG, 100, swapname)
+        Atomicity_buildScalarContract(ResponderChain, InitiatorEVMAddr,  xG, 55, swapname)
         addr = Atomicity_deployEVMContract(swapname, customGasMod=3)
         if addr != "fail":
             #ASSUMING ITS ENDING WITH \n
@@ -134,15 +135,35 @@ def GeneralizedENC_ResponderClaimSubroutine(responderJSONPath):
         finalization_list = json_tools.json_to_keyValList(DEC_finalizationPATH)
         json_tools.keyVal_list_update(finalization_list, responderJSONPath)
         boxID = json.loads(DEC_finalization)["boxId"]
-        boxValue = SigmaParticleInterface.checkBoxValue(boxID, swapName + "/testBoxValPath.bin")
+        boxValue = SigmaParticleInterface.checkBoxValue(boxID, swapName + "/testBoxValPath.bin", swapName, "responder")
+        j_response = json_tools.ojf(resp_J["responsePATH"])
+        if boxValue == 0:
+            print("refund tried, swap aborting")
+            while True:
+                if AtomicityInterface.Atomicity_RemainingLockTimeAtomicMultisig_v_002(j_response, swapName) <= 0:
+                    AtomicityInterface.Atomicity_Refund(swapName, "responder")
+                    break
+                time.sleep(3)
+            exit()
         #other than just the box value responder should verify the scalars in the contract match those expected
         remoteLockTime = SigmaParticleInterface.SigmaParticle_CheckLockTimeAtomicSchnorr(swapName, boxID)
         if remoteLockTime < MIN_LOCKTIME_ERGOTESTNET:
-            print("lock time is below safe minimum for claiming, aborting swap")
+            while True:
+                if AtomicityInterface.Atomicity_RemainingLockTimeAtomicMultisig_v_002(j_response, swapName) <= 0:
+                    AtomicityInterface.Atomicity_Refund(swapName, "responder")
+                    break
+                time.sleep(3)
+            print("lock time is below safe minimum for claiming, refunding swap")
             exit()
         minBoxValue = 1123841 #1123841
-        if int(boxValue) < int(minBoxValue):
-            print("not enough nanoerg in contract")
+        customMinBoxValue = 1111111123841
+        if int(boxValue) < int(customMinBoxValue):
+            while True:
+                if AtomicityInterface.Atomicity_RemainingLockTimeAtomicMultisig_v_002(j_response, swapName) <= 0:
+                    AtomicityInterface.Atomicity_Refund(swapName, "responder")
+                    break
+                time.sleep(3)
+            print("not enough nanoerg in contract, refunging swap")
             exit()
         SigmaParticleInterface.SigmaParticle_newFrame(swapName)
         SigmaParticleInterface.SigmaParticle_updateKeyEnv(swapName, responderErgoAccountName)
