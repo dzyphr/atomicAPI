@@ -19,8 +19,7 @@ def clean_file_open(filepath, readOrWrite, writingContent=None, extraWarn=None, 
                     f.truncate()
                 f.close()
             except:
-                err = "Can't write " + writingContent + "to:" + filepath + "\n" +  extraWarn
-                print(err)
+                err = "error: Can't write " + writingContent + "to:" + filepath + "\n" +  extraWarn
                 return err
     elif readOrWrite == "r":
         if os.path.isfile(filepath) == True:
@@ -29,8 +28,8 @@ def clean_file_open(filepath, readOrWrite, writingContent=None, extraWarn=None, 
             f.close()
             return content
         else:
-            err = filepath + " cannot be found!\n " +  extraWarn
-            print(err)
+            err = "error: " + filepath + " cannot be found!\n " +  extraWarn
+            return err
     else:
         print("Unknown argument", readOrWrite , "\nfor argument 2 'readOrWrite' enter r or w as a string")
         

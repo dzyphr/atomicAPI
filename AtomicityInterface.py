@@ -46,11 +46,7 @@ def Atomicity_RemainingLockTimeAtomicMultisig_v_002(j_response, swapName):
         cmd = \
                 "cd " + Atomicity + "Swap_" + swapName.replace("-", "") + " && ./deploy.sh lockTime " + \
                 addr + " ../../../" + swapName + "/remainingLockTime"
-        print(os.popen(cmd).read())
-#        devnull = open(os.devnull, 'wb')
-#        response = subprocess.Popen(cmd, shell=True,
-#                        stdout=devnull, stderr=devnull,close_fds=True)
-#        print(response)
+        os.popen(cmd).read()
         if wait_for_file(swapName + "/remainingLockTime"):
             remainingLockTime = clean_file_open(swapName + "/remainingLockTime", "r")
             return int(remainingLockTime)
