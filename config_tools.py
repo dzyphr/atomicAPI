@@ -2,12 +2,6 @@ import sys
 import json
 import shutil
 import configparser
-from initiatorInterface import *
-from responderInterface import *
-from ElGamalInterface import *
-from AtomicityInterface import *
-from SigmaParticleInterface import *
-from functional_tests import *
 import json_tools
 import time
 import file_tools
@@ -29,8 +23,8 @@ def firstRunCheck():
                 "Sepolia": "True"
             }
         }
-        clean_file_open(userjsonpath, "w", json.dumps(userjson, indent=4))
-    ChainsList = json.loads(clean_file_open(userjsonpath, "r"))["Chains"]
+        file_tools.clean_file_open(userjsonpath, "w", json.dumps(userjson, indent=4))
+    ChainsList = json.loads(file_tools.clean_file_open(userjsonpath, "r"))["Chains"]
     for chain in ChainsList:
         if ChainsList[chain] == "True":
             initializeAccount("basic_framework", chain)
@@ -56,7 +50,7 @@ def initializeAccount(accountName, chain): #interactive command line function to
                     print("A(n)", chain, "Account named ", accountName, "was already found, overwrite?") #we added an upfront check for this, should we double check?
                     yn = input()
                     if yn == "y":
-                        clean_file_open(fullenvpath, "w", envFormat)
+                        file_tools.clean_file_open(fullenvpath, "w", envFormat)
                         print("Account: ", accountName, " created!")
                         return False
                     if yn == "n": #add a rename option here to make this ux more useful
@@ -66,12 +60,12 @@ def initializeAccount(accountName, chain): #interactive command line function to
                         print("unknown: ", yn)
                         continue
             else:
-                clean_file_open(fullenvpath, "w", envFormat)
+                file_tools.clean_file_open(fullenvpath, "w", envFormat)
                 print(chain, "Account: ", accountName, " created!")
                 return True
 
         else:
-            clean_file_open(fullenvpath, "w", envFormat)
+            file_tools.clean_file_open(fullenvpath, "w", envFormat)
             print(chain, "Account: ", accountName, " created!")
             return True
 

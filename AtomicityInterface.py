@@ -28,13 +28,19 @@ def Atomicity_newFrame(swapName, chain, multiFile=None, constructorArgs=None):
     os.popen(cmd).read()
     os.popen(specChain).read()
 
-def Atomicity_Refund(swapName, role):
+def Atomicity_Refund(swapName, role, gas=None, gasMod=None):
     formattedSwapName = "Swap_" + swapName.replace("-", "")
     if role == "responder":
-        addr = json_tools.ojf(swapName + "/response_path.json")["responderContractAddr"]
-        refundCMD = \
-                "cd " + Atomicity + formattedSwapName + " && ./deploy.sh refund " + addr
-        return os.popen(refundCMD).read()
+        if gas == None or gasMod == None:
+            addr = json_tools.ojf(swapName + "/response_path.json")["responderContractAddr"]
+            refundCMD = \
+                    "cd " + Atomicity + formattedSwapName + " && ./deploy.sh refund " + addr
+            return os.popen(refundCMD).read()
+        else:
+            addr = json_tools.ojf(swapName + "/response_path.json")["responderContractAddr"]
+            refundCMD = \
+                    "cd " + Atomicity + formattedSwapName + " && ./deploy.sh refund " + addr + " " + str(gas) + " " + str(gasMod)
+            return os.popen(refundCMD).read()
         
 
 

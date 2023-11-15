@@ -202,7 +202,7 @@ def checkBoxValue(boxID, boxValPATH, swapName, role):
                     responsepath = swapName + "/response_path.json"
                     j_response = json_tools.ojf(responsepath)
                     if AtomicityInterface.Atomicity_RemainingLockTimeAtomicMultisig_v_002(j_response, swapName) == 0:
-                        AtomicityInterface.Atomicity_Refund(swapName, "responder")
+                        AtomicityInterface.Atomicity_Refund(swapName, "responder",  gas=7000000, gasMod=3)
                         return 0
                         break
             time.sleep(5)

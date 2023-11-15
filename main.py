@@ -1,4 +1,5 @@
 import sys
+import ast
 import json
 import shutil
 import configparser
@@ -14,7 +15,6 @@ import time
 import file_tools
 from config_tools import firstRunCheck
 args = sys.argv
-
 
 def publishNewOrderType_ServerEndpoint(url, CoinA, CoinB, CoinA_price, CoinB_price, MaxVolCoinA, MinVolCoinA, auth):
     import requests, uuid
@@ -69,24 +69,31 @@ def requestEncryptedInitiation_ClientEndpoint(url, OrderTypeUUID, ElGamalPubkey)
 def test2pAtomicSwap(p1Chain1, p1Chain2, p2Chain1, p2Chain2):
     FT_ErgoToSepolia(p1Chain1, p1Chain2, p2Chain1, p2Chain2) 
 
-
-
 if len(args) == 2:
     if args[1] == "firstRunCheck":
         firstRunCheck()
-    exit()
+        exit()
+    if args[1] == "generateNewElGamalPubKey":
+        ElGamalInterface.generateNewElGamalPubKey()
+        exit()
 elif len(args) == 3:
     if args[1] == "GeneralizedENC_ResponderClaimSubroutine":
         GeneralizedENC_ResponderClaimSubroutine(args[2])
+        exit()
     if args[1] == "GeneralizedENC_InitiatorClaimSubroutine":
         GeneralizedENC_InitiatorClaimSubroutine(args[2])
-    exit()
+        exit()
 elif len(args) == 4:
     if args[1] == "init":
         accountName = args[2]
         chain = args[3]
         initializeAccount(accountName, chain)
-    exit()
+        exit()
+    if args[1] == "generateNewElGamalPubKey":
+        q = args[2]
+        g = args[3]
+        ElGamalInterface.generateNewElGamalPubKey(q=q, g=g)
+        exit()
 elif len(args) == 5:
     if args[1] == "requestEncryptedInitiation_ClientEndpoint":
         requestEncryptedInitiation_ClientEndpoint(args[2], args[3], args[4])

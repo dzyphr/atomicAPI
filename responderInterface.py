@@ -1,32 +1,30 @@
 import json, os, json_tools, configparser
 from datetime import datetime
 import AtomicityInterface
-from AtomicityInterface import *
 import SigmaParticleInterface
-from SigmaParticleInterface import *
-from ElGamalInterface import *
-from file_tools import *
-from price_tools import *
+import ElGamalInterface
+import file_tools
+import price_tools
 import config_tools
-from config_tools import *
 py = "python3 -u "
 AtomicSwapECCPath = "Ergo/SigmaParticle/AtomicMultiSigECC/py/deploy.py " #TODO Ergo Specific
 s_ = " "
 
-MIN_LOCKTIME_ERGOTESTNET = 10
+MIN_CLAIM_LOCKTIME_ERGOTESTNET = int(config_tools.valFromConf(".env", "MIN_CLAIM_LOCKTIME_ERGOTESTNET"))
+MIN_REFUND_LOCKTIME_SEPOLIA = int(config_tools.valFromConf(".env", "MIN_REFUND_LOCKTIME_SEPOLIA"))
 
 
 # we need to assume we have the ENC file saved already
 def process_initiation(ENC_filepath, DEC_filepath, SenderPubKey, UserKeyFileName): #this is generic to any enc_message actually
-    clean_file_open(ENC_filepath, "r")
-    decrypt = ElGamal_Decrypt(ENC_filepath, SenderPubKey, UserKeyFileName) #TODO verify initiation details including json sanity
-    clean_file_open(DEC_filepath, "w", decrypt)
+    file_tools.clean_file_open(ENC_filepath, "r")
+    decrypt = ElGamalInterface.ElGamal_Decrypt(ENC_filepath, SenderPubKey, UserKeyFileName) #TODO verify initiation details including json sanity
+    file_tools.clean_file_open(DEC_filepath, "w", decrypt)
 
 
 def response(DEC_initiation_filepath, responderMasterJSONPATH, response_filepath, SenderPubKey, UserKeyFileName):
-    j_init = json.loads(clean_file_open(DEC_initiation_filepath, "r"))
+    j_init = json.loads(file_tools.clean_file_open(DEC_initiation_filepath, "r"))
     ksG = j_init["ksG"]
-    j_master = json.loads(clean_file_open(responderMasterJSONPATH, "r"))
+    j_master = json.loads(file_tools.clean_file_open(responderMasterJSONPATH, "r"))
     swapName = j_master["swapName"]
     sr_filepath = swapName + "/sr"
     x_filepath = swapName + "/x"
@@ -36,9 +34,9 @@ def response(DEC_initiation_filepath, responderMasterJSONPATH, response_filepath
         "'" + ksG  + "' " + "'" + responderMessageContent  + "' " + \
         sr_filepath + s_ + x_filepath 
     response = os.popen(command).read()
-    clean_file_open(response_filepath, "w", response)
-    sr = clean_file_open(sr_filepath, "r")
-    x = clean_file_open(x_filepath, "r")
+    file_tools.clean_file_open(response_filepath, "w", response)
+    sr = file_tools.clean_file_open(sr_filepath, "r")
+    x = file_tools.clean_file_open(x_filepath, "r")
     secretslist = [{"sr":sr}, {"x":x}]
     json_tools.keyVal_list_update(secretslist, responderMasterJSONPATH)
 
@@ -69,8 +67,8 @@ def GeneralizeENC_ResponseSubroutine(\
                 "ENC_finalizationPATH" : swapName + "/ENC_finalization.bin",
                 "DEC_finalizationPATH" : swapName + "/DEC_finalization.json",
             }
-        clean_mkdir(mi["swapName"])
-        clean_file_open(mi["responderJSONPath"], "w", json.dumps(mi))
+        file_tools.clean_mkdir(mi["swapName"])
+        file_tools.clean_file_open(mi["responderJSONPath"], "w", json.dumps(mi))
         resp_J = json_tools.ojf(mi["responderJSONPath"])
         swapname = resp_J["swapName"]
         ENC_Init_PATH = resp_J["ENC_Init_PATH"]
@@ -94,9 +92,9 @@ def GeneralizeENC_ResponseSubroutine(\
         response(DEC_Init_PATH, responderJSONPath, \
                 responsePATH, ElGamalKey, ElGamalKeyPath)
         #TODO: replace sr and x paths with master json update
-        xG = json.loads(clean_file_open(responsePATH, "r"))["xG"]
-        Atomicity_buildScalarContract(ResponderChain, InitiatorEVMAddr,  xG, 55, swapname)
-        addr = Atomicity_deployEVMContract(swapname, customGasMod=3)
+        xG = json.loads(file_tools.clean_file_open(responsePATH, "r"))["xG"]
+        AtomicityInterface.Atomicity_buildScalarContract(ResponderChain, InitiatorEVMAddr,  xG, MIN_REFUND_LOCKTIME_SEPOLIA, swapname)
+        addr = AtomicityInterface.Atomicity_deployEVMContract(swapname, customGasMod=3)
         if addr != "fail":
             #ASSUMING ITS ENDING WITH \n
             addr  =  addr[:-1]
@@ -108,16 +106,16 @@ def GeneralizeENC_ResponseSubroutine(\
         #0.00059eth
 #        oneWei = 1000000000000000000
 #        responderFundingAmountWei = int(float(swapAmount) * oneWei)
-        responderFundingAmountWei = EthToWei(swapAmount)
+        responderFundingAmountWei = price_tools.EthToWei(swapAmount)
 
-        Atomicity_SendFunds(addr, responderFundingAmountWei, swapname, gasMod=3)
+        AtomicityInterface.Atomicity_SendFunds(addr, responderFundingAmountWei, swapname, gasMod=3)
         update_response_keyValList = [{"responderLocalChain":ResponderChain}, \
                 {"responderContractAddr":addr},\
                 {"ResponderErgoAddr":ResponderErgoAddr}]
         json_tools.keyVal_list_update(update_response_keyValList, responsePATH)
         responseLIST = json_tools.json_to_keyValList(responsePATH)
         json_tools.keyVal_list_update(responseLIST, responderJSONPath)
-        encrypted_response = ElGamal_Encrypt(ElGamalKey, ElGamalKeyPath, responsePATH, ENC_Response_PATH)
+        encrypted_response = ElGamalInterface.ElGamal_Encrypt(ElGamalKey, ElGamalKeyPath, responsePATH, ENC_Response_PATH)
         return ENC_Response_PATH
 
 def GeneralizedENC_ResponderClaimSubroutine(responderJSONPath):
@@ -130,8 +128,8 @@ def GeneralizedENC_ResponderClaimSubroutine(responderJSONPath):
         ElGamalKeyPath = resp_J["ElGamalKeyPath"]
         DEC_finalizationPATH = resp_J["DEC_finalizationPATH"]
         responderErgoAccountName = resp_J["responderErgoAccountName"]
-        DEC_finalization = ElGamal_Decrypt(ENC_finalizationPATH, ElGamalKey, ElGamalKeyPath)
-        clean_file_open(DEC_finalizationPATH, "w", DEC_finalization)
+        DEC_finalization = ElGamalInterface.ElGamal_Decrypt(ENC_finalizationPATH, ElGamalKey, ElGamalKeyPath)
+        file_tools.clean_file_open(DEC_finalizationPATH, "w", DEC_finalization)
         finalization_list = json_tools.json_to_keyValList(DEC_finalizationPATH)
         json_tools.keyVal_list_update(finalization_list, responderJSONPath)
         boxID = json.loads(DEC_finalization)["boxId"]
@@ -141,26 +139,25 @@ def GeneralizedENC_ResponderClaimSubroutine(responderJSONPath):
             print("refund tried, swap aborting")
             while True:
                 if AtomicityInterface.Atomicity_RemainingLockTimeAtomicMultisig_v_002(j_response, swapName) <= 0:
-                    AtomicityInterface.Atomicity_Refund(swapName, "responder")
+                    AtomicityInterface.Atomicity_Refund(swapName, "responder", gas=7000000, gasMod=3)
                     break
                 time.sleep(3)
             exit()
         #other than just the box value responder should verify the scalars in the contract match those expected
         remoteLockTime = SigmaParticleInterface.SigmaParticle_CheckLockTimeAtomicSchnorr(swapName, boxID)
-        if remoteLockTime < MIN_LOCKTIME_ERGOTESTNET:
+        if remoteLockTime < MIN_CLAIM_LOCKTIME_ERGOTESTNET:
             while True:
                 if AtomicityInterface.Atomicity_RemainingLockTimeAtomicMultisig_v_002(j_response, swapName) <= 0:
-                    AtomicityInterface.Atomicity_Refund(swapName, "responder")
+                    AtomicityInterface.Atomicity_Refund(swapName, "responder",  gas=7000000, gasMod=3)
                     break
                 time.sleep(3)
             print("lock time is below safe minimum for claiming, refunding swap")
             exit()
         minBoxValue = 1123841 #1123841
-        customMinBoxValue = 1111111123841
-        if int(boxValue) < int(customMinBoxValue):
+        if int(boxValue) < int(minBoxValue):
             while True:
                 if AtomicityInterface.Atomicity_RemainingLockTimeAtomicMultisig_v_002(j_response, swapName) <= 0:
-                    AtomicityInterface.Atomicity_Refund(swapName, "responder")
+                    AtomicityInterface.Atomicity_Refund(swapName, "responder",  gas=7000000, gasMod=3)
                     break
                 time.sleep(3)
             print("not enough nanoerg in contract, refunging swap")
