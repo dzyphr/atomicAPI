@@ -5,6 +5,7 @@ import shutil
 import json_tools
 import time
 import os
+import ast
 from enum import Enum
 import ElGamalInterface
 import SigmaParticleInterface
@@ -59,7 +60,7 @@ def inspectResponse(DEC_response_filepath, swapName):
         return json.dumps(inspectScalarContractObject)
 
 def finalizeSwap(initiatorMasterJSONPath):
-    j = json.loads(file_tools.clean_file_openinitiatorMasterJSONPath, "r")
+    j = json.loads(file_tools.clean_file_open(initiatorMasterJSONPath, "r"))
     sr_ = j["sr_"]
     xG = j["xG"]
     srG = j["srG"]
@@ -176,12 +177,12 @@ def GeneralizedENC_FinalizationSubroutine(initiatorJSONPath, CoinA_Price, CoinB_
         if AtomicityInterface.Atomicity_compareScalarContractCoords(swapName, addr, xG[0], xG[1]) == False:
             print("on chain contract does not meet offchain contract spec, do not fulfil this swap!")
             exit()
-        convList = price_tools.getPriceConversions(weiToEth(contractFunds), CoinA_Price, CoinB_Price)
-        finalizeOBJ = initiatorInterface.finalizeSwap(initiatorJSONPath)
+        convList = price_tools.getPriceConversions(price_tools.weiToEth(contractFunds), CoinA_Price, CoinB_Price)
+        finalizeOBJ = finalizeSwap(initiatorJSONPath)
         file_tools.clean_file_open(finalizationPATH, "w", finalizeOBJ)
         finalizeOBJ_LIST = json_tools.json_to_keyValList(finalizationPATH)
         json_tools.keyVal_list_update(finalizeOBJ_LIST, initiatorJSONPath)
-        SigmaParticleInterface.BuildAtomicSchnorrContract(initiatorJSONPath, MINIMUM_REFUND_LOCKTIME_ERGO, swapName, ErgToNanoErg(convList[1]))
+        SigmaParticleInterface.BuildAtomicSchnorrContract(initiatorJSONPath, MINIMUM_REFUND_LOCKTIME_ERGO, swapName, price_tools.ErgToNanoErg(convList[1]))
         SigmaParticleInterface.deployErgoContract(swapName) #TODO generalize based on chain
         boxId = SigmaParticleInterface.getBoxID(swapName)
         InitiatorAtomicSchnorrLockHeight = file_tools.clean_file_open("Ergo/SigmaParticle/" + swapName + "/lockHeight", "r")
