@@ -40,6 +40,7 @@ def Atomicity_Refund(swapName, role, gas=None, gasMod=None):
             addr = json_tools.ojf(swapName + "/response_path.json")["responderContractAddr"]
             refundCMD = \
                     "cd " + Atomicity + formattedSwapName + " && ./deploy.sh refund " + addr + " " + str(gas) + " " + str(gasMod)
+            print(refundCMD)
             return os.popen(refundCMD).read()
         
 

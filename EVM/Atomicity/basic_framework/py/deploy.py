@@ -1,3 +1,4 @@
+constructorParamVals = ["0x01225869F695b4b7F0af5d75381Fe340A4d27593",63024571172782282685334378155819498765329939054869126512244428535760961285371,57383153770454636058383754312434156335268281500101000678691661869065982846552,6]
 import pathlib
 from pathlib import Path
 import requests
@@ -36,9 +37,9 @@ else:
 
 def senderReclaim(addr, gas=None, gasMod=None):
     if gas == None:
-        gas = 8000000
+        gas = 10000000
     if gasMod == None:
-        gasMod = 1
+        gasMod = 2
     if chain == "Goerli":
         rpc = Web3(Web3.HTTPProvider(os.getenv('Goerli')))
         chain_id = int(os.getenv('GoerliID')) #use int so it doesnt interpret env variable as string values

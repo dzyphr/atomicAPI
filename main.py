@@ -6,6 +6,7 @@ import configparser
 from configparser import *
 from initiatorInterface import *
 from responderInterface import *
+import responderInterface
 from ElGamalInterface import *
 from AtomicityInterface import * 
 from SigmaParticleInterface import *
@@ -82,6 +83,9 @@ elif len(args) == 3:
         exit()
     if args[1] == "GeneralizedENC_InitiatorClaimSubroutine":
         GeneralizedENC_InitiatorClaimSubroutine(args[2])
+        exit()
+    if args[1] == "Responder_CheckLockTimeRefund":
+        responderInterface.Responder_CheckLockTimeRefund(args[2])
         exit()
 elif len(args) == 4:
     if args[1] == "init":

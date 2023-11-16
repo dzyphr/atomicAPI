@@ -1,4 +1,5 @@
 import json, os, json_tools, configparser
+import time
 from datetime import datetime
 import AtomicityInterface
 import SigmaParticleInterface
@@ -53,6 +54,7 @@ def GeneralizeENC_ResponseSubroutine(\
                 "swapName" : swapName,
                 "InitiatorChain" : InitiatorChain,
                 "ResponderChain" : ResponderChain,
+                "responderLocalChain": ResponderChain,
                 "responderJSONPath" : swapName + "/responder.json",
                 "ResponderEVMAddr" : \
                         config_tools.valFromConf("EVM/Atomicity/" + responderLocalChainAccountName.replace('"', '') + "/.env", 'SepoliaSenderAddr').replace('"', ''),
@@ -101,6 +103,7 @@ def GeneralizeENC_ResponseSubroutine(\
         else:
             print("fail: deployContract() didnt return a contract addr")
             exit()
+
         #add contract addr and chain name to response here then encrypt
         #convert swap amount to wei
         #0.00059eth
@@ -108,11 +111,15 @@ def GeneralizeENC_ResponseSubroutine(\
 #        responderFundingAmountWei = int(float(swapAmount) * oneWei)
         responderFundingAmountWei = price_tools.EthToWei(swapAmount)
 
-        AtomicityInterface.Atomicity_SendFunds(addr, responderFundingAmountWei, swapname, gasMod=3)
+        AtomicityInterface.Atomicity_SendFunds(addr, responderFundingAmountWei, swapname, gas=9000000, gasMod=3)
         update_response_keyValList = [{"responderLocalChain":ResponderChain}, \
                 {"responderContractAddr":addr},\
                 {"ResponderErgoAddr":ResponderErgoAddr}]
         json_tools.keyVal_list_update(update_response_keyValList, responsePATH)
+        j_response = json_tools.ojf(responsePATH)
+        while int(AtomicityInterface.Atomicity_CheckContractFunds(j_response)) <= 0:
+            print("contract not funded yet waiting...")
+            time.sleep(5)
         responseLIST = json_tools.json_to_keyValList(responsePATH)
         json_tools.keyVal_list_update(responseLIST, responderJSONPath)
         encrypted_response = ElGamalInterface.ElGamal_Encrypt(ElGamalKey, ElGamalKeyPath, responsePATH, ENC_Response_PATH)
@@ -173,4 +180,21 @@ def GeneralizedENC_ResponderClaimSubroutine(responderJSONPath):
         SigmaParticleInterface.responderClaimAtomicSchnorr(swapName, 2500)
     ################################################################################
 
+def Responder_CheckLockTimeRefund(swapName):
+    resp_J = json_tools.ojf(swapName + "/responder.json")
+    j_response = json_tools.ojf(resp_J["responsePATH"])
+    swapName = resp_J["swapName"]
+    while True:
+        if AtomicityInterface.Atomicity_RemainingLockTimeAtomicMultisig_v_002(j_response, swapName) <= 0:
+            print(AtomicityInterface.Atomicity_Refund(swapName, "responder"))
+            time.sleep(3)
+            #we may want to alter the smart contract to enforce that funds are in the 
+            #contract before sender reclaim can be called
+            #will completely prevent fee waste on mainnet
+            print("lock time expired, refunding")
+            if int(AtomicityInterface.Atomicity_CheckContractFunds(j_response)) != 0:
+                continue
+            else:
+                break
+    print("contract empty")
 
