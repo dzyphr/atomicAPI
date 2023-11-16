@@ -56,6 +56,10 @@ def Atomicity_RemainingLockTimeAtomicMultisig_v_002(j_response, swapName):
         os.popen(cmd).read()
         if wait_for_file(swapName + "/remainingLockTime"):
             remainingLockTime = clean_file_open(swapName + "/remainingLockTime", "r")
+            while remainingLockTime == '':
+                os.popen(cmd).read()
+                remainingLockTime = clean_file_open(swapName + "/remainingLockTime", "r")
+                time.sleep(3)
             return int(remainingLockTime)
         else:
             print("failed to create or find remainingLockTime file")

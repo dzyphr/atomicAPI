@@ -185,16 +185,18 @@ def Responder_CheckLockTimeRefund(swapName):
     j_response = json_tools.ojf(resp_J["responsePATH"])
     swapName = resp_J["swapName"]
     while True:
-        if AtomicityInterface.Atomicity_RemainingLockTimeAtomicMultisig_v_002(j_response, swapName) <= 0:
+        if AtomicityInterface.Atomicity_RemainingLockTimeAtomicMultisig_v_002(j_response, swapName) <= 0 and int(AtomicityInterface.Atomicity_CheckContractFunds(j_response)) != 0:
             print(AtomicityInterface.Atomicity_Refund(swapName, "responder"))
-            time.sleep(3)
+            time.sleep(10)
             #we may want to alter the smart contract to enforce that funds are in the 
             #contract before sender reclaim can be called
             #will completely prevent fee waste on mainnet
-            print("lock time expired, refunding")
+            print("lock time expired, refund attempted")
+        else:
             if int(AtomicityInterface.Atomicity_CheckContractFunds(j_response)) != 0:
+                time.sleep(3)
                 continue
             else:
                 break
-    print("contract empty")
+    print("contract empty / timelock expired")
 
