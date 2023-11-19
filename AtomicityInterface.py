@@ -1,5 +1,5 @@
 import os, ast, json, json_tools, subprocess
-from file_tools import *
+import file_tools
 Atomicity = "EVM/Atomicity/"
 
 
@@ -54,11 +54,11 @@ def Atomicity_RemainingLockTimeAtomicMultisig_v_002(j_response, swapName):
                 "cd " + Atomicity + "Swap_" + swapName.replace("-", "") + " && ./deploy.sh lockTime " + \
                 addr + " ../../../" + swapName + "/remainingLockTime"
         os.popen(cmd).read()
-        if wait_for_file(swapName + "/remainingLockTime"):
-            remainingLockTime = clean_file_open(swapName + "/remainingLockTime", "r")
+        if file_tools.wait_for_file(swapName + "/remainingLockTime"):
+            remainingLockTime = file_tools.clean_file_open(swapName + "/remainingLockTime", "r")
             while remainingLockTime == '':
                 os.popen(cmd).read()
-                remainingLockTime = clean_file_open(swapName + "/remainingLockTime", "r")
+                remainingLockTime = file_tools.clean_file_open(swapName + "/remainingLockTime", "r")
                 time.sleep(3)
             return int(remainingLockTime)
         else:
@@ -72,7 +72,7 @@ def Atomicity_buildScalarContract(chain, counterpartyChainPub, xG, locktimeDurat
             " -M -CA 4 " + "\\\"" + counterpartyChainPub + "\\\" " + \
             str(ast.literal_eval(xG)[0]) + " " + str(ast.literal_eval(xG)[1]) + " " + str(locktimeDuration)
     new_frame = os.popen(cmd).read()
-    wait_for_file(Atomicity + swapName + "/contracts/" + swapName + ".sol")
+    file_tools.wait_for_file(Atomicity + swapName + "/contracts/" + swapName + ".sol")
     os.remove(Atomicity + swapName + "/contracts/" + swapName + ".sol")
     contract_copy = \
             "cd " + Atomicity + swapName + "/contracts " + \
@@ -80,8 +80,8 @@ def Atomicity_buildScalarContract(chain, counterpartyChainPub, xG, locktimeDurat
             "&& cp ../../AtomicMultiSigSecp256k1/contracts/ReentrancyGuard.sol . " + \
             "&& cp ../../AtomicMultiSigSecp256k1/contracts/EllipticCurve.sol . "
     cpy = os.popen(contract_copy).read()
-    rename = str(clean_file_open(Atomicity + swapName + "/contracts/" + swapName + ".sol", "r"))
-    clean_file_open(Atomicity + swapName + "/contracts/" + swapName + ".sol", "w", rename.replace('AtomicMultiSigSecp256k1', swapName))
+    rename = str(file_tools.clean_file_open(Atomicity + swapName + "/contracts/" + swapName + ".sol", "r"))
+    file_tools.clean_file_open(Atomicity + swapName + "/contracts/" + swapName + ".sol", "w", rename.replace('AtomicMultiSigSecp256k1', swapName))
     specifyChain = os.popen("echo 'CurrentChain=\"" + chain  + "\"' >> " + Atomicity + \
           swapName + "/.env").read()
 
@@ -131,7 +131,7 @@ def Atomicity_compareScalarContractCoords(swapName, contractAddr, expectedX, exp
 
 def Atomicity_claimScalarContract(initiatorMasterJSONPath, swapName, gas=None, gasMod=None):
     swapName = "Swap_" + swapName.replace("-", "")
-    j_master = json.loads(clean_file_open(initiatorMasterJSONPath, "r"))
+    j_master = json.loads(file_tools.clean_file_open(initiatorMasterJSONPath, "r"))
     x = j_master["x"]
     contractAddr = j_master["responderContractAddr"]
     if gas == None or type(gas) != int:
@@ -145,7 +145,7 @@ def Atomicity_claimScalarContract(initiatorMasterJSONPath, swapName, gas=None, g
 
 def Atomicity_updateKeyEnv(swapName, targetKeyEnvDirName):
     swapName = "Swap_" + swapName.replace("-", "")
-    update = clean_file_open(Atomicity + targetKeyEnvDirName + "/.env", "r")
+    update = file_tools.clean_file_open(Atomicity + targetKeyEnvDirName + "/.env", "r")
     update.replace("[default]", "")
     cmd = \
     "echo \"" + update + "\"" + " >> " + Atomicity + swapName + "/.env"

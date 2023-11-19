@@ -16,6 +16,9 @@ from enum_tools import *
 import file_tools
 
 
+
+#TODO: remove import *'s to prevent circular imports
+#TODO:update with refund and lock time checking scenarios (and other similar scenarios)
 def FT_ErgoToSepolia(initiatorErgoAccountName, initiatorSepoliaAccountName, responderErgoAccountName, responderSepoliaAccountName):
     #test input data
     fileTransferProtocols = [

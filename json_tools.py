@@ -1,27 +1,27 @@
 import os, json
-from file_tools import *
-def keyVal_list_update(keyValList, jsonPath):
-#    if type(keyValList) is not type(list):
-#        print("type(keyValList) is not type(list)")
-#        return False
+import file_tools
+def keyVal_list_update(keyValList, jsonPath): #update a json file with a list of key value pairs
+    if type(keyValList) is not list:
+        print("must be a list of key value pairs")
+        return False
     try:
-        j = json.loads(str(clean_file_open(jsonPath, "r")))
+        j = json.loads(str(file_tools.clean_file_open(jsonPath, "r")))
         for keyVal in keyValList:
             if keyVal not in json_to_keyValList(jsonPath): #overwrite protection
                 j.update(keyVal)
-        clean_file_open(jsonPath, "w", str(json.dumps(j, indent=4)))
+        file_tools.clean_file_open(jsonPath, "w", str(json.dumps(j, indent=4)))
     except ValueError as e:
         print("Invalid Json")
        
-def json_to_keyValList(jsonPath):
+def json_to_keyValList(jsonPath): #convert a json file to a python key value list: [{"key":"value"}, {"key", "value"}]
     keyValList = []
     try: 
-        j = json.loads(clean_file_open(jsonPath, "r"))
+        j = json.loads(file_tools.clean_file_open(jsonPath, "r"))
         for key in j:
             keyValList.append({key:j[key]})
         return keyValList
     except ValueError as e:
         print("Invalid Json")
 
-def ojf(filepath):
-    return json.loads(str(clean_file_open(filepath, "r")))
+def ojf(filepath): #open json file
+    return json.loads(str(file_tools.clean_file_open(filepath, "r")))
