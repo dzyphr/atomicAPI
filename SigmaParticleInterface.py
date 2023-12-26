@@ -28,6 +28,37 @@ def SigmaParticle_newFrame(swapName):
     cmd = "cd " + str(SigmaParticlePath)  + " && ./new_frame " + str(swapName)
     os.popen(cmd).read()
 
+
+def is_json(myjson):
+    try:
+        json.loads(myjson)
+    except ValueError as e:
+        return False
+    return True
+
+def SigmaParticle_box_to_addr(boxId):
+    tries = 60
+    while tries > 0:
+        try:
+            tree = SigmaParticle_getTreeFromBox(boxId)
+            treeToAddrCmd = \
+                        "cd " + SigmaParticlePath + "treeToAddr && ./deploy.sh " + tree
+            res = os.popen(treeToAddrCmd).read()
+            if is_json(res) == True:
+                addr = json.loads(res)["address"]
+                return addr
+            else:
+                tries = tries - 1
+                time.sleep(3)
+                continue
+        except ValueError as e:
+            print(e)
+            time.sleep(3)
+            tries = tries - 1
+            continue
+    return "attempts exhausted looking for this box: " + boxId
+
+
 def SigmaParticle_CheckLockTimeAtomicSchnorr(swapName, boxId):
     lockHeightCMD = \
                             "cd " + SigmaParticlePath + "boxConstantByIndex && ./deploy.sh " + boxId + \
@@ -188,11 +219,12 @@ def deployErgoContract(swapName):
 def getBoxID(swapName):
     return file_tools.clean_file_open(SigmaParticlePath + swapName + "/boxId", "r")
 
-def checkBoxValue(boxID, boxValPATH, swapName, role):
+def checkBoxValue(boxID, boxValPATH, swapName, role=None):
     while True:
         cmd = "cd " + SigmaParticlePath + "/boxValue/ && ./deploy.sh " + boxID + " " + "../../../" + boxValPATH
         devnull = open(os.devnull, 'wb')
         pipe = subprocess.Popen(cmd, shell=True, stdout=devnull, stderr=devnull, close_fds=True)
+        pipe.wait()
         response = file_tools.clean_file_open(boxValPATH, "r")
         if "error" in str(response) or type(response) == type(None):
             if role == "responder":

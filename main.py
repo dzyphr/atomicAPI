@@ -85,6 +85,8 @@ elif len(args) == 3:
     if args[1] == "Responder_CheckLockTimeRefund":
         responderInterface.Responder_CheckLockTimeRefund(args[2])
         exit()
+    if args[1] == "SigmaParticle_box_to_addr":
+       sys.stdout.write(SigmaParticleInterface.SigmaParticle_box_to_addr(args[2]))
 elif len(args) == 4:
     if args[1] == "init":
         accountName = args[2]
@@ -105,6 +107,11 @@ elif len(args) == 5:
         exit()
     if args[1] == "GeneralizedENC_FinalizationSubroutine":#initiator refund checking starts here
         initiatorInterface.GeneralizedENC_FinalizationSubroutine(args[2], args[3], args[4])
+        exit()
+    if args[1] == "ElGamal_decrypt":
+        sys.stdout.write(ElGamalInterface.ElGamal_Decrypt(args[2], args[3], args[4]))#subjectFilePath, senderPubKey, userKeyFileName
+    if args[1] == "checkBoxValue":
+        sys.stdout.write(SigmaParticleInterface.checkBoxValue(args[2], args[3], args[4]))#boxID, boxValPATH, swapName
         exit()
 elif len(args) == 6:
     if args[1] == "test2pAtomicSwap":

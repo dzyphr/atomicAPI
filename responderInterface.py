@@ -140,7 +140,7 @@ def GeneralizedENC_ResponderClaimSubroutine(responderJSONPath):
         finalization_list = json_tools.json_to_keyValList(DEC_finalizationPATH)
         json_tools.keyVal_list_update(finalization_list, responderJSONPath)
         boxID = json.loads(DEC_finalization)["boxId"]
-        boxValue = SigmaParticleInterface.checkBoxValue(boxID, swapName + "/testBoxValPath.bin", swapName, "responder")
+        boxValue = SigmaParticleInterface.checkBoxValue(boxID, swapName + "/testBoxValPath.bin", swapName, role="responder")
         j_response = json_tools.ojf(resp_J["responsePATH"])
         if boxValue == 0:
             print("refund tried, swap aborting")
