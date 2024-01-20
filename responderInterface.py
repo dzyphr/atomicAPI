@@ -13,7 +13,8 @@ s_ = " "
 
 MIN_CLAIM_LOCKTIME_ERGOTESTNET = int(config_tools.valFromConf(".env", "MIN_CLAIM_LOCKTIME_ERGOTESTNET"))
 MIN_REFUND_LOCKTIME_SEPOLIA = int(config_tools.valFromConf(".env", "MIN_REFUND_LOCKTIME_SEPOLIA"))
-
+SEPOLIA_EVM_GAS_CONTROL = int(config_tools.valFromConf(".env", "SEPOLIA_EVM_GAS_CONTROL"))
+SEPOLIA_EVM_GASMOD_CONTROL = int(config_tools.valFromConf(".env", "SEPOLIA_EVM_GASMOD_CONTROL"))
 
 # we need to assume we have the ENC file saved already
 def process_initiation(ENC_filepath, DEC_filepath, SenderPubKey, UserKeyFileName): #this is generic to any enc_message actually
@@ -96,7 +97,7 @@ def GeneralizeENC_ResponseSubroutine(\
         #TODO: replace sr and x paths with master json update
         xG = json.loads(file_tools.clean_file_open(responsePATH, "r"))["xG"]
         AtomicityInterface.Atomicity_buildScalarContract(ResponderChain, InitiatorEVMAddr,  xG, MIN_REFUND_LOCKTIME_SEPOLIA, swapname)
-        addr = AtomicityInterface.Atomicity_deployEVMContract(swapname, customGasMod=3)
+        addr = AtomicityInterface.Atomicity_deployEVMContract(swapname, customGas=SEPOLIA_EVM_GAS_CONTROL, customGasMod=SEPOLIA_EVM_GASMOD_CONTROL)
         if addr != "fail":
             #ASSUMING ITS ENDING WITH \n
             addr  =  addr[:-1]
@@ -111,7 +112,7 @@ def GeneralizeENC_ResponseSubroutine(\
 #        responderFundingAmountWei = int(float(swapAmount) * oneWei)
         responderFundingAmountWei = price_tools.EthToWei(swapAmount)
 
-        AtomicityInterface.Atomicity_SendFunds(addr, responderFundingAmountWei, swapname, gas=9000000, gasMod=3)
+        AtomicityInterface.Atomicity_SendFunds(addr, responderFundingAmountWei, swapname, gas=SEPOLIA_EVM_GAS_CONTROL, gasMod=SEPOLIA_EVM_GASMOD_CONTROL)
         update_response_keyValList = [{"responderLocalChain":ResponderChain}, \
                 {"responderContractAddr":addr},\
                 {"ResponderErgoAddr":ResponderErgoAddr}]
@@ -146,7 +147,7 @@ def GeneralizedENC_ResponderClaimSubroutine(responderJSONPath):
             print("refund tried, swap aborting")
             while True:
                 if AtomicityInterface.Atomicity_RemainingLockTimeAtomicMultisig_v_002(j_response, swapName) <= 0:
-                    AtomicityInterface.Atomicity_Refund(swapName, "responder", gas=7000000, gasMod=3)
+                    AtomicityInterface.Atomicity_Refund(swapName, "responder", gas=SEPOLIA_EVM_GAS_CONTROL, gasMod=SEPOLIA_EVM_GASMOD_CONTROL)
                     break
                 time.sleep(3)
             exit()
@@ -155,7 +156,7 @@ def GeneralizedENC_ResponderClaimSubroutine(responderJSONPath):
         if remoteLockTime < MIN_CLAIM_LOCKTIME_ERGOTESTNET:
             while True:
                 if AtomicityInterface.Atomicity_RemainingLockTimeAtomicMultisig_v_002(j_response, swapName) <= 0:
-                    AtomicityInterface.Atomicity_Refund(swapName, "responder",  gas=7000000, gasMod=3)
+                    AtomicityInterface.Atomicity_Refund(swapName, "responder",  gas=SEPOLIA_EVM_GAS_CONTROL, gasMod=SEPOLIA_EVM_GASMOD_CONTROL)
                     break
                 time.sleep(3)
             print("lock time is below safe minimum for claiming, refunding swap")
@@ -164,7 +165,7 @@ def GeneralizedENC_ResponderClaimSubroutine(responderJSONPath):
         if int(boxValue) < int(minBoxValue):
             while True:
                 if AtomicityInterface.Atomicity_RemainingLockTimeAtomicMultisig_v_002(j_response, swapName) <= 0:
-                    AtomicityInterface.Atomicity_Refund(swapName, "responder",  gas=7000000, gasMod=3)
+                    AtomicityInterface.Atomicity_Refund(swapName, "responder",  gas=SEPOLIA_EVM_GAS_CONTROL, gasMod=SEPOLIA_EVM_GASMOD_CONTROL)
                     break
                 time.sleep(3)
             print("not enough nanoerg in contract, refunging swap")
