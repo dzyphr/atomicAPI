@@ -5,7 +5,12 @@ import configparser
 import json_tools
 import time
 import file_tools
+from dotenv import dotenv_values, set_key
 args = sys.argv
+
+def updateMainEnv(Key, Val):
+#    env_content = dotenv_values('.env')
+    return set_key('.env', Key, Val, quote_mode='never')
 
 def valFromConf(confPath, val):
     confParser = configparser.ConfigParser()

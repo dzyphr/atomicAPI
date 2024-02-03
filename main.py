@@ -12,7 +12,7 @@ import functional_tests
 import json_tools
 import time
 import file_tools
-from config_tools import firstRunCheck
+from config_tools import firstRunCheck, updateMainEnv
 args = sys.argv
 
 def publishNewOrderType_ServerEndpoint(url, CoinA, CoinB, CoinA_price, CoinB_price, MaxVolCoinA, MinVolCoinA, auth):
@@ -88,6 +88,9 @@ elif len(args) == 3:
     if args[1] == "SigmaParticle_box_to_addr":
        sys.stdout.write(SigmaParticleInterface.SigmaParticle_box_to_addr(args[2]))
 elif len(args) == 4:
+    if args[1] == "updateMainEnv":
+        updateMainEnv(args[2], args[3])
+
     if args[1] == "init":
         accountName = args[2]
         chain = args[3]
