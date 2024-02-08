@@ -12,7 +12,7 @@ import functional_tests
 import json_tools
 import time
 import file_tools
-from config_tools import firstRunCheck, updateMainEnv
+from config_tools import firstRunCheck, updateMainEnv, initErgoAccountNonInteractive 
 args = sys.argv
 
 def publishNewOrderType_ServerEndpoint(url, CoinA, CoinB, CoinA_price, CoinB_price, MaxVolCoinA, MinVolCoinA, auth):
@@ -127,6 +127,9 @@ elif len(args) == 9:
 elif len(args) == 10:
     if args[1] == "publishNewOrderType_ServerEndpoint":
         publishNewOrderType_ServerEndpoint(args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9])
+        exit()
+    if args[1] == "initErgoAccountNonInteractive":
+        initErgoAccountNonInteractive(args[2], args[3], args[4], args[5], args[6], args[7],  args[8], args[9])
         exit()
     if args[1] == "GeneralizeENC_ResponseSubroutine":
         print("response")

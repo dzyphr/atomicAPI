@@ -1,4 +1,5 @@
 import sys
+import os
 import json
 import shutil
 import configparser
@@ -44,6 +45,29 @@ def firstRunCheck():
                         cmd = "cp " + chain_framework_path + "basic_framework/.env " + chain_framework_path + dirs + "/.env"
                         os.popen(cmd).read()
 
+
+
+def initErgoAccountNonInteractive(testnetNode, mnemonic, mnemonicPass, senderEIP3Secret, senderPubKey, apiURL, fulldirpath, fullenvpath):
+    envFormat = \
+                "[default]\n" +\
+                "testnetNode=\"" + testnetNode + "\"\n" +\
+                "mnemonic=\"" + mnemonic + "\"\n" +\
+                "mnemonicPass=\"" + mnemonicPass + "\"\n" +\
+                "senderEIP3Secret=" + senderEIP3Secret + "\n" +\
+                "senderPubKey=\"" + senderPubKey + "\"\n" +\
+                "apiURL=\"" + apiURL + "\"\n"
+
+
+    def create(fulldirpath, fullenvpath, envFormat):
+        if file_tools.clean_mkdir(fulldirpath) == True:
+            if os.path.isfile(fullenvpath):
+                print("Unhandled Edge Case: duplicate .env path found,  aborting")
+                return False
+            else:
+                file_tools.clean_file_open(fullenvpath, "w", envFormat)
+                return True
+
+    create(fulldirpath, fullenvpath, envFormat)
 
 def initializeAccount(accountName, chain): #interactive command line function to setup .env files
     implemented_chains = ["Ergo", "Sepolia"]
