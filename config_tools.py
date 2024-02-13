@@ -47,6 +47,29 @@ def firstRunCheck():
 
 
 
+def initSepoliaAccountNonInteractive(\
+        SepoliaSenderAddr, SepoliaPrivKey, Sepolia, SepoliaID, SepoliaScan, SolidityCompilerVersion, fulldirpath, fullenvpath):
+    envFormat = \
+        "[default]\n" +\
+        "SepoliaSenderAddr=\"" + SepoliaSenderAddr + "\"\n" + \
+        "SepoliaPrivKey=\"" + SepoliaPrivKey + "\"\n"  + \
+        "Sepolia=\"" + Sepolia + "\"\n" + \
+        "SepoliaID=\"" + SepoliaID + "\"\n" + \
+        "SepoliaScan=\"" + SepoliaScan + "\"\n" + \
+        "SolidityCompilerVersion=\"" + SolidityCompilerVersion + "\"\n"
+
+    def create(fulldirpath, fullenvpath, envFormat):
+        if file_tools.clean_mkdir(fulldirpath) == True:
+            if os.path.isfile(fullenvpath):
+                print("Unhandled Edge Case: duplicate .env path found,  aborting")
+                return False
+            else:
+                file_tools.clean_file_open(fullenvpath, "w", envFormat)
+                return True
+
+    create(fulldirpath, fullenvpath, envFormat)
+
+
 def initErgoAccountNonInteractive(testnetNode, mnemonic, mnemonicPass, senderEIP3Secret, senderPubKey, apiURL, fulldirpath, fullenvpath):
     envFormat = \
                 "[default]\n" +\
@@ -56,7 +79,6 @@ def initErgoAccountNonInteractive(testnetNode, mnemonic, mnemonicPass, senderEIP
                 "senderEIP3Secret=" + senderEIP3Secret + "\n" +\
                 "senderPubKey=\"" + senderPubKey + "\"\n" +\
                 "apiURL=\"" + apiURL + "\"\n"
-
 
     def create(fulldirpath, fullenvpath, envFormat):
         if file_tools.clean_mkdir(fulldirpath) == True:

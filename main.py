@@ -125,6 +125,9 @@ elif len(args) == 9:
         initiatorInterface.GeneralizedENC_InitiationSubroutine(args[2], args[3], args[4], args[5], args[6], args[7], args[8])
         exit()
 elif len(args) == 10:
+    if args[1] == "initSepoliaAccountNonInteractive":
+        initSepoliaAccountNonInteractive(args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9])
+        exit()
     if args[1] == "publishNewOrderType_ServerEndpoint":
         publishNewOrderType_ServerEndpoint(args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9])
         exit()
