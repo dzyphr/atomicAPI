@@ -12,7 +12,7 @@ import functional_tests
 import json_tools
 import time
 import file_tools
-from config_tools import firstRunCheck, updateMainEnv, initErgoAccountNonInteractive 
+from config_tools import firstRunCheck, updateMainEnv, initErgoAccountNonInteractive, initSepoliaAccountNonInteractive 
 args = sys.argv
 
 def publishNewOrderType_ServerEndpoint(url, CoinA, CoinB, CoinA_price, CoinB_price, MaxVolCoinA, MinVolCoinA, auth):
