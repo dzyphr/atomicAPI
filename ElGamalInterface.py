@@ -5,11 +5,17 @@ ElGamal = "./ElGamal "
 s_ = " "
 
 
+
 def update_ElGamalPubKeysJSON():
     pubkeyStoreJSONPath = "ElGamalPubKeys.json"
+    QChannelStoreJSONPath = "ElGamalQChannels.json"
+    #update Q Channel here as Pubkeys are generated
+    #if new Q found add to Q Channel list
     keyIndex = 0
     if os.path.isfile(pubkeyStoreJSONPath) == False:
         file_tools.clean_file_open(pubkeyStoreJSONPath, "w", "{}")
+    if os.path.isfile(QChannelStoreJSONPath) == False:
+        file_tools.clean_file_open(QChannelStoreJSONPath, "w", "{}")
     while True:
         path = "Key" + str(keyIndex) + ".ElGamalKey"
         if os.path.isfile(path):
@@ -17,6 +23,13 @@ def update_ElGamalPubKeysJSON():
             updatelist = [{keyIndex:pubkey}]
             json_tools.keyVal_list_update(updatelist, pubkeyStoreJSONPath)
             keyIndex = keyIndex + 1
+            QList = json_tools.ojf(QChannelStoreJSONPath)
+            if json_tools.ojf(path)["q"] not in QList.values():
+                #not in list, add it
+                QIndex = len(QList) + 1
+                Q = json_tools.ojf(path)["q"]
+                QupdateList = [{QIndex:Q}]
+                json_tools.keyVal_list_update(QupdateList, QChannelStoreJSONPath)
         else:
             break
 
@@ -25,6 +38,8 @@ def generateNewElGamalPubKey(q=None, g=None):
     command = ""
     if q == None or g == None:
         command = "./ElGamal genPubKey"
+    if g == None and q !=None:
+        command = "./ElGamal genPubKey_specific_q " + q + " " + g
     else:
         command = "./ElGamal genPubKey_specific_q_g " + q + " " + g
     os.popen(command).read()

@@ -72,7 +72,7 @@ if len(args) == 2:
     if args[1] == "firstRunCheck":
         firstRunCheck()
         exit()
-    if args[1] == "generateNewElGamalPubKey":
+    if args[1] == "generateNewElGamalPubKey": #random q and g
         ElGamalInterface.generateNewElGamalPubKey()
         exit()
 elif len(args) == 3:
@@ -87,6 +87,9 @@ elif len(args) == 3:
         exit()
     if args[1] == "SigmaParticle_box_to_addr":
        sys.stdout.write(SigmaParticleInterface.SigmaParticle_box_to_addr(args[2]))
+    if args[1] == "generateNewElGamalPubKey": #specific q
+        q = args[2]
+        ElGamalInterface.generateNewElGamalPubKey(q=q)
 elif len(args) == 4:
     if args[1] == "updateMainEnv":
         updateMainEnv(args[2], args[3])
@@ -96,7 +99,7 @@ elif len(args) == 4:
         chain = args[3]
         config_tools.initializeAccount(accountName, chain)
         exit()
-    if args[1] == "generateNewElGamalPubKey":
+    if args[1] == "generateNewElGamalPubKey": #specific q and g
         q = args[2]
         g = args[3]
         ElGamalInterface.generateNewElGamalPubKey(q=q, g=g)
