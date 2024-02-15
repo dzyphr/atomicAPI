@@ -1,4 +1,5 @@
 *.env
+QPubkeyArray.json
 ElGamalPubKeys.json
 ElGamalQChannels.json
 *lib

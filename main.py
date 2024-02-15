@@ -86,10 +86,10 @@ elif len(args) == 3:
         responderInterface.Responder_CheckLockTimeRefund(args[2])
         exit()
     if args[1] == "SigmaParticle_box_to_addr":
-       sys.stdout.write(SigmaParticleInterface.SigmaParticle_box_to_addr(args[2]))
+        sys.stdout.write(SigmaParticleInterface.SigmaParticle_box_to_addr(args[2]))
+        exit()
     if args[1] == "generateNewElGamalPubKey": #specific q
-        q = args[2]
-        ElGamalInterface.generateNewElGamalPubKey(q=q)
+        ElGamalInterface.generateNewElGamalPubKey(q=args[2])
 elif len(args) == 4:
     if args[1] == "updateMainEnv":
         updateMainEnv(args[2], args[3])
