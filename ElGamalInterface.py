@@ -56,13 +56,10 @@ def generateNewElGamalPubKey(q=None, g=None):
     command = ""
     if q is None and g is None:
         command = "./ElGamal genPubKey"
-        print("none")
     elif q is not None and g is not None:
         command = "./ElGamal genPubKey_specific_q_g " + q + " " + g
-        print("qg")
     elif q is not None and g is None:
         command = "./ElGamal genPubKey_specific_q " + q
-        print("q")
     os.popen(command).read()
     update_ElGamalPubKeysJSON()
 
