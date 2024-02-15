@@ -1,5 +1,6 @@
 *.env
 ElGamalPubKeys.json
+ElGamalQChannels.json
 *lib
 *bin
 lib64

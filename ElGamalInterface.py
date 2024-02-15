@@ -38,7 +38,7 @@ def generateNewElGamalPubKey(q=None, g=None):
     command = ""
     if q == None or g == None:
         command = "./ElGamal genPubKey"
-    if g == None and q !=None:
+    elif g == None and q !=None:
         command = "./ElGamal genPubKey_specific_q " + q + " " + g
     else:
         command = "./ElGamal genPubKey_specific_q_g " + q + " " + g
