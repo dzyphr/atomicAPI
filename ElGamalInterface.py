@@ -6,7 +6,7 @@ s_ = " "
 
 
 
-def update_ElGamalPubKeysJSON():
+def update_ElGamalPubKeysJSON(index):
     #q:pubkey list for clients to coordinate from available options
     pubkeyStoreJSONPath = "ElGamalPubKeys.json"
     QChannelStoreJSONPath = "ElGamalQChannels.json"
@@ -23,6 +23,8 @@ def update_ElGamalPubKeysJSON():
         if os.path.isfile(path):
             Q = json_tools.ojf(path)["q"]
             pubkey = json_tools.ojf(path)["Public Key"]
+            if keyIndex == index:
+                print(pubkey)
             updatelist = [{keyIndex:pubkey}]
             json_tools.keyVal_list_update(updatelist, pubkeyStoreJSONPath)
             keyIndex = keyIndex + 1
@@ -51,9 +53,19 @@ def update_ElGamalPubKeysJSON():
         else:
             break
 
+def currentKeysStateCheck():
+    keyIndex = 0
+    while True:
+        path = "Key" + str(keyIndex) + ".ElGamalKey"
+        if os.path.isfile(path) == False:
+            return keyIndex 
+        else:
+            keyIndex = keyIndex + 1
+            continue
 
 def generateNewElGamalPubKey(q=None, g=None):
     command = ""
+    index = currentKeysStateCheck()
     if q is None and g is None:
         command = "./ElGamal genPubKey"
     elif q is not None and g is not None:
@@ -61,7 +73,7 @@ def generateNewElGamalPubKey(q=None, g=None):
     elif q is not None and g is None:
         command = "./ElGamal genPubKey_specific_q " + q
     os.popen(command).read()
-    update_ElGamalPubKeysJSON()
+    update_ElGamalPubKeysJSON(index)
 
 
 
