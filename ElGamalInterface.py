@@ -19,12 +19,16 @@ def update_ElGamalPubKeysJSON(index):
     if os.path.isfile(QPubkeyArrayStoreJSONPath) == False:
         file_tools.clean_file_open(QPubkeyArrayStoreJSONPath, "w", "{}")
     while True:
+        ElGKeyIndexFilePath = "ElGKeyIndexFile.json"
         path = "Key" + str(keyIndex) + ".ElGamalKey"
         if os.path.isfile(path):
-            Q = json_tools.ojf(path)["q"]
+            if os.path.isfile(ElGKeyIndexFilePath) == False:
+                file_tools.clean_file_open(ElGKeyIndexFilePath, "w", "{}")
             pubkey = json_tools.ojf(path)["Public Key"]
+            json_tools.keyVal_list_update([{keyIndex:pubkey}], ElGKeyIndexFilePath)
+            Q = json_tools.ojf(path)["q"]
             if keyIndex == index:
-                print(pubkey)
+                print(pubkey, index)
             updatelist = [{keyIndex:pubkey}]
             json_tools.keyVal_list_update(updatelist, pubkeyStoreJSONPath)
             keyIndex = keyIndex + 1
@@ -66,6 +70,7 @@ def currentKeysStateCheck():
 def generateNewElGamalPubKey(q=None, g=None):
     command = ""
     index = currentKeysStateCheck()
+
     if q is None and g is None:
         command = "./ElGamal genPubKey"
     elif q is not None and g is not None:
