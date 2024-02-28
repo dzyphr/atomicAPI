@@ -13,6 +13,7 @@ import json_tools
 import time
 import file_tools
 from config_tools import firstRunCheck, updateMainEnv, initErgoAccountNonInteractive, initSepoliaAccountNonInteractive 
+from bearerRESTAPIkeygen import generate_bearer_RESTAPI_key
 args = sys.argv
 
 def publishNewOrderType_ServerEndpoint(url, CoinA, CoinB, CoinA_price, CoinB_price, MaxVolCoinA, MinVolCoinA, auth):
@@ -75,7 +76,11 @@ if len(args) == 2:
     if args[1] == "generateNewElGamalPubKey": #random q and g
         ElGamalInterface.generateNewElGamalPubKey()
         exit()
+    if args[1] == "generate_bearer_RESTAPI_key":
+        generate_bearer_RESTAPI_key()
 elif len(args) == 3:
+    if args[1] == "generate_bearer_RESTAPI_key":
+        generate_bearer_RESTAPI_key(length=args[2])
     if args[1] == "GeneralizedENC_ResponderClaimSubroutine":
         responderInterface.GeneralizedENC_ResponderClaimSubroutine(args[2])
         exit()
