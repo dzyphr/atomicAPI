@@ -41,10 +41,10 @@ def update_ElGamalPubKeysJSON(index):
             if QG not in QGPubkeyArray.keys():
                 QGPubkeyArrayUpdateList = [{QG:pubkey}]
                 json_tools.keyVal_list_update(QGPubkeyArrayUpdateList, QGPubkeyArrayStoreJSONPath)
-            elif pubkey not in QPubkeyArray.values():
+            elif pubkey not in QGPubkeyArray.values():
                 if type(QGPubkeyArray[QG]) != list:
                     newlist = [QGPubkeyArray[QG], pubkey]
-                    QPubkeyArrayUpdateList = [{QG:newlist}]
+                    QGPubkeyArrayUpdateList = [{QG:newlist}]
                     json_tools.keyVal_list_update(QGPubkeyArrayUpdateList, QGPubkeyArrayStoreJSONPath)
                     #make it a list
                 else:
