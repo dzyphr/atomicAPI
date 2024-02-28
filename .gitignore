@@ -1,8 +1,8 @@
 *.env
-QPubkeyArray.json
+QGPubkeyArray.json
 ElGKeyIndexFile.json
 ElGamalPubKeys.json
-ElGamalQChannels.json
+ElGamalQGChannels.json
 *lib
 *bin
 lib64

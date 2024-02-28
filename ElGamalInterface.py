@@ -9,50 +9,49 @@ s_ = " "
 def update_ElGamalPubKeysJSON(index):
     #q:pubkey list for clients to coordinate from available options
     pubkeyStoreJSONPath = "ElGamalPubKeys.json"
-    QChannelStoreJSONPath = "ElGamalQChannels.json"
-    QPubkeyArrayStoreJSONPath = "QPubkeyArray.json"
+    #TODO MUST USE SAME Q AND G FOR A CHANNEL CONFIRMED
+    QGChannelStoreJSONPath = "ElGamalQGChannels.json"
+    QGPubkeyArrayStoreJSONPath = "QGPubkeyArray.json"
     keyIndex = 0
     if os.path.isfile(pubkeyStoreJSONPath) == False:
         file_tools.clean_file_open(pubkeyStoreJSONPath, "w", "{}")
-    if os.path.isfile(QChannelStoreJSONPath) == False:
-        file_tools.clean_file_open(QChannelStoreJSONPath, "w", "{}")
-    if os.path.isfile(QPubkeyArrayStoreJSONPath) == False:
-        file_tools.clean_file_open(QPubkeyArrayStoreJSONPath, "w", "{}")
+    if os.path.isfile(QGChannelStoreJSONPath) == False:
+        file_tools.clean_file_open(QGChannelStoreJSONPath, "w", "{}")
+    if os.path.isfile(QGPubkeyArrayStoreJSONPath) == False:
+        file_tools.clean_file_open(QGPubkeyArrayStoreJSONPath, "w", "{}")
     while True:
-        ElGKeyIndexFilePath = "ElGKeyIndexFile.json"
         path = "Key" + str(keyIndex) + ".ElGamalKey"
         if os.path.isfile(path):
-            if os.path.isfile(ElGKeyIndexFilePath) == False:
-                file_tools.clean_file_open(ElGKeyIndexFilePath, "w", "{}")
             pubkey = json_tools.ojf(path)["Public Key"]
-            json_tools.keyVal_list_update([{keyIndex:pubkey}], ElGKeyIndexFilePath)
             Q = json_tools.ojf(path)["q"]
+            G = json_tools.ojf(path)["g"]
+            QG = f"{Q},{G}"
             if keyIndex == index:
                 print(pubkey, index)
             updatelist = [{keyIndex:pubkey}]
             json_tools.keyVal_list_update(updatelist, pubkeyStoreJSONPath)
             keyIndex = keyIndex + 1
-            QList = json_tools.ojf(QChannelStoreJSONPath)
-            QPubkeyArray = json_tools.ojf(QPubkeyArrayStoreJSONPath)
-            if Q not in QList.values():
+            QGList = json_tools.ojf(QGChannelStoreJSONPath)
+            QGPubkeyArray = json_tools.ojf(QGPubkeyArrayStoreJSONPath)
+            if QG not in QGList.values():
                 #not in list, add it
-                QIndex = len(QList) + 1
-                QupdateList = [{QIndex:Q}]
-                json_tools.keyVal_list_update(QupdateList, QChannelStoreJSONPath)
-            elif Q not in QPubkeyArray.keys():
-                QPubkeyArrayUpdateList = [{Q:pubkey}]
-                json_tools.keyVal_list_update(QPubkeyArrayUpdateList, QPubkeyArrayStoreJSONPath)
+                QGIndex = len(QGList) + 1
+                QGupdateList = [{QGIndex:QG}]
+                json_tools.keyVal_list_update(QGupdateList, QGChannelStoreJSONPath)
+            if QG not in QGPubkeyArray.keys():
+                QGPubkeyArrayUpdateList = [{QG:pubkey}]
+                json_tools.keyVal_list_update(QGPubkeyArrayUpdateList, QGPubkeyArrayStoreJSONPath)
             elif pubkey not in QPubkeyArray.values():
-                if type(QPubkeyArray[Q]) != list:
-                    newlist = [QPubkeyArray[Q], pubkey]
-                    QPubkeyArrayUpdateList = [{Q:newlist}]
-                    json_tools.keyVal_list_update(QPubkeyArrayUpdateList, QPubkeyArrayStoreJSONPath)
+                if type(QGPubkeyArray[QG]) != list:
+                    newlist = [QGPubkeyArray[QG], pubkey]
+                    QPubkeyArrayUpdateList = [{QG:newlist}]
+                    json_tools.keyVal_list_update(QGPubkeyArrayUpdateList, QGPubkeyArrayStoreJSONPath)
                     #make it a list
                 else:
-                    publist = QPubkeyArray[Q]
+                    publist = QGPubkeyArray[QG]
                     publist.append(pubkey)
-                    QPubkeyArrayUpdateList = [{Q:list(set(publist))}]
-                    json_tools.keyVal_list_update(QPubkeyArrayUpdateList, QPubkeyArrayStoreJSONPath)
+                    QGPubkeyArrayUpdateList = [{QG:list(set(publist))}]
+                    json_tools.keyVal_list_update(QGPubkeyArrayUpdateList, QGPubkeyArrayStoreJSONPath)
                     #add to the list
         else:
             break
@@ -100,6 +99,7 @@ def ElGamal_Decrypt(subjectFilePath, senderPubKey, userKeyFileName):
             subjectFilePath + s_ + \
             senderPubKey + s_ + \
             userKeyFileName 
+#    print(command)
     decryption = os.popen(command).read()
     return decryption
 
