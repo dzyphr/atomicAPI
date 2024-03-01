@@ -1,4 +1,5 @@
 *.env
+accepted_private_api_keys.json
 QGPubkeyArray.json
 ElGKeyIndexFile.json
 ElGamalPubKeys.json
