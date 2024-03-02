@@ -6,6 +6,7 @@ import configparser
 import json_tools
 import time
 import file_tools
+from bearerRESTAPIkeygen import generate_bearer_RESTAPI_key, add_RESTAPI_key_to_private_accepted_keys_JSON
 from dotenv import dotenv_values, set_key
 args = sys.argv
 
@@ -21,6 +22,7 @@ def valFromConf(confPath, val):
 
 def firstRunCheck():
     userjsonpath = "user.json"
+    add_RESTAPI_key_to_private_accepted_keys_JSON(generate_bearer_RESTAPI_key())
     if os.path.isfile(userjsonpath) == False:
         userjson = \
         {
