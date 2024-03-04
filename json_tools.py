@@ -25,3 +25,17 @@ def json_to_keyValList(jsonPath): #convert a json file to a python key value lis
 
 def ojf(filepath): #open json file
     return json.loads(str(file_tools.clean_file_open(filepath, "r")))
+
+def createOrUpdateIndexedJSONPath(path, value):
+    if os.path.isfile(path):
+#        contents = file_tools.clean_file_open(path, "r")
+        obj = ojf(path)
+        index = len(obj)
+        updatelist = [{index:value}]
+        keyVal_list_update(updatelist, path)
+    else:
+        file_tools.clean_file_open(path, "w", "{}")
+        updatelist = [{0:value}]
+        keyVal_list_update(updatelist, path)
+    return value
+
