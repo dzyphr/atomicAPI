@@ -13,7 +13,7 @@ import json_tools
 import time
 import file_tools
 from config_tools import firstRunCheck, updateMainEnv, initErgoAccountNonInteractive, initSepoliaAccountNonInteractive 
-from bearerRESTAPIkeygen import generate_bearer_RESTAPI_key, add_RESTAPI_key_to_private_accepted_keys_JSON, starterAPIKeys
+from bearerRESTAPIkeygen import generate_bearer_RESTAPI_key, add_RESTAPI_key_to_private_accepted_keys_JSON, starterAPIKeys, add_RESTAPI_key_to_public_accepted_keys_JSON
 args = sys.argv
 
 def publishNewOrderType_ServerEndpoint(url, CoinA, CoinB, CoinA_price, CoinB_price, MaxVolCoinA, MinVolCoinA, auth):
@@ -80,8 +80,11 @@ if len(args) == 2:
         generate_bearer_RESTAPI_key()
     if args[1] == "generate_bearer_RESTAPI_key_add_to_private_accepted":
         add_RESTAPI_key_to_private_accepted_keys_JSON(generate_bearer_RESTAPI_key())
+    if args[1] == "generate_bearer_RESTAPI_key_add_to_public_accepted":
+        add_RESTAPI_key_to_public_accepted_keys_JSON(generate_bearer_RESTAPI_key())
     if args[1] == "generate_starter_RESTAPI_key":
-        starterAPIKeys(add_RESTAPI_key_to_private_accepted_keys_JSON(generate_bearer_RESTAPI_key()))
+        starterAPIKeys(add_RESTAPI_key_to_public_accepted_keys_JSON(generate_bearer_RESTAPI_key()))
+
 elif len(args) == 3:
     if args[1] == "generate_bearer_RESTAPI_key":
         generate_bearer_RESTAPI_key(length=args[2])

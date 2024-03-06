@@ -13,8 +13,12 @@ def add_RESTAPI_key_to_private_accepted_keys_JSON(key):
     accepted_keys_filepath = "accepted_private_api_keys.json"
     return json_tools.createOrUpdateIndexedJSONPath(accepted_keys_filepath, key)
 
-def starterAPIKeys(APIkey):
+def add_RESTAPI_key_to_public_accepted_keys_JSON(key):
+    accepted_keys_filepath = "accepted_public_api_keys.json"
+    return json_tools.createOrUpdateIndexedJSONPath(accepted_keys_filepath, key)
 
+
+def starterAPIKeys(APIkey):
     starterAPIKeysPath = "starterAPIKeys.json"
     return json_tools.createOrUpdateIndexedJSONPath(starterAPIKeysPath, APIkey)
 
