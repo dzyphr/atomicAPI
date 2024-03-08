@@ -50,7 +50,8 @@ def firstRunCheck():
 
 
 def initSepoliaAccountNonInteractive(\
-        SepoliaSenderAddr, SepoliaPrivKey, Sepolia, SepoliaID, SepoliaScan, SolidityCompilerVersion, fulldirpath, fullenvpath):
+        SepoliaSenderAddr, SepoliaPrivKey, Sepolia, SepoliaID, SepoliaScan, 
+        SolidityCompilerVersion, fulldirpath, fullenvpath, enc=False, password=""):
     envFormat = \
         "[default]\n" +\
         "SepoliaSenderAddr=\"" + SepoliaSenderAddr + "\"\n" + \
@@ -61,18 +62,29 @@ def initSepoliaAccountNonInteractive(\
         "SolidityCompilerVersion=\"" + SolidityCompilerVersion + "\"\n"
 
     def create(fulldirpath, fullenvpath, envFormat):
-        if file_tools.clean_mkdir(fulldirpath) == True:
-            if os.path.isfile(fullenvpath):
-                print("Unhandled Edge Case: duplicate .env path found,  aborting")
+        if enc == False:
+            if file_tools.clean_mkdir(fulldirpath) == True:
+                if os.path.isfile(fullenvpath):
+                    print("Unhandled Edge Case: duplicate .env path found,  aborting")
+                    return False
+                else:
+                    file_tools.clean_file_open(fullenvpath, "w", envFormat)
+                    return True
+        else:
+            if password == "":
+                print("PROVIDE PASSWORD WHEN ENCRYPTING ENV FILE")
                 return False
             else:
                 file_tools.clean_file_open(fullenvpath, "w", envFormat)
+                encrypt_file(fullenvpath, password, delete=True)
                 return True
+
 
     create(fulldirpath, fullenvpath, envFormat)
 
 
-def initErgoAccountNonInteractive(testnetNode, mnemonic, mnemonicPass, senderEIP3Secret, senderPubKey, apiURL, fulldirpath, fullenvpath):
+def initErgoAccountNonInteractive(testnetNode, mnemonic, mnemonicPass, senderEIP3Secret, senderPubKey, 
+        apiURL, fulldirpath, fullenvpath, enc=False, password=""):
     envFormat = \
                 "[default]\n" +\
                 "testnetNode=\"" + testnetNode + "\"\n" +\
@@ -90,22 +102,39 @@ def initErgoAccountNonInteractive(testnetNode, mnemonic, mnemonicPass, senderEIP
             else:
                 file_tools.clean_file_open(fullenvpath, "w", envFormat)
                 return True
+        else:
+            if password == "":
+                print("PROVIDE PASSWORD WHEN ENCRYPTING ENV FILE")
+                return False
+            else:
+                file_tools.clean_file_open(fullenvpath, "w", envFormat)
+                encrypt_file(fullenvpath, password, delete=True)
+                return True
 
     create(fulldirpath, fullenvpath, envFormat)
 
 def initializeAccount(accountName, chain): #interactive command line function to setup .env files
     implemented_chains = ["Ergo", "Sepolia"]
     chain_framework_path = ""
-    def create(fulldirpath, fullenvpath, envFormat):
+    def create(fulldirpath, fullenvpath, envFormat, enc=False, password=""):
         if file_tools.clean_mkdir(fulldirpath) == False:
             if os.path.isfile(fullenvpath):
                 while True:
                     print("A(n)", chain, "Account named ", accountName, "was already found, overwrite?") #we added an upfront check for this, should we double check?
                     yn = input()
                     if yn == "y":
-                        file_tools.clean_file_open(fullenvpath, "w", envFormat)
-                        print("Account: ", accountName, " created!")
-                        return False
+                        if enc == False:
+                            file_tools.clean_file_open(fullenvpath, "w", envFormat)
+                            print("Account: ", accountName, " created!")
+                            return True
+                        else:
+                            if password == "":
+                                print("PROVIDE PASSWORD WHEN ENCRYPTING ENV FILE")
+                            else:
+                                file_tools.clean_file_open(fullenvpath, "w", envFormat)
+                                encrypt_file(fullenvpath, password, delete=True)
+                                print(chain, "Account: ", accountName, " created!")
+                                return True
                     if yn == "n": #add a rename option here to make this ux more useful
                         print("aborting")
                         return False
@@ -113,14 +142,66 @@ def initializeAccount(accountName, chain): #interactive command line function to
                         print("unknown: ", yn)
                         continue
             else:
+                if enc == False:
+                    file_tools.clean_file_open(fullenvpath, "w", envFormat)
+                    print(chain, "Account: ", accountName, " created!")
+                    return True
+                else:
+                    if password == "":
+                        print("PROVIDE PASSWORD WHEN ENCRYPTING ENV FILE")
+                    else:
+                        file_tools.clean_file_open(fullenvpath, "w", envFormat)
+                        encrypt_file(fullenvpath, password, delete=True)
+                        print(chain, "Account: ", accountName, " created!")
+                        return True
+
+        else:
+            if enc == False:
                 file_tools.clean_file_open(fullenvpath, "w", envFormat)
                 print(chain, "Account: ", accountName, " created!")
                 return True
+            else:
+                if password == "":
+                    print("PROVIDE PASSWORD WHEN ENCRYPTING ENV FILE")
+                else:
+                    file_tools.clean_file_open(fullenvpath, "w", envFormat)
+                    encrypt_file(fullenvpath, password, delete=True)
+                    print(chain, "Account: ", accountName, " created!")
+                    return True
 
-        else:
-            file_tools.clean_file_open(fullenvpath, "w", envFormat)
-            print(chain, "Account: ", accountName, " created!")
-            return True
+    def enc_env_loop(fulldirpath, fullenvpath, envFormat):
+        while True:
+            print("Password encrypt account file? y or n (experimental)")
+            yn = input()
+            if yn == "y":
+                enc = True
+                while True:
+                    print("enter password to encrypt file with")
+                    password = input()
+                    if password == "":
+                        print("password cannot be blank")
+                        continue
+                    else:
+                        print("password used: ", password, "\n Ok?")
+                        yn = input()
+                        while True:
+                            if yn == "y"
+                                print("\n This WILL NOT be saved anywhere for you.\n" + \
+                                    "Make sure you remember or save this password somewhere safe that you can always access.\n" + \
+                                    "If you lose access to the password you will need to create another account.\n" + \
+                                    "You can ofcourse reupload the same private keys but are solely responsible for\n" + \
+                                    "maintaining proper custody of these keys outside of this application.\n" +\
+                                    "basically please do not password encrypt keys you havent taken proper custody of")
+                                #enc here
+                                create(fulldirpath, fullenvpath, envFormat, enc=True, password=password)
+                            if yn == "n":
+                                break
+                            else:
+                                continue
+            elif yn == "n":
+                create(fulldirpath, fullenvpath, envFormat)
+            else:
+                continue
 
     if chain in implemented_chains:
         if chain == "Ergo":
@@ -129,7 +210,8 @@ def initializeAccount(accountName, chain): #interactive command line function to
             fullenvpath = fulldirpath + "/.env"
             if os.path.isfile(fullenvpath):
                 while True:
-                    print("A(n)", chain, "Account named ", accountName, "was already found, overwrite?") #we added an upfront check for this, should we double check?
+                    print("A(n)", chain, "Account named ", accountName, "was already found, overwrite?") 
+                    #we added an upfront check for this, should we double check?
                     yn = input()
                     if yn == "n":
                         return False
@@ -164,7 +246,9 @@ def initializeAccount(accountName, chain): #interactive command line function to
                 "senderPubKey=\"" + senderPubKey + "\"\n" +\
                 "apiURL=\"" + apiURL + "\"\n"
 
-            create(fulldirpath, fullenvpath, envFormat)
+            enc = False
+            enc_env_loop(fulldirpath, fullenvpath, envFormat)
+
 
 
         elif chain == "Sepolia":
@@ -173,7 +257,8 @@ def initializeAccount(accountName, chain): #interactive command line function to
             fullenvpath = fulldirpath + "/.env"
             if os.path.isfile(fullenvpath):
                 while True:
-                    print("A(n)", chain, "Account named ", accountName, "was already found, overwrite?") #we added an upfront check for this, should we double check?
+                    print("A(n)", chain, "Account named ", accountName, "was already found, overwrite?") 
+                    #we added an upfront check for this, should we double check?
                     yn = input()
                     if yn == "n":
                         return False
@@ -192,6 +277,8 @@ def initializeAccount(accountName, chain): #interactive command line function to
             SepoliaPrivKey = input()
             print("Enter the RPC URL address you wish to submit your transactions to:")
             Sepolia = input()
+            print("Encrypt file? y or n (experimental)")
+            yn = input()
             SepoliaID = "11155111" #chain id
             SepoliaScan = "https://api-sepolia.etherscan.io/api" #block explorer
             SolidityCompilerVersion = "0.8.0" #solidity version
@@ -206,9 +293,7 @@ def initializeAccount(accountName, chain): #interactive command line function to
                 "SepoliaScan=\"" + SepoliaScan + "\"\n" + \
                 "SolidityCompilerVersion=\"" + SolidityCompilerVersion + "\"\n"
 
-            create(fulldirpath, fullenvpath, envFormat)
-
-
+            enc_env_loop(fulldirpath, fullenvpath, envFormat)
     else:
         print(chain, " is not currently implemented into this framework")
 

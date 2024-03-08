@@ -13,7 +13,18 @@ def derive_key(password, iterations=100000):
     )
     return kdf.derive(password.encode())
 
-def encrypt_file(file_path, password, delete): #d: if True delete the plaintext file on success case
+def decrypt_and_write_to_file(file_path, password, replace=False):
+    with open(file_path, 'rb') as f:
+        salt = f.read(16)  # Read the first 16 bytes as the salt
+        encrypted_data = f.read()
+    key = derive_key(password, salt)
+    fernet = Fernet(key)
+    decrypted_data =  fernet.decrypt(encrypted_data)
+    with open(file_path[:-10], 'wb') as f:  # remove the '.encrypted' extension
+        f.write(decrypted_data)
+
+
+def encrypt_file(file_path, password, delete=False): #d: if True delete the plaintext file on success case
     with open(file_path, 'rb') as f:
         data = f.read()
         if delete == True:
