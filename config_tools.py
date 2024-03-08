@@ -185,7 +185,7 @@ def initializeAccount(accountName, chain): #interactive command line function to
                         print("password used: ", password, "\n Ok?")
                         yn = input()
                         while True:
-                            if yn == "y"
+                            if yn == "y":
                                 print("\n This WILL NOT be saved anywhere for you.\n" + \
                                     "Make sure you remember or save this password somewhere safe that you can always access.\n" + \
                                     "If you lose access to the password you will need to create another account.\n" + \

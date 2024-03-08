@@ -57,7 +57,7 @@ To clone and build this application, you'll need [Git](https://git-scm.com).
 
 ```bash
 # Clone this repository
-$ git clone 
+$ git clone https://github.com/dzyphr/atomicAPI 
 
 # Go into the repository
 $ cd atomicAPI
