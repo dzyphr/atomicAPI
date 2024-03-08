@@ -52,6 +52,21 @@ chmod +x bin/activate && . bin/activate
 
 python3 -m pip install python-dotenv ergpy numpy libnum web3==5.31.3 py-solc-x #install python packages to the venv python
 
+#build general .env file here if there isnt one to solve potential chicken or egg 
+if [ -e ".env" ]; then
+    echo "Path already exists"
+else
+    echo "[default]
+
+MINIMUM_REFUND_LOCKTIME_ERGO=10
+MIN_CLAIM_LOCKTIME_ERGOTESTNET=2
+
+MIN_REFUND_LOCKTIME_SEPOLIA=150
+MINIMUM_CLAIM_LOCKTIME_SEPOLIA=16
+
+SEPOLIA_EVM_GAS_CONTROL=7000000
+SEPOLIA_EVM_GASMOD_CONTROL=1" >> .env
+fi
 
 python3 main.py firstRunCheck #run firstRunCheck to initialize accounts
 

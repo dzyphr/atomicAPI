@@ -33,7 +33,8 @@ def firstRunCheck():
         }
         file_tools.clean_file_open(userjsonpath, "w", json.dumps(userjson, indent=4))
     if os.path.isfile(".env") == False:
-        env = "[default]\n" + \ #default as of Mar 8 2024
+        #default env config as of Mar 8 2024
+        env = "[default]\n" + \
             "MINIMUM_REFUND_LOCKTIME_ERGO=10\n" + \
             "MIN_CLAIM_LOCKTIME_ERGOTESTNET=2\n" + \
             "MIN_REFUND_LOCKTIME_SEPOLIA=150\n" + \
