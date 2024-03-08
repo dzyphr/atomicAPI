@@ -32,6 +32,15 @@ def firstRunCheck():
             }
         }
         file_tools.clean_file_open(userjsonpath, "w", json.dumps(userjson, indent=4))
+    if os.path.isfile(".env") == False:
+        env = "[default]\n" + \ #default as of Mar 8 2024
+            "MINIMUM_REFUND_LOCKTIME_ERGO=10\n" + \
+            "MIN_CLAIM_LOCKTIME_ERGOTESTNET=2\n" + \
+            "MIN_REFUND_LOCKTIME_SEPOLIA=150\n" + \
+            "MINIMUM_CLAIM_LOCKTIME_SEPOLIA=16\n" + \
+            "SEPOLIA_EVM_GAS_CONTROL=7000000\n" + \
+            "SEPOLIA_EVM_GASMOD_CONTROL=1\n" 
+        file_tools.clean_file_open(".env", "w", env)
     ChainsList = json.loads(file_tools.clean_file_open(userjsonpath, "r"))["Chains"]
     for chain in ChainsList:
         if ChainsList[chain] == "True":
