@@ -1,4 +1,5 @@
 *.env
+*.env.encrypted
 accepted_private_api_keys.json
 accepted_public_api_keys.json
 starterAPIKeys.json

@@ -6,6 +6,8 @@ import configparser
 import json_tools
 import time
 import file_tools
+import passwordFileEncryption
+from passwordFileEncryption import encrypt_file
 from bearerRESTAPIkeygen import generate_bearer_RESTAPI_key, add_RESTAPI_key_to_private_accepted_keys_JSON
 from dotenv import dotenv_values, set_key
 args = sys.argv
@@ -32,16 +34,6 @@ def firstRunCheck():
             }
         }
         file_tools.clean_file_open(userjsonpath, "w", json.dumps(userjson, indent=4))
-    if os.path.isfile(".env") == False:
-        #default env config as of Mar 8 2024
-        env = "[default]\n" + \
-            "MINIMUM_REFUND_LOCKTIME_ERGO=10\n" + \
-            "MIN_CLAIM_LOCKTIME_ERGOTESTNET=2\n" + \
-            "MIN_REFUND_LOCKTIME_SEPOLIA=150\n" + \
-            "MINIMUM_CLAIM_LOCKTIME_SEPOLIA=16\n" + \
-            "SEPOLIA_EVM_GAS_CONTROL=7000000\n" + \
-            "SEPOLIA_EVM_GASMOD_CONTROL=1\n" 
-        file_tools.clean_file_open(".env", "w", env)
     ChainsList = json.loads(file_tools.clean_file_open(userjsonpath, "r"))["Chains"]
     for chain in ChainsList:
         if ChainsList[chain] == "True":
@@ -53,9 +45,16 @@ def firstRunCheck():
                 chain_framework_path = "EVM/Atomicity/"
             for dirs in os.listdir(chain_framework_path):
                 if os.path.isdir(chain_framework_path + dirs):
-                    if ".env" not in os.listdir(chain_framework_path + dirs):
-                        cmd = "cp " + chain_framework_path + "basic_framework/.env " + chain_framework_path + dirs + "/.env"
-                        os.popen(cmd).read()
+                    if os.path.isfile(chain_framework_path + "basic_framework/.env"):
+                        if ".env" not in os.listdir(chain_framework_path + dirs):
+                            cmd = "cp " + chain_framework_path + "basic_framework/.env " + \
+                                    chain_framework_path + dirs + "/.env"
+                            os.popen(cmd).read()
+                    elif os.path.isfile(chain_framework_path + "basic_framework/.env.encrypted"):
+                        if ".env.encrypted" not in os.listdir(chain_framework_path + dirs):
+                            cmd = "cp " + chain_framework_path + "basic_framework/.env.encrypted " +\
+                                    chain_framework_path + dirs + "/.env.encrypted"
+                            os.popen(cmd).read()
 
 
 
@@ -203,13 +202,15 @@ def initializeAccount(accountName, chain): #interactive command line function to
                                     "maintaining proper custody of these keys outside of this application.\n" +\
                                     "basically please do not password encrypt keys you havent taken proper custody of")
                                 #enc here
-                                create(fulldirpath, fullenvpath, envFormat, enc=True, password=password)
+                                return create(fulldirpath, fullenvpath, envFormat, enc=True, password=password)
+                                break
                             if yn == "n":
                                 break
                             else:
                                 continue
             elif yn == "n":
-                create(fulldirpath, fullenvpath, envFormat)
+                return create(fulldirpath, fullenvpath, envFormat)
+                break
             else:
                 continue
 

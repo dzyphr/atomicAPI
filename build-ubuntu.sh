@@ -50,7 +50,7 @@ python3 -m venv .
 chmod +x bin/activate && . bin/activate 
 ##
 
-python3 -m pip install python-dotenv ergpy numpy libnum web3==5.31.3 py-solc-x #install python packages to the venv python
+python3 -m pip install python-dotenv ergpy numpy libnum web3==5.31.3 py-solc-x cryptography #install python packages to the venv python
 
 #build general .env file here if there isnt one to solve potential chicken or egg 
 if [ -e ".env" ]; then
