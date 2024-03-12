@@ -64,7 +64,7 @@ def update_password_encrypted_env_file_key_val(file_path, password, Key, Val, ne
 
 def get_val_from_envdata_key(key, envdata):
     pattern = re.compile(rf"^{key}=.+", re.MULTILINE)
-    match = re.search(pattern, env_data)
+    match = re.search(pattern, envdata)
     if match:
         return match.group(1)
     else:
