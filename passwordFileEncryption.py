@@ -63,7 +63,7 @@ def update_password_encrypted_env_file_key_val(file_path, password, Key, Val, ne
         f.write(salt + encrypted_data)
 
 def get_val_from_envdata_key(key, envdata):
-    pattern = re.compile(rf"^{var}=.+", re.MULTILINE)
+    pattern = re.compile(rf"^{key}=.+", re.MULTILINE)
     match = re.search(pattern, env_data)
     if match:
         return match.group(1)
