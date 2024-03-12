@@ -61,6 +61,15 @@ def update_password_encrypted_env_file_key_val(file_path, password, Key, Val, ne
     with open(file_path, 'wb') as f:
         f.write(salt + encrypted_data)
 
+def get_val_from_envdata_key(key, envdata):
+    pattern = re.compile(rf"^{var}=.+", re.MULTILINE)
+    match = re.search(pattern, env_data)
+    if match:
+        return match.group(1)
+    else:
+        print("key: ", key, "not found in env")
+        return False
+
 def envfile_data_pattern_re_update(envfile_data, var, val, new=False): #updates var=val in runtime/lifetime datastream instead of ondisk
     pattern = re.compile(rf"^{var}=.+", re.MULTILINE)
     if re.search(pattern, envfile_data):

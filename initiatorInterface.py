@@ -14,6 +14,7 @@ import enum_tools
 import price_tools
 import file_tools
 import config_tools
+from passwordFileEncryption import get_val_from_envdata_key
 py = "python3 -u "
 AtomicSwapECCPath = "Ergo/SigmaParticle/AtomicMultiSigECC/py/deploy.py " #TODO Ergo Specific
 s_ = " "
@@ -79,29 +80,74 @@ def GeneralizedENC_InitiationSubroutine(\
         ElGamalKey, ElGamalKeyPath, InitiatorChain, ResponderChain\
 ): 
     mi = {} #master input json
-    if InitiatorChain.strip("\"") == "TestnetErgo" and ResponderChain.strip("\"") == "Sepolia":
-        mi = {
-            "ElGamalKey" : ElGamalKey.strip("\"").rstrip(),
-            "ElGamalKeyPath" : ElGamalKeyPath.strip("\"").rstrip(),
-            "swapName" : swapName.strip("\"").rstrip(),
-            "InitiatorChain" : InitiatorChain.strip("\"").rstrip(),
-            "ResponderChain" : ResponderChain.strip("\"").rstrip(),
-            "initiatorJSONPath" : swapName.strip("\"").rstrip() + "/initiator.json", #initiators local swap session json state
-            "initiatorEVMAddr" : \
-            config_tools.valFromConf("EVM/Atomicity/" + CrossChainAccountName + "/.env", 'SepoliaSenderAddr'),
-            "InitiatorEIP3Secret".replace('"', '').rstrip() : \
-            config_tools.valFromConf("Ergo/SigmaParticle/" + LocalChainAccountName.strip("\"").rstrip()  + "/.env", 'senderEIP3Secret').replace('"', '').rstrip(),
-                "InitiatorErgoAddr" : \
-            config_tools.valFromConf("Ergo/SigmaParticle/" + LocalChainAccountName.strip("\"").rstrip() + "/.env", 'senderPubKey').replace('"', '').rstrip(),
-            "privateInitPATH" : swapName.strip("\"").rstrip() + "/priv_init.json",
-            "publicInitPATH" : swapName.strip("\"").rstrip() + "/public_init.json",
-            "ENC_Init_PATH" : swapName.strip("\"").rstrip()+ "/ENC_init.bin",
-            "ENC_Response_PATH" : swapName.strip("\"").rstrip() + "/ENC_response_path.bin",
-            "DEC_Response_PATH" : swapName.strip("\"").rstrip() + "/DEC_response.json",
-            "finalizationPATH" : swapName.strip("\"").rstrip() + "/finalization.json",
-            "ENC_finalizationPATH" : swapName.strip("\"").rstrip() + "/ENC_finalization.bin",
-            "InitiatorEVMAccountName": CrossChainAccountName
-        }
+    crossChainEncAccount = False
+    localChainEncAccount = False
+    if os.path.isfile("Ergo/SigmaParticle/" + LocalChainAccountName.strip("\"").rstrip() + "/.env.encrypted"):
+        path = "Ergo/SigmaParticle/" + LocalChainAccountName.strip("\"").rstrip() + "/.env.encrypted"
+        if InitiatorChain == "TestnetErgo":
+            localChainAccountEnvData = decrypt_file_return_contents(path)
+            localChainEncAccount = True
+        elif ResponderChain == "TestnetErgo":
+            crossChainAccountEnvData = decrypt_file_return_contents(path)
+            crossChainEncAccount = True
+        #ergo encrypted
+    if os.path.isfile("EVM/Atomicity/" + CrossChainAccountName + "/.env.encrypted"):
+        path = "EVM/Atomicity/" + CrossChainAccountName + "/.env.encrypted"
+        if InitiatorChain == "Sepolia":
+            localChainAccountEnvData = decrypt_file_return_contents(path)
+            localChainEncAccount = True
+        elif ResponderChain == "Sepolia":
+            crossChainAccountEnvData = decrypt_file_return_contents(path)
+            crossChainEncAccount = True
+        #sepolia encrypted
+    if localChainEncAccount == False and crossChainEncAccount == False:
+        if InitiatorChain.strip("\"") == "TestnetErgo" and ResponderChain.strip("\"") == "Sepolia":
+            mi = {
+                "ElGamalKey" : ElGamalKey.strip("\"").rstrip(),
+                "ElGamalKeyPath" : ElGamalKeyPath.strip("\"").rstrip(),
+                "swapName" : swapName.strip("\"").rstrip(),
+                "InitiatorChain" : InitiatorChain.strip("\"").rstrip(),
+                "ResponderChain" : ResponderChain.strip("\"").rstrip(),
+                "initiatorJSONPath" : swapName.strip("\"").rstrip() + "/initiator.json", #initiators local swap session json state
+                "initiatorEVMAddr" : \
+                get_val_from_envdata_key('SepoliaSenderAddr', crossChainAccountEnvData),
+                "InitiatorEIP3Secret".replace('"', '').rstrip() : \
+                get_val_from_envdata_key('senderEIP3Secret', localChainAccountEnvData).replace('"', '').rstrip(),
+                    "InitiatorErgoAddr" : \
+                get_val_from_envdata_key('senderPubKey', localChainAccountEnvData).replace('"', '').rstrip(),
+                "privateInitPATH" : swapName.strip("\"").rstrip() + "/priv_init.json",
+                "publicInitPATH" : swapName.strip("\"").rstrip() + "/public_init.json",
+                "ENC_Init_PATH" : swapName.strip("\"").rstrip()+ "/ENC_init.bin",
+                "ENC_Response_PATH" : swapName.strip("\"").rstrip() + "/ENC_response_path.bin",
+                "DEC_Response_PATH" : swapName.strip("\"").rstrip() + "/DEC_response.json",
+                "finalizationPATH" : swapName.strip("\"").rstrip() + "/finalization.json",
+                "ENC_finalizationPATH" : swapName.strip("\"").rstrip() + "/ENC_finalization.bin",
+                "InitiatorEVMAccountName": CrossChainAccountName
+            }
+    elif localChainEncAccount == True and crossChainEncAccount == True:
+        if InitiatorChain.strip("\"") == "TestnetErgo" and ResponderChain.strip("\"") == "Sepolia":
+            mi = {
+                "ElGamalKey" : ElGamalKey.strip("\"").rstrip(),
+                "ElGamalKeyPath" : ElGamalKeyPath.strip("\"").rstrip(),
+                "swapName" : swapName.strip("\"").rstrip(),
+                "InitiatorChain" : InitiatorChain.strip("\"").rstrip(),
+                "ResponderChain" : ResponderChain.strip("\"").rstrip(),
+                "initiatorJSONPath" : swapName.strip("\"").rstrip() + "/initiator.json", #initiators local swap session json state
+                "initiatorEVMAddr" : \
+                get_val_from_envdata_key('SepoliaSenderAddr', crossChainAccountEnvData),
+                "InitiatorEIP3Secret".replace('"', '').rstrip() : \
+                get_val_from_envdata_key('senderEIP3Secret', localChainAccountEnvData).replace('"', '').rstrip(),
+                    "InitiatorErgoAddr" : \
+                get_val_from_envdata_key('senderPubKey', localChainAccountEnvData).replace('"', '').rstrip(),
+                "privateInitPATH" : swapName.strip("\"").rstrip() + "/priv_init.json",
+                "publicInitPATH" : swapName.strip("\"").rstrip() + "/public_init.json",
+                "ENC_Init_PATH" : swapName.strip("\"").rstrip()+ "/ENC_init.bin",
+                "ENC_Response_PATH" : swapName.strip("\"").rstrip() + "/ENC_response_path.bin",
+                "DEC_Response_PATH" : swapName.strip("\"").rstrip() + "/DEC_response.json",
+                "finalizationPATH" : swapName.strip("\"").rstrip() + "/finalization.json",
+                "ENC_finalizationPATH" : swapName.strip("\"").rstrip() + "/ENC_finalization.bin",
+                "InitiatorEVMAccountName": CrossChainAccountName
+            }
     print("swapName:", mi["swapName"]);
     file_tools.clean_mkdir(mi["swapName"])
     file_tools.clean_file_open(mi["initiatorJSONPath"], "w", "{}")
