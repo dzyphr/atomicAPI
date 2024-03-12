@@ -80,6 +80,8 @@ def GeneralizedENC_InitiationSubroutine(\
         ElGamalKey, ElGamalKeyPath, InitiatorChain, ResponderChain\
 ): 
     mi = {} #master input json
+    localChainAccountEnvData = ""
+    crossChainAccountEnvData = ""
     crossChainEncAccount = False
     localChainEncAccount = False
     if os.path.isfile("Ergo/SigmaParticle/" + LocalChainAccountName.strip("\"").rstrip() + "/.env.encrypted"):
