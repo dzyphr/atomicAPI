@@ -14,7 +14,7 @@ import enum_tools
 import price_tools
 import file_tools
 import config_tools
-from passwordFileEncryption import get_val_from_envdata_key
+from passwordFileEncryption import get_val_from_envdata_key, decrypt_file_return_contents
 py = "python3 -u "
 AtomicSwapECCPath = "Ergo/SigmaParticle/AtomicMultiSigECC/py/deploy.py " #TODO Ergo Specific
 s_ = " "
@@ -84,13 +84,17 @@ def GeneralizedENC_InitiationSubroutine(\
     crossChainAccountEnvData = ""
     crossChainEncAccount = False
     localChainEncAccount = False
-    if os.path.isfile("Ergo/SigmaParticle/" + LocalChainAccountName.strip("\"").rstrip() + "/.env.encrypted"):
-        path = "Ergo/SigmaParticle/" + LocalChainAccountName.strip("\"").rstrip() + "/.env.encrypted"
+#    .strip("\"").rstrip()
+    InitiatorChain = InitiatorChain.strip("\"").rstrip()
+    ResponderChain = ResponderChain.strip("\"").rstrip()
+    ErgoPath = "Ergo/SigmaParticle/" + LocalChainAccountName + "/.env.encrypted"
+    if os.path.isfile(ErgoPath):
         if InitiatorChain == "TestnetErgo":
-            localChainAccountEnvData = decrypt_file_return_contents(path)
+            localChainAccountEnvData = decrypt_file_return_contents(ErgoPath) #need to get password from somewhere
+                                                                        #server will be logged in passively
             localChainEncAccount = True
         elif ResponderChain == "TestnetErgo":
-            crossChainAccountEnvData = decrypt_file_return_contents(path)
+            crossChainAccountEnvData = decrypt_file_return_contents(ErgoPath)
             crossChainEncAccount = True
         #ergo encrypted
     if os.path.isfile("EVM/Atomicity/" + CrossChainAccountName + "/.env.encrypted"):

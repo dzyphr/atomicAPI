@@ -14,7 +14,22 @@ import time
 import file_tools
 from config_tools import firstRunCheck, updateMainEnv, initErgoAccountNonInteractive, initSepoliaAccountNonInteractive 
 from bearerRESTAPIkeygen import generate_bearer_RESTAPI_key, add_RESTAPI_key_to_private_accepted_keys_JSON, starterAPIKeys, add_RESTAPI_key_to_public_accepted_keys_JSON
+from passwordFileEncryption import proveEncEnvFilePasswordKnowledge
 args = sys.argv
+
+def logInToPasswordEncryptedAccount_ServerEndpoint(Chain, AccountName, Password, auth):
+    import requests, uuid
+    url = "http://localhost:3030/v0.0.1/requests/" #server private requests url
+    ID = str(uuid.uuid4())
+    headers = {"Authorization": "Bearer " + auth}
+    requestobj = {
+            "id": ID,
+            "request_type": "logInToPasswordEncryptedAccount",
+            "Chain": Chain,
+            "AccountName": AccountName,
+            "Password": Password
+    }
+    print(requests.post(url, headers=headers,  json = requestobj).text)
 
 def publishNewOrderType_ServerEndpoint(url, CoinA, CoinB, CoinA_price, CoinB_price, MaxVolCoinA, MinVolCoinA, auth):
     import requests, uuid
@@ -118,6 +133,8 @@ elif len(args) == 4:
         g = args[3]
         ElGamalInterface.generateNewElGamalPubKey(q=q, g=g)
         exit()
+    if args[1] == "proveEncEnvFilePasswordKnowledge":
+        proveEncEnvFilePasswordKnowledge(args[2], args[3])
 elif len(args) == 5:
     if args[1] == "requestEncryptedInitiation_ClientEndpoint":
         requestEncryptedInitiation_ClientEndpoint(args[2], args[3], args[4])
@@ -134,6 +151,9 @@ elif len(args) == 5:
         sys.stdout.write(SigmaParticleInterface.checkBoxValue(args[2], args[3], args[4]))#boxID, boxValPATH, swapName
         exit()
 elif len(args) == 6:
+    if args[1] == "logInToPasswordEncryptedAccount":
+        print("logInToPasswordEncryptedAccount_ServerEndpoint")
+        logInToPasswordEncryptedAccount_ServerEndpoint(args[2], args[3], args[4], args[5])
     if args[1] == "test2pAtomicSwap":
         test2pAtomicSwap(args[2], args[3], args[4], args[5])
         exit()

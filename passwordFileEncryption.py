@@ -51,7 +51,7 @@ def decrypt_file_return_contents(file_path, password):
     key = derive_key(password, salt=salt)
     fernet = Fernet(key)
     return fernet.decrypt(encrypted_data)
-
+   
 def update_password_encrypted_env_file_key_val(file_path, password, Key, Val, new=False):
     data = decrypt_file_return_contents(file_path, password)
     updated_data = envfile_data_pattern_re_update(data, Key, Val, new)
@@ -82,3 +82,15 @@ def envfile_data_pattern_re_update(envfile_data, var, val, new=False): #updates 
             mod = re.sub(pattern, f"{var}={val}", envfile_data)
             return mod
 
+def proveEncEnvFilePasswordKnowledge(encenvfilepath, password):
+    if os.path.isfile(encenvfilepath):
+        data = decrypt_file_return_contents(encenvfilepath, password)
+        if data.startswith(b'[default]'):
+            print("True")
+            return True
+        else:
+            print("False")
+            return False
+    else:
+        print("path: ", encenvfilepath, "not found")
+        return False
