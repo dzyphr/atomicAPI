@@ -84,9 +84,14 @@ def initSepoliaAccountNonInteractive(\
                 print("PROVIDE PASSWORD WHEN ENCRYPTING ENV FILE")
                 return False
             else:
-                file_tools.clean_file_open(fullenvpath, "w", envFormat)
-                encrypt_file(fullenvpath, password, delete=True)
-                return True
+                if file_tools.clean_mkdir(fulldirpath) == True:
+                    if os.path.isfile(fullenvpath):
+                        print("Unhandled Edge Case: duplicate .env path found,  aborting")
+                        return False
+                    else:
+                        file_tools.clean_file_open(fullenvpath, "w", envFormat)
+                        encrypt_file(fullenvpath, password, delete=True)
+                        return True
 
 
     create(fulldirpath, fullenvpath, envFormat)
@@ -116,9 +121,14 @@ def initErgoAccountNonInteractive(testnetNode, mnemonic, mnemonicPass, senderEIP
                 print("PROVIDE PASSWORD WHEN ENCRYPTING ENV FILE")
                 return False
             else:
-                file_tools.clean_file_open(fullenvpath, "w", envFormat)
-                encrypt_file(fullenvpath, password, delete=True)
-                return True
+                if file_tools.clean_mkdir(fulldirpath) == True:
+                    if os.path.isfile(fullenvpath):
+                        print("Unhandled Edge Case: duplicate .env path found,  aborting")
+                        return False
+                    else:
+                        file_tools.clean_file_open(fullenvpath, "w", envFormat)
+                        encrypt_file(fullenvpath, password, delete=True)
+                        return True
 
     create(fulldirpath, fullenvpath, envFormat)
 

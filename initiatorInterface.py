@@ -77,7 +77,8 @@ def finalizeSwap(initiatorMasterJSONPath):
 #Generalized function to create initiation commitments
 def GeneralizedENC_InitiationSubroutine(\
         swapName, LocalChainAccountName, CrossChainAccountName, \
-        ElGamalKey, ElGamalKeyPath, InitiatorChain, ResponderChain\
+        ElGamalKey, ElGamalKeyPath, InitiatorChain, ResponderChain,\
+        localChainAccountPassword="", crossChainAccountPassword=""
 ): 
     mi = {} #master input json
     localChainAccountEnvData = ""
@@ -90,21 +91,37 @@ def GeneralizedENC_InitiationSubroutine(\
     ErgoPath = "Ergo/SigmaParticle/" + LocalChainAccountName + "/.env.encrypted"
     if os.path.isfile(ErgoPath):
         if InitiatorChain == "TestnetErgo":
-            localChainAccountEnvData = decrypt_file_return_contents(ErgoPath) #need to get password from somewhere
+            if localChainAccountPassword != "":
+                localChainAccountEnvData = decrypt_file_return_contents(ErgoPath) #need to get password from somewhere
                                                                         #server will be logged in passively
-            localChainEncAccount = True
+                localChainEncAccount = True
+            else:
+                print("password required for encrypted env file!")
+                exit()
         elif ResponderChain == "TestnetErgo":
-            crossChainAccountEnvData = decrypt_file_return_contents(ErgoPath)
-            crossChainEncAccount = True
+            if crossChainAccountPassword != "":
+                crossChainAccountEnvData = decrypt_file_return_contents(ErgoPath)
+                crossChainEncAccount = True
+            else:
+                print("password required for encrypted env file!")
+                exit()
         #ergo encrypted
     if os.path.isfile("EVM/Atomicity/" + CrossChainAccountName + "/.env.encrypted"):
         path = "EVM/Atomicity/" + CrossChainAccountName + "/.env.encrypted"
         if InitiatorChain == "Sepolia":
-            localChainAccountEnvData = decrypt_file_return_contents(path)
-            localChainEncAccount = True
+            if localChainAccountPassword != "":
+                localChainAccountEnvData = decrypt_file_return_contents(path)
+                localChainEncAccount = True
+            else:
+                print("password required for encrypted env file!")
+                exit()
         elif ResponderChain == "Sepolia":
-            crossChainAccountEnvData = decrypt_file_return_contents(path)
-            crossChainEncAccount = True
+            if crossChainAccountPassword != "":
+                crossChainAccountEnvData = decrypt_file_return_contents(path)
+                crossChainEncAccount = True
+            else:
+                print("password required for encrypted env file!")
+                exit()
         #sepolia encrypted
     if localChainEncAccount == False and crossChainEncAccount == False:
         if InitiatorChain.strip("\"") == "TestnetErgo" and ResponderChain.strip("\"") == "Sepolia":
