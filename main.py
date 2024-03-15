@@ -85,7 +85,7 @@ def test2pAtomicSwap(p1Chain1, p1Chain2, p2Chain1, p2Chain2):
     FT_ErgoToSepolia(p1Chain1, p1Chain2, p2Chain1, p2Chain2) 
 
 
-print("argslen: ", len(args))
+#print("argslen: ", len(args))
 
 if len(args) == 2:
     if args[1] == "firstRunCheck":
@@ -155,7 +155,6 @@ elif len(args) == 5:
         exit()
 elif len(args) == 6:
     if args[1] == "logInToPasswordEncryptedAccount":
-        print("logInToPasswordEncryptedAccount_ServerEndpoint")
         logInToPasswordEncryptedAccount_ServerEndpoint(args[2], args[3], args[4], args[5])
     if args[1] == "test2pAtomicSwap":
         test2pAtomicSwap(args[2], args[3], args[4], args[5])
@@ -166,7 +165,6 @@ elif len(args) == 9:
         exit()
 elif len(args) == 10:
     if args[1] == "initSepoliaAccountNonInteractive":
-#       print("initSepoliaAccountNonInteractive 10")
         initSepoliaAccountNonInteractive(args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9])
         exit()
     if args[1] == "publishNewOrderType_ServerEndpoint":
@@ -186,7 +184,6 @@ elif len(args) == 11:
                 args[6], args[7], args[8], localChainAccountPassword=args[9], crossChainAccountPassword=args[10])
         exit()
     if args[1] == "initSepoliaAccountNonInteractive_ENC":
-        print("initSepoliaAccountNonInteractive_ENC 11")
         initSepoliaAccountNonInteractive(
             args[2], args[3], args[4], args[5], args[6], args[7],
             args[8], args[9], enc=True, password=args[10]

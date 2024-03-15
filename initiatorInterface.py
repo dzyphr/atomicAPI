@@ -92,7 +92,7 @@ def GeneralizedENC_InitiationSubroutine(\
     if os.path.isfile(ErgoPath):
         if InitiatorChain == "TestnetErgo":
             if localChainAccountPassword != "":
-                localChainAccountEnvData = decrypt_file_return_contents(ErgoPath) #need to get password from somewhere
+                localChainAccountEnvData = decrypt_file_return_contents(ErgoPath, localChainAccountPassword) #need to get password from somewhere
                                                                         #server will be logged in passively
                 localChainEncAccount = True
             else:
@@ -100,7 +100,7 @@ def GeneralizedENC_InitiationSubroutine(\
                 exit()
         elif ResponderChain == "TestnetErgo":
             if crossChainAccountPassword != "":
-                crossChainAccountEnvData = decrypt_file_return_contents(ErgoPath)
+                crossChainAccountEnvData = decrypt_file_return_contents(ErgoPath, crossChainAccountPassword)
                 crossChainEncAccount = True
             else:
                 print("password required for encrypted env file!")
@@ -110,14 +110,14 @@ def GeneralizedENC_InitiationSubroutine(\
         path = "EVM/Atomicity/" + CrossChainAccountName + "/.env.encrypted"
         if InitiatorChain == "Sepolia":
             if localChainAccountPassword != "":
-                localChainAccountEnvData = decrypt_file_return_contents(path)
+                localChainAccountEnvData = decrypt_file_return_contents(path, localChainAccountPassword)
                 localChainEncAccount = True
             else:
                 print("password required for encrypted env file!")
                 exit()
         elif ResponderChain == "Sepolia":
             if crossChainAccountPassword != "":
-                crossChainAccountEnvData = decrypt_file_return_contents(path)
+                crossChainAccountEnvData = decrypt_file_return_contents(path, crossChainAccountPassword)
                 crossChainEncAccount = True
             else:
                 print("password required for encrypted env file!")
