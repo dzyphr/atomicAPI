@@ -13,14 +13,12 @@ from dotenv import dotenv_values, set_key
 args = sys.argv
 
 def updateMainEnv(Key, Val):
-#    env_content = dotenv_values('.env')
     return set_key('.env', Key, Val, quote_mode='never')
 
 def valFromConf(confPath, val):
     confParser = configparser.ConfigParser()
     confParser.read(confPath)
     return confParser['default'][val]
-
 
 def firstRunCheck():
     userjsonpath = "user.json"
@@ -56,7 +54,28 @@ def firstRunCheck():
                                     chain_framework_path + dirs + "/.env.encrypted"
                             os.popen(cmd).read()
 
-
+def createNonInteractive(fulldirpath, fullenvpath, envFormat, enc=False, password=""):
+    if enc == False:
+        if file_tools.clean_mkdir(fulldirpath) == True:
+            if os.path.isfile(fullenvpath):
+                print("Unhandled Edge Case: duplicate .env path found,  aborting")
+                return False
+            else:
+                file_tools.clean_file_open(fullenvpath, "w", envFormat)
+                return True
+    else:
+        if password == "":
+            print("PROVIDE PASSWORD WHEN ENCRYPTING ENV FILE")
+            return False
+        else:
+            if file_tools.clean_mkdir(fulldirpath) == True:
+                if os.path.isfile(fullenvpath):
+                    print("Unhandled Edge Case: duplicate .env path found,  aborting")
+                    return False
+                else:
+                    file_tools.clean_file_open(fullenvpath, "w", envFormat)
+                    encrypt_file(fullenvpath, password, delete=True)
+                    return True
 
 def initSepoliaAccountNonInteractive(\
         SepoliaSenderAddr, SepoliaPrivKey, Sepolia, SepoliaID, SepoliaScan, 
@@ -70,67 +89,21 @@ def initSepoliaAccountNonInteractive(\
         "SepoliaScan=\"" + SepoliaScan + "\"\n" + \
         "SolidityCompilerVersion=\"" + SolidityCompilerVersion + "\"\n"
 
-    def create(fulldirpath, fullenvpath, envFormat):
-        if enc == False:
-            if file_tools.clean_mkdir(fulldirpath) == True:
-                if os.path.isfile(fullenvpath):
-                    print("Unhandled Edge Case: duplicate .env path found,  aborting")
-                    return False
-                else:
-                    file_tools.clean_file_open(fullenvpath, "w", envFormat)
-                    return True
-        else:
-            if password == "":
-                print("PROVIDE PASSWORD WHEN ENCRYPTING ENV FILE")
-                return False
-            else:
-                if file_tools.clean_mkdir(fulldirpath) == True:
-                    if os.path.isfile(fullenvpath):
-                        print("Unhandled Edge Case: duplicate .env path found,  aborting")
-                        return False
-                    else:
-                        file_tools.clean_file_open(fullenvpath, "w", envFormat)
-                        encrypt_file(fullenvpath, password, delete=True)
-                        return True
-
-
-    create(fulldirpath, fullenvpath, envFormat)
+    createNonInteractive(fulldirpath, fullenvpath, envFormat, enc, password)
 
 
 def initErgoAccountNonInteractive(testnetNode, mnemonic, mnemonicPass, senderEIP3Secret, senderPubKey, 
         apiURL, fulldirpath, fullenvpath, enc=False, password=""):
     envFormat = \
-                "[default]\n" +\
-                "testnetNode=\"" + testnetNode + "\"\n" +\
-                "mnemonic=\"" + mnemonic + "\"\n" +\
-                "mnemonicPass=\"" + mnemonicPass + "\"\n" +\
-                "senderEIP3Secret=" + senderEIP3Secret + "\n" +\
-                "senderPubKey=\"" + senderPubKey + "\"\n" +\
-                "apiURL=\"" + apiURL + "\"\n"
+        "[default]\n" +\
+        "testnetNode=\"" + testnetNode + "\"\n" +\
+        "mnemonic=\"" + mnemonic + "\"\n" +\
+        "mnemonicPass=\"" + mnemonicPass + "\"\n" +\
+        "senderEIP3Secret=" + senderEIP3Secret + "\n" +\
+        "senderPubKey=\"" + senderPubKey + "\"\n" +\
+        "apiURL=\"" + apiURL + "\"\n"
 
-    def create(fulldirpath, fullenvpath, envFormat):
-        if file_tools.clean_mkdir(fulldirpath) == True:
-            if os.path.isfile(fullenvpath):
-                print("Unhandled Edge Case: duplicate .env path found,  aborting")
-                return False
-            else:
-                file_tools.clean_file_open(fullenvpath, "w", envFormat)
-                return True
-        else:
-            if password == "":
-                print("PROVIDE PASSWORD WHEN ENCRYPTING ENV FILE")
-                return False
-            else:
-                if file_tools.clean_mkdir(fulldirpath) == True:
-                    if os.path.isfile(fullenvpath):
-                        print("Unhandled Edge Case: duplicate .env path found,  aborting")
-                        return False
-                    else:
-                        file_tools.clean_file_open(fullenvpath, "w", envFormat)
-                        encrypt_file(fullenvpath, password, delete=True)
-                        return True
-
-    create(fulldirpath, fullenvpath, envFormat)
+    createNonInteractive(fulldirpath, fullenvpath, envFormat, enc, password)
 
 def initializeAccount(accountName, chain): #interactive command line function to setup .env files
     implemented_chains = ["Ergo", "Sepolia"]
@@ -173,7 +146,6 @@ def initializeAccount(accountName, chain): #interactive command line function to
                         encrypt_file(fullenvpath, password, delete=True)
                         print(chain, "Account: ", accountName, " created!")
                         return True
-
         else:
             if enc == False:
                 file_tools.clean_file_open(fullenvpath, "w", envFormat)

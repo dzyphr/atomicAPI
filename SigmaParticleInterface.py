@@ -22,12 +22,9 @@ def SigmaParticle_addNodeEndpoint(nodeurl, accountName):
         else:
 '''
 
-    
-
 def SigmaParticle_newFrame(swapName):
     cmd = "cd " + str(SigmaParticlePath)  + " && ./new_frame " + str(swapName)
     os.popen(cmd).read()
-
 
 def is_json(myjson):
     try:
@@ -36,13 +33,13 @@ def is_json(myjson):
         return False
     return True
 
-def SigmaParticle_box_to_addr(boxId):
+def SigmaParticle_box_to_addr(boxId, password=""):
     tries = 60
     while tries > 0:
         try:
-            tree = SigmaParticle_getTreeFromBox(boxId)
+            tree = SigmaParticle_getTreeFromBox(boxId, password=password)
             treeToAddrCmd = \
-                        "cd " + SigmaParticlePath + "treeToAddr && ./deploy.sh " + tree
+                        "cd " + SigmaParticlePath + "treeToAddr && ./deploy.sh " + tree + " " + password
             res = os.popen(treeToAddrCmd).read()
             if is_json(res) == True:
                 addr = json.loads(res)["address"]
@@ -57,7 +54,6 @@ def SigmaParticle_box_to_addr(boxId):
             tries = tries - 1
             continue
     return "attempts exhausted looking for this box: " + boxId
-
 
 def SigmaParticle_CheckLockTimeAtomicSchnorr(swapName, boxId):
     lockHeightCMD = \
@@ -207,17 +203,17 @@ def SigmaParticle_updateKeyEnv(swapName, targetKeyEnvDirName):
     os.popen(cmd).read()
     
 
-def SigmaParticle_getTreeFromBox(boxID):
+def SigmaParticle_getTreeFromBox(boxID, password=""):
     cmd = \
-            "cd " + SigmaParticlePath + "getTreeFromBox && ./deploy.sh " + boxID
+            "cd " + SigmaParticlePath + "getTreeFromBox && ./deploy.sh " + boxID + " " + password
     return os.popen(cmd).read()
 
-def deployErgoContract(swapName):
-    command = "cd " + SigmaParticlePath + swapName + " && ./deploy.sh deposit"
+def deployErgoContract(swapName, password=""):
+    command = "cd " + SigmaParticlePath + swapName + " && ./deploy.sh deposit " + password
     os.popen(command).read()
 
-def getBoxID(swapName):
-    return file_tools.clean_file_open(SigmaParticlePath + swapName + "/boxId", "r")
+def getBoxID(swapName, password=""):
+    return file_tools.clean_file_open(SigmaParticlePath + swapName + "/boxId " + password, "r")
 
 def checkBoxValue(boxID, boxValPATH, swapName, role=None):
     while True:
@@ -243,11 +239,12 @@ def checkBoxValue(boxID, boxValPATH, swapName, role=None):
             return response #returns box value in nano Ergs (nΣ)
             break
 
-def checkSchnorrTreeForClaim(boxID, swapName, initiatorMasterJSONPath):
+def checkSchnorrTreeForClaim(boxID, swapName, initiatorMasterJSONPath, password=""):
     while True:
         tree = file_tools.clean_file_open(SigmaParticlePath + swapName + "/ergoTree", "r")
         treeToAddrCmd = \
-                "cd " + SigmaParticlePath + "treeToAddr && ./deploy.sh " + tree
+                "cd " + SigmaParticlePath + "treeToAddr && ./deploy.sh " + tree + " " + SigmaParticlePath + \
+                swapName + "/scriptAddr" + password
         addr = json.loads(os.popen(treeToAddrCmd).read())["address"]
         boxFilterCmd = \
                 "cd " + SigmaParticlePath + "boxFilter && " + \
@@ -263,7 +260,7 @@ def checkSchnorrTreeForClaim(boxID, swapName, initiatorMasterJSONPath):
         else:
 #            print("no atomic swap claim found...")
             #check contract lock time here for refund
-            remainingLocalLockTime = SigmaParticle_CheckLockTimeAtomicSchnorr(swapName, boxID)
+            remainingLocalLockTime = SigmaParticle_CheckLockTimeAtomicSchnorr(swapName, boxID, password=password)
             if type(remainingLocalLockTime) == int:
                 if remainingLocalLockTime <= 0:
                     #claim refund here

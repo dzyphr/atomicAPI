@@ -9,7 +9,7 @@ from web3 import Web3
 from solcx import compile_standard, install_solc, compile_files
 import json
 import sys
-
+from passwordFileEncryption import get_val_from_envdata_key, decrypt_file_return_contents
 
 solcV = os.getenv('SolidityCompilerVersion') #solidity compiler version
 contractName = os.getenv('ContractName') #this variable is set when creating a new_frame
@@ -34,28 +34,15 @@ else:
     verifyBlockExplorer = False
 
 
-def senderReclaim(addr, gas=None, gasMod=None):
+def senderReclaim(addr, gas=None, gasMod=None, password=""):
     if gas == None:
         gas = 10000000
     if gasMod == None:
         gasMod = 2
-    if chain == "Goerli":
-        rpc = Web3(Web3.HTTPProvider(os.getenv('Goerli')))
-        chain_id = int(os.getenv('GoerliID')) #use int so it doesnt interpret env variable as string values
-        senderAddr = os.getenv('GoerliSenderAddr')
-        senderPrivKey = os.getenv('GoerliPrivKey')
-    elif chain == "Sepolia":
-        rpc = Web3(Web3.HTTPProvider(os.getenv('Sepolia')))
-        chain_id = int(os.getenv('SepoliaID'))
-        senderAddr = os.getenv('SepoliaSenderAddr')
-        senderPrivKey = os.getenv('SepoliaPrivKey')
+    rpc, chain_id, senderAddr, senderPrivKey, url = pickChain(password)
     f = open("../AtomicMultisig_ABI_0.0.1.json")
     abi = f.read()
     f.close()
-    if chain == "Goerli":
-        rpc = Web3(Web3.HTTPProvider(os.getenv('Goerli')))
-    elif chain == "Sepolia":
-        rpc = Web3(Web3.HTTPProvider(os.getenv('Sepolia')))
     contract = rpc.eth.contract(address=addr, abi=abi)
     tx = contract.functions.senderReclaim().buildTransaction(
         {
@@ -71,21 +58,12 @@ def senderReclaim(addr, gas=None, gasMod=None):
     tx_receipt = rpc.eth.wait_for_transaction_receipt(send_tx)
     print(tx_receipt)
 
-def claim(addr, x, gas=None, gasMod=None):
+def claim(addr, x, gas=None, gasMod=None, password=""):
     if gas == None:
         gas = 8000000
     if gasMod == None:
         gasMod = 1
-    if chain == "Goerli":
-        rpc = Web3(Web3.HTTPProvider(os.getenv('Goerli')))
-        chain_id = int(os.getenv('GoerliID')) #use int so it doesnt interpret env variable as string values
-        senderAddr = os.getenv('GoerliSenderAddr')
-        senderPrivKey = os.getenv('GoerliPrivKey')
-    elif chain == "Sepolia":
-        rpc = Web3(Web3.HTTPProvider(os.getenv('Sepolia')))
-        chain_id = int(os.getenv('SepoliaID'))
-        senderAddr = os.getenv('SepoliaSenderAddr')
-        senderPrivKey = os.getenv('SepoliaPrivKey')
+    rpc, chain_id, senderAddr, senderPrivKey, url = pickChain(password)
     f = open("../AtomicMultisig_ABI_0.0.1.json")
     abi = f.read()
     f.close()
@@ -107,19 +85,19 @@ def claim(addr, x, gas=None, gasMod=None):
     send_tx = rpc.eth.send_raw_transaction(signed_tx.rawTransaction)
     tx_receipt = rpc.eth.wait_for_transaction_receipt(send_tx)
     print(tx_receipt)
-
-
 #    processed_logs = contract.events.myEvent().process_receipt(tx_receipt)
 #    print(dir(tx_receipt))
 
-def checkRemainingLockTime(addr, filepath=None):
-    if checkLockHeight(addr) >= getHeight():
+def checkRemainingLockTime(addr, filepath=None, password=""):
+    lockheight = checkLockHeight(addr, password=password)
+    currentheight = getHeight(password=password)
+    if lockheight >= currentheight:
         if filepath != None:
             f = open(filepath, "w")
-            f.write(str(int(checkLockHeight(addr)) - int(getHeight())))
+            f.write(str(int(lockheight) - int(currentheight)))
             f.close()
-        sys.stdout.write(str(int(checkLockHeight(addr)) - int(getHeight())))
-        return int(checkLockHeight(addr)) - int(getHeight())
+        sys.stdout.write(str(int(lockheight) - int(currentheight)))
+        return int(lockheight) - int(currentheight)
     else:
         if filepath != None:
             f = open(filepath, "w")
@@ -128,35 +106,23 @@ def checkRemainingLockTime(addr, filepath=None):
         sys.stdout.write("0")
         return 0
 
-def getHeight():
-    if chain == "Goerli":
-        rpc = Web3(Web3.HTTPProvider(os.getenv('Goerli')))
-        return int(rpc.eth.get_block_number())
-    elif chain == "Sepolia":
-        rpc = Web3(Web3.HTTPProvider(os.getenv('Sepolia')))
-        return int(rpc.eth.get_block_number())
+def getHeight(password=""):
+    rpc, chain_id, senderAddr, senderPrivKey, url = pickChain(password)
+    return int(rpc.eth.get_block_number())
 
-def checkLockHeight(addr):
+def checkLockHeight(addr, password=""):
     f = open("../AtomicMultisig_ABI_0.0.1.json")
     abi = f.read()
     f.close()
-    if chain == "Goerli":
-        rpc = Web3(Web3.HTTPProvider(os.getenv('Goerli')))
-        contract = rpc.eth.contract(address=addr, abi=abi)
-        return int(contract.functions.lockHeight().call())
-    elif chain == "Sepolia":
-        rpc = Web3(Web3.HTTPProvider(os.getenv('Sepolia')))
-        contract = rpc.eth.contract(address=addr, abi=abi)
-        return int(contract.functions.lockHeight().call())
+    rpc, chain_id, senderAddr, senderPrivKey, url = pickChain(password)
+    contract = rpc.eth.contract(address=addr, abi=abi)
+    return int(contract.functions.lockHeight().call())
 
-def checkCoords(addr):  #TODO: check curve constants against expected as well as receiver pubkey against specified pubkey
+def checkCoords(addr, password=""):  #TODO: check curve constants against expected as well as receiver pubkey against specified pubkey
     f = open("../AtomicMultisig_ABI_0.0.1.json")
     abi = f.read()
     f.close()
-    if chain == "Goerli":
-        rpc = Web3(Web3.HTTPProvider(os.getenv('Goerli')))
-    elif chain == "Sepolia":
-        rpc = Web3(Web3.HTTPProvider(os.getenv('Sepolia')))
+    rpc, chain_id, senderAddr, senderPrivKey, url = pickChain(password)
     contract = rpc.eth.contract(address=addr, abi=abi)
     x = contract.functions.gxX().call()
     y = contract.functions.gxY().call()
@@ -169,58 +135,34 @@ def checkCoords(addr):  #TODO: check curve constants against expected as well as
         #technically this should be checked in the contract's constructor given we are using the same contract coordinated by the
         #contract abi hash, however ultimately its good practice for the counterparty to check curve validity
 
-def getXCoord(addr):
+def getXCoord(addr, password=""):
     f = open("../AtomicMultisig_ABI_0.0.1.json")
     abi = f.read()
     f.close()
-    if chain == "Goerli":
-        rpc = Web3(Web3.HTTPProvider(os.getenv('Goerli')))
-    elif chain == "Sepolia":
-        rpc = Web3(Web3.HTTPProvider(os.getenv('Sepolia')))
+    rpc, chain_id, senderAddr, senderPrivKey, url = pickChain(password)
     contract = rpc.eth.contract(address=addr, abi=abi)
     sys.stdout.write(str(contract.functions.gxX().call()))
 
-def getYCoord(addr):
+def getYCoord(addr, password=""):
     f = open("../AtomicMultisig_ABI_0.0.1.json")
     abi = f.read()
     f.close()
-    if chain == "Goerli":
-        rpc = Web3(Web3.HTTPProvider(os.getenv('Goerli')))
-    elif chain == "Sepolia":
-        rpc = Web3(Web3.HTTPProvider(os.getenv('Sepolia')))
+    rpc, chain_id, senderAddr, senderPrivKey, url = pickChain(password)
     contract = rpc.eth.contract(address=addr, abi=abi)
     sys.stdout.write(str(contract.functions.gxY().call()))
 
 
-def getAccount():
-    if chain == "Goerli":
-        sys.stdout.write(os.getenv('GoerliSenderAddr'))
-    elif chain == "Sepolia":
-        sys.stdout.write(os.getenv("SepoliaSenderAddr"))
+def getAccount(password=""):
+    rpc, chain_id, senderAddr, senderPrivKey, url = pickChain(password)
+    sys.stdout.write(senderAddr)
 
-def getBalance(address):
-    if chain == "Goerli":
-        rpc = Web3(Web3.HTTPProvider(os.getenv('Goerli')))
-        bal = str(rpc.eth.get_balance(address))
-        sys.stdout.write(bal)
-    elif chain == "Sepolia":
-        rpc = Web3(Web3.HTTPProvider(os.getenv('Sepolia')))
-        bal = str(rpc.eth.get_balance(address))
-        sys.stdout.write(bal)
 
-def sendAmount(amount, receiver):
-    if chain == "Goerli":
-        rpc = Web3(Web3.HTTPProvider(os.getenv('Goerli')))
-        chain_id = int(os.getenv('GoerliID')) #use int so it doesnt interpret env variable as string values
-        senderAddr = os.getenv('GoerliSenderAddr')
-        senderPrivKey = os.getenv('GoerliPrivKey')
-        url = os.getenv('GoerliScan')
-    elif chain == "Sepolia":
-        rpc = Web3(Web3.HTTPProvider(os.getenv('Sepolia')))
-        chain_id = int(os.getenv('SepoliaID'))
-        senderAddr = os.getenv('SepoliaSenderAddr')
-        senderPrivKey = os.getenv('SepoliaPrivKey')
-        url = os.getenv('SepoliaScan')
+def getBalance(address, password=""):
+    rpc, chain_id, senderAddr, senderPrivKey, url = pickChain(password)
+    bal = str(rpc.eth.get_balance(address))
+
+def sendAmount(amount, receiver, password=""):
+    rpc, chain_id, senderAddr, senderPrivKey, url = pickChain(password)
     nonce = rpc.eth.get_transaction_count(senderAddr)
     gasprice = rpc.eth.gas_price * gasMod
     startgas = 70000
@@ -238,22 +180,41 @@ def sendAmount(amount, receiver):
     signed = rpc.eth.account.sign_transaction(txdata, senderPrivKey)
     rpc.eth.send_raw_transaction(signed.rawTransaction)
 
-def pickChain():
+def pickChain(password=""):
     #PICK THE CHAIN HERE #fills all chain specific args with env variables
+    #TODO idea: use this to remove chain logic flow from beggining of all other functions???
     if chain == "Goerli":
-        rpc = Web3(Web3.HTTPProvider(os.getenv('Goerli')))
-        chain_id = int(os.getenv('GoerliID')) #use int so it doesnt interpret env variable as string values
-        senderAddr = os.getenv('GoerliSenderAddr')
-        senderPrivKey = os.getenv('GoerliPrivKey')
-        url = os.getenv('GoerliScan')
-        return rpc, chain_id, senderAddr, senderPrivKey, url
+        if password == "":
+            rpc = Web3(Web3.HTTPProvider(os.getenv('Goerli')))
+            chain_id = int(os.getenv('GoerliID')) #use int so it doesnt interpret env variable as string values
+            senderAddr = os.getenv('GoerliSenderAddr')
+            senderPrivKey = os.getenv('GoerliPrivKey')
+            url = os.getenv('GoerliScan')
+            return rpc, chain_id, senderAddr, senderPrivKey, url
+        else:
+            envdata = decrypt_file_return_contents(".env.encrypted", password)
+            rpc = Web3(Web3.HTTPProvider(get_val_from_envdata_key('Goerli', envdata).strip('"\"')))
+            chain_id = int(get_val_from_envdata_key('GoerliID', envdata).strip('"\"')) #use int so it doesnt interpret env variable as string values
+            senderAddr = get_val_from_envdata_key('GoerliSenderAddr', envdata).strip('"\"')
+            senderPrivKey = get_val_from_envdata_key('GoerliPrivKey', envdata).strip('"\"')
+            url = get_val_from_envdata_key('GoerliScan', envdata).strip('"\"')
+            return rpc, chain_id, senderAddr, senderPrivKey, url
     elif chain == "Sepolia":
-        rpc = Web3(Web3.HTTPProvider(os.getenv('Sepolia')))
-        chain_id = int(os.getenv('SepoliaID'))
-        senderAddr = os.getenv('SepoliaSenderAddr')
-        senderPrivKey = os.getenv('SepoliaPrivKey')
-        url = os.getenv('SepoliaScan')
-        return rpc, chain_id, senderAddr, senderPrivKey, url
+        if password == "":
+            rpc = Web3(Web3.HTTPProvider(os.getenv('Sepolia')))
+            chain_id = int(os.getenv('SepoliaID'))
+            senderAddr = os.getenv('SepoliaSenderAddr')
+            senderPrivKey = os.getenv('SepoliaPrivKey')
+            url = os.getenv('SepoliaScan')
+            return rpc, chain_id, senderAddr, senderPrivKey, url
+        else:
+            envdata = decrypt_file_return_contents(".env.encrypted", password)
+            rpc = Web3(Web3.HTTPProvider(get_val_from_envdata_key('Sepolia', envdata).strip('"\"')))
+            chain_id = int(get_val_from_envdata_key('SepoliaID', envdata).strip('"\"'))
+            senderAddr = get_val_from_envdata_key('SepoliaSenderAddr', envdata).strip('"\"')
+            senderPrivKey = get_val_from_envdata_key('SepoliaPrivKey', envdata).strip('"\"')
+            url = get_val_from_envdata_key('SepoliaScan', envdata).strip('"\"')
+            return rpc, chain_id, senderAddr, senderPrivKey, url
 
 
 def getContract():
@@ -281,6 +242,7 @@ def checkMultiFile():
     #        print("failed to flatten multi-file contract, verification wont succeed automatically!")
             if verifyBlockExplorer == True:
                 exit(1)
+
 def compileContract():
     install_solc(solcV)
     #NOTE: Theoretically we can just default to compile_files later right now its convinient to use working impls
@@ -314,8 +276,6 @@ def compileContract():
             solc_version=solcV,
         )
         return compilation
-
-
 
 
                             #set whether to verify on block explorer
@@ -354,9 +314,7 @@ def exportBytecode(compilation):                            #turn off when using
 
 
 def uploadContract(rpc, abi, bytecode, gas=None, gasModExtra=None):
-
     InitContract = rpc.eth.contract(abi=abi, bytecode=bytecode)
-
     #print("current gas price :", rpc.eth.gas_price );
     if gas == None:
         gas = 8000000
@@ -491,9 +449,6 @@ def checkVerifStatus(guid,  url, fresh):
         print(response.decode("utf-8"))
         #TODO:automate check for failure case save reason to file
 
-
-
-
 def grabExistingContractAddr():
     if os.path.isfile(contractName + "-addr"):
         f = open(contractName + "-addr", "r")
@@ -507,18 +462,28 @@ def grabExistingContractAddr():
 args_n = len(sys.argv)
 if args_n > 1:
     if sys.argv[1] == "getAccount":
-        getAccount()
-        exit()
+        if args_n == 2:
+            getAccount()
+            exit()
+        elif args_n == 3:
+            getAccount(password=sys.argv[2])
+            exit()
     elif sys.argv[1] == "sendAmount":
-        if args_n > 3:
+        if args_n == 4:
             sendAmount(sys.argv[2], sys.argv[3])
+            exit()
+        elif args_n == 5:
+            sendAmount(sys.argv[2], sys.argv[3], password=sys.argv[4])
             exit()
         else:
             print("enter amount(in wei), receiver evm pubkey as followup arguments to sendAmount")
             exit()
     elif sys.argv[1] == "getBalance":
-        if args_n > 2:
+        if args_n == 3:
             getBalance(sys.argv[2])
+            exit()
+        if args_n == 4:
+            getBalance(sys.argv[2], password=sys.argv[3])
             exit()
         else:
             print("enter address to get balance from as followup argument")
@@ -527,29 +492,44 @@ if args_n > 1:
         if args_n > 2:
             checkCoords(sys.argv[2])
             exit()
+        elif args_n > 3:
+            checkCoords(sys.argv[2], password=sys.argv[3])
+            exit()
         else:
             print("enter the address to check as followup argument")
             exit()
     elif sys.argv[1] == "getXCoord":
-        if args_n > 2:
+        if args_n == 3:
             getXCoord(sys.argv[2])
+            exit()
+        if args_n == 4:
+            getXCoord(sys.argv[2], password=sys.argv[3])
             exit()
         else:
             print("enter the address to check as followup argument")
             exit()
     elif sys.argv[1] == "getYCoord":
-        if args_n > 2:
+        if args_n == 3:
             getYCoord(sys.argv[2])
+            exit()
+        if args_n == 4:
+            getYCoord(sys.argv[2], password=sys.argv[3])
             exit()
         else:
             print("enter the address to check as followup argument")
             exit()
     elif sys.argv[1] == "claim":
-        if args_n > 3 :
+        if args_n == 4 :
             claim(sys.argv[2], sys.argv[3])
             exit()
-        if args_n > 5:
+        if args_n == 5:
+            claim(sys.argv[2], sys.argv[3], password=sys.argv[5])
+            exit()
+        if args_n == 6:
             claim(sys.argv[2], sys.argv[3], gas=sys.argv[4], gasMod=sys.argv[5])
+            exit()
+        if args_n > 6:
+            claim(sys.argv[2], sys.argv[3], gas=sys.argv[4], gasMod=sys.argv[5], password=sys.argv[6])
             exit()
         else :
             print("enter the address, x, optional: gas and gasMod as followup arguments")
@@ -558,8 +538,14 @@ if args_n > 1:
         if args_n == 3 :
             senderReclaim(sys.argv[2])
             exit()
+        if args_n == 4 :
+            senderReclaim(sys.argv[2], password=sys.argv[3])
+            exit()
         if args_n == 5  : 
             senderReclaim(sys.argv[2], gas=sys.argv[3], gasMod=sys.argv[4])
+            exit()
+        if args_n == 6  :
+            senderReclaim(sys.argv[2], gas=sys.argv[3], gasMod=sys.argv[4], password=sys.argv[5])
             exit()
         else:
             print("enter the address, optional: gas and gasMod as followup arguments")
@@ -571,9 +557,11 @@ if args_n > 1:
         if args_n == 4:
             checkRemainingLockTime(sys.argv[2], sys.argv[3])
             exit()
+        if args_n == 5:
+            checkRemainingLockTime(sys.argv[2], sys.argv[3], password=sys.argv[4])
+        #if args_n == 5: then env is encrypted and use this arg implicitly as password
         else:
             print("enter address, optional: filepath as follup arguments")
-
     elif sys.argv[1] == "verify":
         time.sleep(30)
         rpc, chain_id, senderAddr, senderPrivKey, url = pickChain()
@@ -597,8 +585,8 @@ if args_n > 1:
             APISolcV = getSOLCVersion()
 #            verify(flat, contractAddr, APISolcV, url, True)
             exit()
-
 else:
+    #normal deploy / hardcoded gas rate
     rpc, chain_id, senderAddr, senderPrivKey, url = pickChain()
     getContract()
     flat = checkMultiFile()

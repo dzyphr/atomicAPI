@@ -35,6 +35,7 @@ def main(contractName, ergo, wallet_mnemonic, mnemonic_password, senderAddress, 
                 addr = json.loads(response)["address"]
                 f.write(addr)
                 f.close()
+                print(response)
             else:
                 print(response)
         except Exception as err:

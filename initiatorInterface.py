@@ -27,6 +27,7 @@ def initiation(crossChainPubKey, initiatorChain, crossChain): #returns an initia
     return os.popen(py + AtomicSwapECCPath + "p1Initiate " + crossChainPubKey + s_ + initiatorChain + s_ + crossChain).read()
 
 def sanitizeInitiation(initiationJSON): #this can be done at the SigmaParticle framework level easily instead of here
+    #TODO redo this with cleaner json framework
     j = json.loads(initiationJSON)
     ksG = j["ksG"]
     ks = j["ks"]
@@ -43,22 +44,35 @@ def sanitizeInitiation(initiationJSON): #this can be done at the SigmaParticle f
             .rstrip()
     return strip1
 
-def inspectResponse(DEC_response_filepath, swapName):
+def inspectResponse(DEC_response_filepath, swapName, password=""):
     j_response = json.loads(file_tools.clean_file_open(DEC_response_filepath, "r"))
     if "responderLocalChain" not in j_response or "responderContractAddr" not in j_response:
         print("Error: response does not have expected keys")
         return "Error: response does not have expected keys"
-    else:
-        fundedAmount = AtomicityInterface.Atomicity_CheckContractFunds(j_response)
-        remainingLockTime = AtomicityInterface.Atomicity_RemainingLockTimeAtomicMultisig_v_002(j_response, swapName)
-        if fundedAmount == "" or fundedAmount == None:
-            fundedAmount = 0
-#        print("contractAmount: ", fundedAmount, " wei")
-        inspectScalarContractObject = {
-                "counterpartyContractFundedAmount": fundedAmount,
-                "remainingLockTime": remainingLockTime
-        }
-        return json.dumps(inspectScalarContractObject)
+    else: 
+        if password == "": #password doesnt have an effect when empty might not need logic to pass it into functions
+            fundedAmount = AtomicityInterface.Atomicity_CheckContractFunds(j_response)
+            remainingLockTime = AtomicityInterface.Atomicity_RemainingLockTimeAtomicMultisig_v_002(j_response, swapName)
+            if fundedAmount == "" or fundedAmount == None:
+                fundedAmount = 0
+    #        print("contractAmount: ", fundedAmount, " wei")
+            inspectScalarContractObject = {
+                    "counterpartyContractFundedAmount": fundedAmount,
+                    "remainingLockTime": remainingLockTime
+            }
+            return json.dumps(inspectScalarContractObject)
+        else:
+            fundedAmount = AtomicityInterface.Atomicity_CheckContractFunds(j_response, password=password)
+            remainingLockTime = \
+                    AtomicityInterface.Atomicity_RemainingLockTimeAtomicMultisig_v_002(j_response, swapName, password=password)
+            if fundedAmount == "" or fundedAmount == None:
+                fundedAmount = 0
+    #        print("contractAmount: ", fundedAmount, " wei")
+            inspectScalarContractObject = {
+                    "counterpartyContractFundedAmount": fundedAmount,
+                    "remainingLockTime": remainingLockTime
+            }
+            return json.dumps(inspectScalarContractObject)
 
 def finalizeSwap(initiatorMasterJSONPath):
     j = json.loads(file_tools.clean_file_open(initiatorMasterJSONPath, "r"))
@@ -133,11 +147,13 @@ def GeneralizedENC_InitiationSubroutine(\
                 "ResponderChain" : ResponderChain.strip("\"").rstrip(),
                 "initiatorJSONPath" : swapName.strip("\"").rstrip() + "/initiator.json", #initiators local swap session json state
                 "initiatorEVMAddr" : \
-                get_val_from_envdata_key('SepoliaSenderAddr', crossChainAccountEnvData),
+                    config_tools.valFromConf("EVM/Atomicity/" + CrossChainAccountName + "/.env", 'SepoliaSenderAddr'),
                 "InitiatorEIP3Secret".replace('"', '').rstrip() : \
-                get_val_from_envdata_key('senderEIP3Secret', localChainAccountEnvData).replace('"', '').rstrip(),
-                    "InitiatorErgoAddr" : \
-                get_val_from_envdata_key('senderPubKey', localChainAccountEnvData).replace('"', '').rstrip(),
+                    config_tools.valFromConf("Ergo/SigmaParticle/" + \
+                    LocalChainAccountName.strip("\"").rstrip()  + "/.env", 'senderEIP3Secret').replace('"', '').rstrip(),
+                "InitiatorErgoAddr" : \
+                    config_tools.valFromConf("Ergo/SigmaParticle/" + \
+                    LocalChainAccountName.strip("\"").rstrip() + "/.env", 'senderPubKey').replace('"', '').rstrip(),
                 "privateInitPATH" : swapName.strip("\"").rstrip() + "/priv_init.json",
                 "publicInitPATH" : swapName.strip("\"").rstrip() + "/public_init.json",
                 "ENC_Init_PATH" : swapName.strip("\"").rstrip()+ "/ENC_init.bin",
@@ -204,7 +220,7 @@ def GeneralizedENC_InitiationSubroutine(\
 
 
 
-def GeneralizedENC_FinalizationSubroutine(initiatorJSONPath, CoinA_Price, CoinB_Price):
+def GeneralizedENC_FinalizationSubroutine(initiatorJSONPath, CoinA_Price, CoinB_Price, localchainpassword="", crosschainpassword=""):
     init_J = json_tools.ojf(initiatorJSONPath)
     if init_J["InitiatorChain"] == "TestnetErgo" and init_J["ResponderChain"] == "Sepolia":
         swapName = init_J["swapName"]
@@ -227,7 +243,7 @@ def GeneralizedENC_FinalizationSubroutine(initiatorJSONPath, CoinA_Price, CoinB_
         AtomicityInterface.Atomicity_newFrame(swapName, responderLocalChain)
         print("wait for contract upload and funding")
         time.sleep(30)
-        inspect_json = inspectResponse(DEC_Response_PATH, init_J["swapName"])
+        inspect_json = inspectResponse(DEC_Response_PATH, init_J["swapName"], password=crosschainpassword)
         if inspect_json == "Error: response does not have expected keys":
             print("fail")
             exit()
@@ -243,7 +259,7 @@ def GeneralizedENC_FinalizationSubroutine(initiatorJSONPath, CoinA_Price, CoinB_
         if int(contractFunds) < int(minimum_wei):
             print("not enough wei in contract, fail")
             exit()
-        if AtomicityInterface.Atomicity_compareScalarContractCoords(swapName, addr, xG[0], xG[1]) == False:
+        if AtomicityInterface.Atomicity_compareScalarContractCoords(swapName, addr, xG[0], xG[1], password=crosschainpassword) == False:
             print("on chain contract does not meet offchain contract spec, do not fulfil this swap!")
             exit()
         convList = price_tools.getPriceConversions(price_tools.weiToEth(contractFunds), CoinA_Price, CoinB_Price)
@@ -251,9 +267,13 @@ def GeneralizedENC_FinalizationSubroutine(initiatorJSONPath, CoinA_Price, CoinB_
         file_tools.clean_file_open(finalizationPATH, "w", finalizeOBJ)
         finalizeOBJ_LIST = json_tools.json_to_keyValList(finalizationPATH)
         json_tools.keyVal_list_update(finalizeOBJ_LIST, initiatorJSONPath)
-        SigmaParticleInterface.BuildAtomicSchnorrContract(initiatorJSONPath, MINIMUM_REFUND_LOCKTIME_ERGO, swapName, price_tools.ErgToNanoErg(convList[1]))
-        SigmaParticleInterface.deployErgoContract(swapName) #TODO generalize based on chain
-        boxId = SigmaParticleInterface.getBoxID(swapName)
+        #TODO impl passwords in sigmaparticleinterface fns
+        SigmaParticleInterface.BuildAtomicSchnorrContract(
+                initiatorJSONPath, MINIMUM_REFUND_LOCKTIME_ERGO, swapName, \
+                price_tools.ErgToNanoErg(convList[1]) \
+        )
+        SigmaParticleInterface.deployErgoContract(swapName, password=localchainpassword) #TODO generalize based on chain
+        boxId = SigmaParticleInterface.getBoxID(swapName, password=localchainpassword)
         InitiatorAtomicSchnorrLockHeight = file_tools.clean_file_open("Ergo/SigmaParticle/" + swapName + "/lockHeight", "r")
         contractKeyValList = [{"boxId":boxId, "InitiatorAtomicSchnorrLockHeight":InitiatorAtomicSchnorrLockHeight, \
                 "InitiatorErgoAddr":InitiatorErgoAddr}]
@@ -263,18 +283,18 @@ def GeneralizedENC_FinalizationSubroutine(initiatorJSONPath, CoinA_Price, CoinB_
    
     #GeneralizedENC_InitiatorClaimSubroutine(init_J["initiatorJSONPath"])
 
-def GeneralizedENC_InitiatorClaimSubroutine(initiatorJSONPath):
+def GeneralizedENC_InitiatorClaimSubroutine(initiatorJSONPath, localchainpassword="", crosschainpassword=""):
     ############## INITIATOR #######################################################
     init_J = json.loads(file_tools.clean_file_open(initiatorJSONPath, "r"))
     if init_J["InitiatorChain"] == "TestnetErgo" and init_J["ResponderChain"] == "Sepolia":
         swapName = init_J["swapName"]
         boxID = init_J["boxId"]
         initiatorEVMAccountName = init_J["InitiatorEVMAccountName"] 
-        if SigmaParticleInterface.checkSchnorrTreeForClaim(boxID, swapName, initiatorJSONPath) == False:
+        if SigmaParticleInterface.checkSchnorrTreeForClaim(boxID, swapName, initiatorJSONPath, password=localchainpassword) == False:
             print("refund attempted due to timelock expiry")
             exit()
         SigmaParticleInterface.deduceX_fromAtomicSchnorrClaim(initiatorJSONPath, swapName)
         AtomicityInterface.Atomicity_updateKeyEnv(swapName, initiatorEVMAccountName)
-        AtomicityInterface.Atomicity_claimScalarContract(initiatorJSONPath, swapName, gasMod=3)
+        AtomicityInterface.Atomicity_claimScalarContract(initiatorJSONPath, swapName, gasMod=3, password=crosschainpassword)
     ################################################################################
 

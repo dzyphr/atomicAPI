@@ -3,18 +3,23 @@ import file_tools
 Atomicity = "EVM/Atomicity/"
 
 
-def Atomicity_CheckContractFunds(j_response):
+def Atomicity_CheckContractFunds(j_response, password=""):
     chain = j_response["responderLocalChain"]
     contractAddr = j_response["responderContractAddr"]
     if chain == "Sepolia":
-        value = os.popen("cd " + Atomicity  + chain + "  && python3 -u py/deploy.py getBalance " + contractAddr).read()
-        return value
+            value = \
+                    os.popen(\
+                        "cd " + Atomicity  + chain + \
+                        " && python3 -u py/deploy.py getBalance " + \
+                        contractAddr + " " + password\
+                    ).read()
+            return value
 
-def Atomicity_SendFunds(addr, amount_wei, swapName, gas=None, gasMod=None):
+def Atomicity_SendFunds(addr, amount_wei, swapName, gas=None, gasMod=None, password=""):
     swapName = "Swap_" + swapName.replace("-", "")
     cmd = "cd " + Atomicity + \
             swapName + " && ./deploy.sh sendAmount " + \
-            str(amount_wei) + " " + addr
+            str(amount_wei) + " " + addr + " " + password
     return os.popen(cmd).read()
 
 def Atomicity_newFrame(swapName, chain, multiFile=None, constructorArgs=None):
@@ -28,38 +33,40 @@ def Atomicity_newFrame(swapName, chain, multiFile=None, constructorArgs=None):
     os.popen(cmd).read()
     os.popen(specChain).read()
 
-def Atomicity_Refund(swapName, role, gas=None, gasMod=None):
+def Atomicity_Refund(swapName, role, gas=None, gasMod=None, password=""):
     formattedSwapName = "Swap_" + swapName.replace("-", "")
     if role == "responder":
         if gas == None or gasMod == None:
             addr = json_tools.ojf(swapName + "/response_path.json")["responderContractAddr"]
             refundCMD = \
-                    "cd " + Atomicity + formattedSwapName + " && ./deploy.sh refund " + addr
+                    "cd " + Atomicity + formattedSwapName + " && ./deploy.sh refund " + addr + " " + password
             return os.popen(refundCMD).read()
         else:
             addr = json_tools.ojf(swapName + "/response_path.json")["responderContractAddr"]
             refundCMD = \
-                    "cd " + Atomicity + formattedSwapName + " && ./deploy.sh refund " + addr + " " + str(gas) + " " + str(gasMod)
+                    "cd " + Atomicity + formattedSwapName + " && ./deploy.sh refund " +\
+                    addr + " " + str(gas) + " " + str(gasMod) + " " + password
             print(refundCMD)
             return os.popen(refundCMD).read()
         
 
 
-def Atomicity_RemainingLockTimeAtomicMultisig_v_002(j_response, swapName):
+def Atomicity_RemainingLockTimeAtomicMultisig_v_002(j_response, swapName, password=""):
     resp_j = j_response
     responderChain = resp_j["responderLocalChain"]
     if responderChain == "Sepolia":
         addr = resp_j["responderContractAddr"]
+        file_tools.clean_file_open("addrtest", "w", addr)
         cmd = \
                 "cd " + Atomicity + "Swap_" + swapName.replace("-", "") + " && ./deploy.sh lockTime " + \
-                addr + " ../../../" + swapName + "/remainingLockTime"
+                addr + " ../../../" + swapName + "/remainingLockTime " + password
         os.popen(cmd).read()
         if file_tools.wait_for_file(swapName + "/remainingLockTime"):
             remainingLockTime = file_tools.clean_file_open(swapName + "/remainingLockTime", "r")
             while remainingLockTime == '':
                 os.popen(cmd).read()
                 remainingLockTime = file_tools.clean_file_open(swapName + "/remainingLockTime", "r")
-                time.sleep(3)
+                time.sleep(5) 
             return int(remainingLockTime)
         else:
             print("failed to create or find remainingLockTime file")
@@ -85,7 +92,7 @@ def Atomicity_buildScalarContract(chain, counterpartyChainPub, xG, locktimeDurat
     specifyChain = os.popen("echo 'CurrentChain=\"" + chain  + "\"' >> " + Atomicity + \
           swapName + "/.env").read()
 
-def Atomicity_deployEVMContract(swapName, customGas=None, customGasMod=None):
+def Atomicity_deployEVMContract(swapName, customGas=None, customGasMod=None, password=""):
     custom = False
     swapName = "Swap_" + swapName.replace("-", "")
     gas = "9000000"
@@ -103,7 +110,7 @@ def Atomicity_deployEVMContract(swapName, customGas=None, customGasMod=None):
             gasMod = customGasMod
             custom = True
     if custom == False:
-       response = os.popen("cd " + Atomicity + swapName + "/ && python3 py/deploy.py").read()
+       response = os.popen("cd " + Atomicity + swapName + "/ && python3 py/deploy.py " + password).read()
        if response.startswith("0x"):
            return response
        else:
@@ -113,23 +120,23 @@ def Atomicity_deployEVMContract(swapName, customGas=None, customGasMod=None):
                os.popen(\
                "cd " +  Atomicity + swapName + \
                "/ && python3 py/deploy.py deployCustomGas " + \
-               str(gas) + " " + str(gasMod)).read()
+               str(gas) + " " + str(gasMod)).read() + " " + password
        if str(response).startswith("0x"):
            return response
        else:
            return "fail"
 
-def Atomicity_compareScalarContractCoords(swapName, contractAddr, expectedX, expectedY):
+def Atomicity_compareScalarContractCoords(swapName, contractAddr, expectedX, expectedY, password=""):
     swapName = "Swap_" + swapName.replace("-", "")
-    x = os.popen("cd " + Atomicity + swapName + " && python3 -u py/deploy.py getXCoord " + contractAddr).read()
-    y = os.popen("cd " + Atomicity + swapName + " && python3 -u py/deploy.py getYCoord " + contractAddr).read()
+    x = os.popen("cd " + Atomicity + swapName + " && python3 -u py/deploy.py getXCoord " + contractAddr + " " + password).read()
+    y = os.popen("cd " + Atomicity + swapName + " && python3 -u py/deploy.py getYCoord " + contractAddr + " " + password).read()
     print("onchain:(", x, " ,", y, ")  offchain:(", expectedX, " ,", expectedY, ")")
     if int(x) == int(expectedX) and int(y) == int(expectedY):
         return True
     else:
         return False
 
-def Atomicity_claimScalarContract(initiatorMasterJSONPath, swapName, gas=None, gasMod=None):
+def Atomicity_claimScalarContract(initiatorMasterJSONPath, swapName, gas=None, gasMod=None, password=""):
     swapName = "Swap_" + swapName.replace("-", "")
     j_master = json.loads(file_tools.clean_file_open(initiatorMasterJSONPath, "r"))
     x = j_master["x"]
@@ -139,15 +146,16 @@ def Atomicity_claimScalarContract(initiatorMasterJSONPath, swapName, gas=None, g
     if gasMod == None or type(gasMod) != int:
         gasMod = 1
     claimScript = \
-            "cd " + Atomicity + swapName + " && ./deploy.sh claim " + contractAddr + " " + str(x) + " " + str(gas) + " " + str(gasMod)
+            "cd " + Atomicity + swapName + " && ./deploy.sh claim " + contractAddr + " " + str(x) + \
+            " " + str(gas) + " " + str(gasMod) + " " + password
     return os.popen(claimScript).read()
 
 
-def Atomicity_updateKeyEnv(swapName, targetKeyEnvDirName):
+def Atomicity_updateKeyEnv(swapName, targetKeyEnvDirName): #TODO check for .env.encrypted?
     swapName = "Swap_" + swapName.replace("-", "")
     update = file_tools.clean_file_open(Atomicity + targetKeyEnvDirName + "/.env", "r")
     update.replace("[default]", "")
     cmd = \
-    "echo \"" + update + "\"" + " >> " + Atomicity + swapName + "/.env"
+        "echo \"" + update + "\"" + " >> " + Atomicity + swapName + "/.env"
     os.popen(cmd).read()
 

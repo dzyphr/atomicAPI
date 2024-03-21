@@ -21,19 +21,29 @@ jpype.addClassPath(interpreterClasspath)
 from sigmastate.eval.package import ecPointToGroupElement
 def main(contractName, ergo, wallet_mnemonic, mnemonic_password, senderAddress, args):
     print("Running", contractName)
-    def atomicDeposit(verifyTreeOnly=None):
+    def atomicDeposit(verifyTreeOnly=None, password=""):
         sender = senderAddress[0]
         castedSender = ergo.castAddress(senderAddress[0])
         senderAddr = ""
+        #prob public
+        ergoAmountRaw = int(os.getenv('ergoAmount'))
+        receiver = Address.create(os.getenv('receiverAddr'))
+        if password == "":
+            senderPubkey = os.getenv('senderAddr')
+            senderEIP3Secret = int(os.getenv('senderEIP3Secret'))
+            senderWalletMnemonic = ergo.getMnemonic(wallet_mnemonic, mnemonic_password=mnemonic_password)
+        else:
+
+        senderProver = ergo._ctx.newProverBuilder().withMnemonic(senderWalletMnemonic[0]).withEip3Secret(senderEIP3Secret).build()
         if verifyTreeOnly != None:
             if verifyTreeOnly == True:
                 senderPubkey = os.getenv('senderAddr')
         else:
             senderPubkey = Address.create(sender).getPublicKey()
-        senderWalletMnemonic = ergo.getMnemonic(wallet_mnemonic, mnemonic_password=mnemonic_password)
-        senderEIP3Secret = int(os.getenv('senderEIP3Secret'))
-        senderProver = ergo._ctx.newProverBuilder().withMnemonic(senderWalletMnemonic[0]).withEip3Secret(senderEIP3Secret).build()
-        ergoAmountRaw = int(os.getenv('ergoAmount'))
+#        senderWalletMnemonic = ergo.getMnemonic(wallet_mnemonic, mnemonic_password=mnemonic_password)
+#        senderEIP3Secret = int(os.getenv('senderEIP3Secret'))
+#        senderProver = ergo._ctx.newProverBuilder().withMnemonic(senderWalletMnemonic[0]).withEip3Secret(senderEIP3Secret).build()
+#        ergoAmountRaw = int(os.getenv('ergoAmount'))
         ergoAmount = ergoAmountRaw 
         ergoAmountFeeIncluded = ergoAmount #+ Parameters.MinFee #fee seems to include itself
         if ergoAmountFeeIncluded <= 123841 + Parameters.MinFee: #if someone tries to deposit lower than the fee it cannot be profitably spent
@@ -62,7 +72,7 @@ def main(contractName, ergo, wallet_mnemonic, mnemonic_password, senderAddress, 
             ssGY = BigInteger(os.getenv('ssGY'))
             ssG = dlogGroup().curve().createPoint(ssGX, ssGY)
             GE_ssG = ecPointToGroupElement(ssG)
-        receiver = Address.create(os.getenv('receiverAddr'))
+#        receiver = Address.create(os.getenv('receiverAddr'))
         lockHeight = ""
         if verifyTreeOnly != None:
             if verifyTreeOnly == True:
@@ -208,7 +218,7 @@ def main(contractName, ergo, wallet_mnemonic, mnemonic_password, senderAddress, 
 
     if len(args) > 1:
         if args[1] == "deposit":
-            if len(args) > 2:
+            if len(args) == 3:
                 if args[2] == "verifyTreeOnly":
                     atomicDeposit(verifyTreeOnly=True)
                     exit()

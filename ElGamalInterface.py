@@ -7,9 +7,7 @@ s_ = " "
 
 
 def update_ElGamalPubKeysJSON(index):
-    #q:pubkey list for clients to coordinate from available options
     pubkeyStoreJSONPath = "ElGamalPubKeys.json"
-    #TODO MUST USE SAME Q AND G FOR A CHANNEL CONFIRMED
     QGChannelStoreJSONPath = "ElGamalQGChannels.json"
     QGPubkeyArrayStoreJSONPath = "QGPubkeyArray.json"
     keyIndex = 0
@@ -69,7 +67,6 @@ def currentKeysStateCheck():
 def generateNewElGamalPubKey(q=None, g=None):
     command = ""
     index = currentKeysStateCheck()
-
     if q is None and g is None:
         command = "./ElGamal genPubKey"
     elif q is not None and g is not None:
@@ -90,7 +87,6 @@ def ElGamal_Encrypt(receiverPubKey, userKeyFileName, subject, filePath):
             userKeyFileName + s_ + \
             " $subject " + s_ + \
             filePath
-#    print(command)
     return os.popen(command).read()
 
 def ElGamal_Decrypt(subjectFilePath, senderPubKey, userKeyFileName):
@@ -99,7 +95,6 @@ def ElGamal_Decrypt(subjectFilePath, senderPubKey, userKeyFileName):
             subjectFilePath + s_ + \
             senderPubKey + s_ + \
             userKeyFileName 
-#    print(command)
     decryption = os.popen(command).read()
     return decryption
 

@@ -28,7 +28,6 @@ def ojf(filepath): #open json file
 
 def createOrUpdateIndexedJSONPath(path, value):
     if os.path.isfile(path):
-#        contents = file_tools.clean_file_open(path, "r")
         obj = ojf(path)
         index = len(obj)
         updatelist = [{index:value}]
