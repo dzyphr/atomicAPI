@@ -13,10 +13,16 @@ from ergpy import helper_functions, appkit
 import waits
 import coinSelection
 import scalaPipe
+from passwordFileEncryption import get_val_from_envdata_key, decrypt_file_return_contents
 def main(contractName, ergo, wallet_mnemonic, mnemonic_password, senderAddress, args):
     
-    def treeToAddr(tree, filepath=None):
-        node = os.getenv('testnetNode')          
+    def treeToAddr(tree, filepath=None, password=""):
+        node = ""
+        if password == "":
+            node = os.getenv('testnetNode')          
+        else:
+            envdata = decrypt_file_return_contents(".env.encrypted", password)
+            node = get_val_from_envdata_key('testnetNode', envdata).strip('\"')
         url = node  + "utils/ergoTreeToAddress"
         headers = {\
             "accept": 'application/json',\
@@ -42,11 +48,14 @@ def main(contractName, ergo, wallet_mnemonic, mnemonic_password, senderAddress, 
             print("error getting address for: ", tree, "\nerror: ", err)
 
 
-    if len(args) >= 2:
-        if len(args) >= 3:
-            treeToAddr(args[1], filepath=args[2])
-            exit()
+    if len(args) == 2:
         treeToAddr(args[1])
+        exit()
+    if len(args) == 3:
+        treeToAddr(args[1], filepath=args[2])
+        exit()
+    if len(args) == 4:
+        treeToAddr(args[1], filepath=args[2], password=args[3])
         exit()
     else:
         print("enter tree [optional: filepath] as argument")

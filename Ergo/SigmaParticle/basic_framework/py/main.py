@@ -33,7 +33,7 @@ def main(contractName, ergo, wallet_mnemonic, mnemonic_password, senderAddress, 
             senderEIP3Secret = int(os.getenv('senderEIP3Secret'))
             senderWalletMnemonic = ergo.getMnemonic(wallet_mnemonic, mnemonic_password=mnemonic_password)
         else:
-
+            
         senderProver = ergo._ctx.newProverBuilder().withMnemonic(senderWalletMnemonic[0]).withEip3Secret(senderEIP3Secret).build()
         if verifyTreeOnly != None:
             if verifyTreeOnly == True:

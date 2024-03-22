@@ -273,7 +273,7 @@ def GeneralizedENC_FinalizationSubroutine(initiatorJSONPath, CoinA_Price, CoinB_
                 price_tools.ErgToNanoErg(convList[1]) \
         )
         SigmaParticleInterface.deployErgoContract(swapName, password=localchainpassword) #TODO generalize based on chain
-        boxId = SigmaParticleInterface.getBoxID(swapName, password=localchainpassword)
+        boxId = SigmaParticleInterface.getBoxID(swapName)
         InitiatorAtomicSchnorrLockHeight = file_tools.clean_file_open("Ergo/SigmaParticle/" + swapName + "/lockHeight", "r")
         contractKeyValList = [{"boxId":boxId, "InitiatorAtomicSchnorrLockHeight":InitiatorAtomicSchnorrLockHeight, \
                 "InitiatorErgoAddr":InitiatorErgoAddr}]

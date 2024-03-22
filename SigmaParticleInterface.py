@@ -55,14 +55,14 @@ def SigmaParticle_box_to_addr(boxId, password=""):
             continue
     return "attempts exhausted looking for this box: " + boxId
 
-def SigmaParticle_CheckLockTimeAtomicSchnorr(swapName, boxId):
+def SigmaParticle_CheckLockTimeAtomicSchnorr(swapName, boxId, password=""):
     lockHeightCMD = \
                             "cd " + SigmaParticlePath + "boxConstantByIndex && ./deploy.sh " + boxId + \
-                            " 8 ../../../" + swapName + "/localChain_lockHeight"
+                            " 8 ../../../" + swapName + "/localChain_lockHeight " + password
     print(os.popen(lockHeightCMD).read())
     currentHeightCMD = \
                     "cd " + SigmaParticlePath + "currentHeight && ./deploy.sh ../../../" + \
-                    swapName + "/localChain_currentHeight"
+                    swapName + "/localChain_currentHeight " + password
 
     print(os.popen(currentHeightCMD).read())
     if os.path.isfile(swapName + "/localChain_lockHeight") == True and os.path.isfile(swapName + "/localChain_currentHeight") == True:
@@ -212,8 +212,8 @@ def deployErgoContract(swapName, password=""):
     command = "cd " + SigmaParticlePath + swapName + " && ./deploy.sh deposit " + password
     os.popen(command).read()
 
-def getBoxID(swapName, password=""):
-    return file_tools.clean_file_open(SigmaParticlePath + swapName + "/boxId " + password, "r")
+def getBoxID(swapName):
+    return file_tools.clean_file_open(SigmaParticlePath + swapName + "/boxId ", "r")
 
 def checkBoxValue(boxID, boxValPATH, swapName, role=None):
     while True:
@@ -243,8 +243,9 @@ def checkSchnorrTreeForClaim(boxID, swapName, initiatorMasterJSONPath, password=
     while True:
         tree = file_tools.clean_file_open(SigmaParticlePath + swapName + "/ergoTree", "r")
         treeToAddrCmd = \
-                "cd " + SigmaParticlePath + "treeToAddr && ./deploy.sh " + tree + " " + SigmaParticlePath + \
-                swapName + "/scriptAddr" + password
+                "cd " + SigmaParticlePath + "treeToAddr && ./deploy.sh " + tree + " ../" + \
+                swapName + "/scriptAddr " + password
+        file_tools.clean_file_open("treeToAddrScriptTestDebug", "w", treeToAddrCmd)
         addr = json.loads(os.popen(treeToAddrCmd).read())["address"]
         boxFilterCmd = \
                 "cd " + SigmaParticlePath + "boxFilter && " + \

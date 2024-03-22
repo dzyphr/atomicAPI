@@ -7,8 +7,12 @@ from loggingFmt import *
 loggingFmt()
 
 # Create connection to the blockchain #exported to connect.py
+password = ""
+if len(args) == 3:
+    password = args[2]
+
 from connect import *
-ergo, wallet_mnemonic, mnemonic_password, senderAddress= connect() #dotenv loaded here dont call env vars before
+ergo, wallet_mnemonic, mnemonic_password, senderAddress= connect(password=password) #dotenv loaded here dont call env vars before
 
 from main import *
 main(os.getenv('ContractName'), ergo, wallet_mnemonic, mnemonic_password, senderAddress, args)

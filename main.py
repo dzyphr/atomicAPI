@@ -67,6 +67,8 @@ elif len(args) == 4:
     if args[1] == "proveEncEnvFilePasswordKnowledge":
         proveEncEnvFilePasswordKnowledge(args[2], args[3])
 elif len(args) == 5:
+    if args[1] == "GeneralizedENC_InitiatorClaimSubroutine":
+        initiatorInterface.GeneralizedENC_InitiatorClaimSubroutine(args[2], localchainpassword=args[3], crosschainpassword=args[4])
     if args[1] == "requestEncryptedInitiation_ClientEndpoint":
         requestEncryptedInitiation_ClientEndpoint(args[2], args[3], args[4])
     if args[1] == "submitEncryptedResponse_ClientEndpoint":
