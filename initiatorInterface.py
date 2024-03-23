@@ -62,7 +62,7 @@ def inspectResponse(DEC_response_filepath, swapName, password=""):
             }
             return json.dumps(inspectScalarContractObject)
         else:
-            fundedAmount = AtomicityInterface.Atomicity_CheckContractFunds(j_response, password=password)
+            fundedAmount = AtomicityInterface.Atomicity_CheckContractFunds(swapName, j_response, password=password)
             remainingLockTime = \
                     AtomicityInterface.Atomicity_RemainingLockTimeAtomicMultisig_v_002(j_response, swapName, password=password)
             if fundedAmount == "" or fundedAmount == None:

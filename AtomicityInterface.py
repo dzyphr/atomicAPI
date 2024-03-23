@@ -3,17 +3,17 @@ import file_tools
 Atomicity = "EVM/Atomicity/"
 
 
-def Atomicity_CheckContractFunds(j_response, password=""):
+def Atomicity_CheckContractFunds(swapName, j_response, password=""):
     chain = j_response["responderLocalChain"]
     contractAddr = j_response["responderContractAddr"]
+    swapName = "Swap_" + swapName.replace("-", "")
     if chain == "Sepolia":
-            value = \
-                    os.popen(\
-                        "cd " + Atomicity  + chain + \
-                        " && python3 -u py/deploy.py getBalance " + \
-                        contractAddr + " " + password\
-                    ).read()
-            return value
+        script = "cd " + Atomicity  + "/" + swapName + \
+                    " && python3 -u py/deploy.py getBalance " + \
+                    contractAddr + " " + password
+        value = os.popen(script).read()
+        file_tools.clean_file_open("checkcontractfundsdebug", "w", script)
+        return value
 
 def Atomicity_SendFunds(addr, amount_wei, swapName, gas=None, gasMod=None, password=""):
     swapName = "Swap_" + swapName.replace("-", "")

@@ -160,6 +160,7 @@ def getAccount(password=""):
 def getBalance(address, password=""):
     rpc, chain_id, senderAddr, senderPrivKey, url = pickChain(password)
     bal = str(rpc.eth.get_balance(address))
+    sys.stdout.write(bal)
 
 def sendAmount(amount, receiver, password=""):
     rpc, chain_id, senderAddr, senderPrivKey, url = pickChain(password)

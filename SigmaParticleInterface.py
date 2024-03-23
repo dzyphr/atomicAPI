@@ -213,7 +213,12 @@ def deployErgoContract(swapName, password=""):
     os.popen(command).read()
 
 def getBoxID(swapName):
-    return file_tools.clean_file_open(SigmaParticlePath + swapName + "/boxId ", "r")
+    path = SigmaParticlePath + swapName + "/boxId"
+    if os.path.isfile(path):
+        return file_tools.clean_file_open(path, "r")
+    else:
+        print("Path:", path, "not found!")
+        return False
 
 def checkBoxValue(boxID, boxValPATH, swapName, role=None):
     while True:

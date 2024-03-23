@@ -42,7 +42,7 @@ def wait_for_file(path, tries=None):
                 time.sleep(1)
                 continue
     else:
-        if type(tries) != type(int):
+        if type(tries) != int:
             print("tries must be an int type")
         i = 0
         while i < tries:
