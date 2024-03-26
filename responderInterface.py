@@ -118,7 +118,7 @@ def GeneralizeENC_ResponseSubroutine(\
                 {"ResponderErgoAddr":ResponderErgoAddr}]
         json_tools.keyVal_list_update(update_response_keyValList, responsePATH)
         j_response = json_tools.ojf(responsePATH)
-        while int(AtomicityInterface.Atomicity_CheckContractFunds(j_response)) <= 0:
+        while int(AtomicityInterface.Atomicity_CheckContractFunds(swapname, j_response)) <= 0:
             print("contract not funded yet waiting...")
             time.sleep(5)
         responseLIST = json_tools.json_to_keyValList(responsePATH)
