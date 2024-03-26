@@ -51,7 +51,7 @@ def inspectResponse(DEC_response_filepath, swapName, password=""):
         return "Error: response does not have expected keys"
     else: 
         if password == "": #password doesnt have an effect when empty might not need logic to pass it into functions
-            fundedAmount = AtomicityInterface.Atomicity_CheckContractFunds(j_response)
+            fundedAmount = AtomicityInterface.Atomicity_CheckContractFunds(swapName, j_response)
             remainingLockTime = AtomicityInterface.Atomicity_RemainingLockTimeAtomicMultisig_v_002(j_response, swapName)
             if fundedAmount == "" or fundedAmount == None:
                 fundedAmount = 0
