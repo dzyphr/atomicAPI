@@ -80,6 +80,8 @@ def createNonInteractive(fulldirpath, fullenvpath, envFormat, enc=False, passwor
 def initSepoliaAccountNonInteractive(\
         SepoliaSenderAddr, SepoliaPrivKey, Sepolia, SepoliaID, SepoliaScan, 
         SolidityCompilerVersion, fulldirpath, fullenvpath, enc=False, password=""):
+    #TODO get rid of ID scan and compiler version args
+    #TODO use hardcoded (fornow) chain frameworkpath instead of fullpaths to build paths on fly w less args
     envFormat = \
         "[default]\n" +\
         "SepoliaSenderAddr=\"" + SepoliaSenderAddr + "\"\n" + \
@@ -94,6 +96,7 @@ def initSepoliaAccountNonInteractive(\
 
 def initErgoAccountNonInteractive(testnetNode, mnemonic, mnemonicPass, senderEIP3Secret, senderPubKey, 
         apiURL, fulldirpath, fullenvpath, enc=False, password=""):
+    #TODO use hardcoded (fornow) chain frameworkpath instead of fullpaths to build paths on fly w less args
     envFormat = \
         "[default]\n" +\
         "testnetNode=\"" + testnetNode + "\"\n" +\

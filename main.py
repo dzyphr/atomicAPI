@@ -104,9 +104,14 @@ elif len(args) == 11:
         initiatorInterface.GeneralizedENC_InitiationSubroutine(\
                 args[2], args[3], args[4], args[5], \
                 args[6], args[7], args[8], localChainAccountPassword=args[9], crossChainAccountPassword=args[10])
-    if args[1] == "initSepoliaAccountNonInteractive_ENC":
+    if args[1] == "initSepoliaAccountNonInteractive_ENC": #TODO get rid of ID scan and compiler version args
         initSepoliaAccountNonInteractive(
             args[2], args[3], args[4], args[5], args[6], args[7],
+            args[8], args[9], enc=True, password=args[10]
+        )
+    if args[1] == "initErgoAccountNonInteractive_ENC":
+        initErgoAccountNonInteractive(
+            args[2], args[3], args[4], args[5], args[6], args[7], \
             args[8], args[9], enc=True, password=args[10]
         )
 
