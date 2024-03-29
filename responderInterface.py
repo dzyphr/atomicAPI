@@ -23,7 +23,7 @@ def process_initiation(ENC_filepath, DEC_filepath, SenderPubKey, UserKeyFileName
     file_tools.clean_file_open(DEC_filepath, "w", decrypt)
 
 
-def response(DEC_initiation_filepath, responderMasterJSONPATH, response_filepath, SenderPubKey, UserKeyFileName):
+def response(DEC_initiation_filepath, responderMasterJSONPATH, response_filepath, SenderPubKey):
     j_init = json.loads(file_tools.clean_file_open(DEC_initiation_filepath, "r"))
     ksG = j_init["ksG"]
     j_master = json.loads(file_tools.clean_file_open(responderMasterJSONPATH, "r"))
