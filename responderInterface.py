@@ -93,7 +93,7 @@ def GeneralizeENC_ResponseSubroutine(\
         resp_J = json_tools.ojf(mi["responderJSONPath"])
         InitiatorEVMAddr = resp_J["InitiatorEVMAddr"]
         response(DEC_Init_PATH, responderJSONPath, \
-                responsePATH, ElGamalKey, ElGamalKeyPath)
+                responsePATH, ElGamalKey) #ElGamalKeyPath)
         #TODO: replace sr and x paths with master json update
         xG = json.loads(file_tools.clean_file_open(responsePATH, "r"))["xG"]
         AtomicityInterface.Atomicity_buildScalarContract(ResponderChain, InitiatorEVMAddr,  xG, MIN_REFUND_LOCKTIME_SEPOLIA, swapname)
@@ -194,7 +194,7 @@ def Responder_CheckLockTimeRefund(swapName):
             #will completely prevent fee waste on mainnet
             print("lock time expired, refund attempted")
         else:
-            if int(AtomicityInterface.Atomicity_CheckContractFunds(j_response)) != 0:
+            if int(AtomicityInterface.Atomicity_CheckContractFunds(swapName, j_response)) != 0:
                 time.sleep(3)
                 continue
             else:
