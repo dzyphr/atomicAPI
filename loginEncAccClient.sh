@@ -3,6 +3,6 @@
 	 echo "Usage: $0 <Chain> <AccountName> <Password> <Bearer-RESTAPI-Auth-Key>"
  fi
 
-python3 main.py logInToPasswordEncryptedAccount $1 $2 $3 $4
+python3 main.py logInToPasswordEncryptedAccount_Client $1 $2 $3 $4
 
 

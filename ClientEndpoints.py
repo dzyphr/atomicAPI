@@ -1,3 +1,18 @@
+def logInToPasswordEncryptedAccount_ClientEndpoint(Chain, AccountName, Password, auth):
+    import requests, uuid
+    url = "http://localhost:3031/v0.0.1/requests/" #server private requests url
+    ID = str(uuid.uuid4())
+    headers = {"Authorization": "Bearer " + auth}
+    requestobj = {
+            "id": ID,
+            "request_type": "logInToPasswordEncryptedAccount",
+            "Chain": Chain,
+            "AccountName": AccountName,
+            "Password": Password
+    }
+    print(requests.post(url, headers=headers,  json = requestobj).text)
+
+
 def submitEncryptedResponse_ClientEndpoint(url, SwapTicketID, ENC_response_path):
     import requests, uuid
     ID = str(uuid.uuid4())

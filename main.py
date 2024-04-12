@@ -13,7 +13,7 @@ import json_tools
 import time
 import file_tools
 from ServerEndpoints import logInToPasswordEncryptedAccount_ServerEndpoint, publishNewOrderType_ServerEndpoint
-from ClientEndpoints import submitEncryptedResponse_ClientEndpoint, requestEncryptedInitiation_ClientEndpoint
+from ClientEndpoints import submitEncryptedResponse_ClientEndpoint, requestEncryptedInitiation_ClientEndpoint, logInToPasswordEncryptedAccount_ClientEndpoint
 from config_tools import firstRunCheck, updateMainEnv, initErgoAccountNonInteractive, initSepoliaAccountNonInteractive 
 from bearerRESTAPIkeygen import generate_bearer_RESTAPI_key, add_RESTAPI_key_to_private_accepted_keys_JSON, starterAPIKeys, add_RESTAPI_key_to_public_accepted_keys_JSON
 from passwordFileEncryption import proveEncEnvFilePasswordKnowledge
@@ -80,8 +80,10 @@ elif len(args) == 5:
     if args[1] == "checkBoxValue":
         sys.stdout.write(SigmaParticleInterface.checkBoxValue(args[2], args[3], args[4]))#boxID, boxValPATH, swapName
 elif len(args) == 6:
-    if args[1] == "logInToPasswordEncryptedAccount":
+    if args[1] == "logInToPasswordEncryptedAccount_Server":
         logInToPasswordEncryptedAccount_ServerEndpoint(args[2], args[3], args[4], args[5])
+    if args[1] == "logInToPasswordEncryptedAccount_Client":
+        logInToPasswordEncryptedAccount_ClientEndpoint(args[2], args[3], args[4], args[5])
     if args[1] == "test2pAtomicSwap":
         test2pAtomicSwap(args[2], args[3], args[4], args[5])
 elif len(args) == 7:
@@ -114,4 +116,9 @@ elif len(args) == 11:
             args[2], args[3], args[4], args[5], args[6], args[7], \
             args[8], args[9], enc=True, password=args[10]
         )
-
+elif len(args) == 12:
+    if args[1] == "GeneralizeENC_ResponseSubroutine":
+        responderInterface.GeneralizeENC_ResponseSubroutine(
+                args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9],
+                localChainAccountPassword=args[10], crossChainAccountPassword=args[11]
+        )
