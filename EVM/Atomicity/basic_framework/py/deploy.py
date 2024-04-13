@@ -574,7 +574,7 @@ if args_n > 1:
         checkVerifStatus(guid,  url, False)
         exit()
     elif sys.argv[1] == "deployCustomGas":
-        if args_n > 3:
+        if args_n == 4:
             gas = sys.argv[2]
             gasModExtra = sys.argv[3]
             rpc, chain_id, senderAddr, senderPrivKey, url = pickChain()
@@ -586,8 +586,28 @@ if args_n > 1:
             APISolcV = getSOLCVersion()
 #            verify(flat, contractAddr, APISolcV, url, True)
             exit()
+        if args_n == 5:
+            gas = sys.argv[2]
+            gasModExtra = sys.argv[3]
+            rpc, chain_id, senderAddr, senderPrivKey, url = pickChain(password=sys.argv[4])
+            getContract()
+            flat = checkMultiFile()
+            compilation = compileContract()
+            abi, bytecode = exportBytecode(compilation)
+            contractAddr = uploadContract(rpc, abi, bytecode, gas=gas, gasModExtra=gasModExtra)
+            APISolcV = getSOLCVersion()
+    else:
+        #arg given is not expected so we assume its a deploy w a password
+        rpc, chain_id, senderAddr, senderPrivKey, url = pickChain(password=sys.argv[1])
+        getContract()
+        flat = checkMultiFile()
+        compilation = compileContract()
+        abi, bytecode = exportBytecode(compilation)
+        contractAddr = uploadContract(rpc, abi, bytecode)
+        APISolcV = getSOLCVersion()
 else:
     #normal deploy / hardcoded gas rate
+    #no args aka no password
     rpc, chain_id, senderAddr, senderPrivKey, url = pickChain()
     getContract()
     flat = checkMultiFile()

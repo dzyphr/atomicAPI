@@ -1,7 +1,7 @@
 import time, os, ast, json, json_tools, subprocess
 import file_tools
 Atomicity = "EVM/Atomicity/"
-
+HARDCODEDSOLCV = "0.8.0"
 
 def Atomicity_CheckContractFunds(swapName, j_response, password=""):
     chain = j_response["responderLocalChain"]
@@ -12,7 +12,6 @@ def Atomicity_CheckContractFunds(swapName, j_response, password=""):
                     " && python3 -u py/deploy.py getBalance " + \
                     contractAddr + " " + password
         value = os.popen(script).read()
-        file_tools.clean_file_open("checkcontractfundsdebug", "w", script)
         return value
 
 def Atomicity_SendFunds(addr, amount_wei, swapName, gas=None, gasMod=None, password=""):
@@ -91,6 +90,8 @@ def Atomicity_buildScalarContract(chain, counterpartyChainPub, xG, locktimeDurat
     file_tools.clean_file_open(Atomicity + swapName + "/contracts/" + swapName + ".sol", "w", rename.replace('AtomicMultiSigSecp256k1', swapName))
     specifyChain = os.popen("echo 'CurrentChain=\"" + chain  + "\"' >> " + Atomicity + \
           swapName + "/.env").read()
+    specifySolcV = os.popen("echo 'SolidityCompilerVersion=\"" + HARDCODEDSOLCV  + "\"' >> " + Atomicity + \
+          swapName + "/.env").read()
 
 def Atomicity_deployEVMContract(swapName, customGas=None, customGasMod=None, password=""):
     custom = False
@@ -120,7 +121,7 @@ def Atomicity_deployEVMContract(swapName, customGas=None, customGasMod=None, pas
                os.popen(\
                "cd " +  Atomicity + swapName + \
                "/ && python3 py/deploy.py deployCustomGas " + \
-               str(gas) + " " + str(gasMod)).read() + " " + password
+               str(gas) + " " + str(gasMod) + " " + password).read() 
        if str(response).startswith("0x"):
            return response
        else:

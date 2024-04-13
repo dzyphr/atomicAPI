@@ -7,6 +7,7 @@ import ElGamalInterface
 import file_tools
 import price_tools
 import config_tools
+from passwordFileEncryption import get_val_from_envdata_key, decrypt_file_return_contents
 py = "python3 -u "
 AtomicSwapECCPath = "Ergo/SigmaParticle/AtomicMultiSigECC/py/deploy.py " #TODO Ergo Specific
 s_ = " "
@@ -54,33 +55,33 @@ def GeneralizeENC_ResponseSubroutine(\
     ErgoPath = "Ergo/SigmaParticle/" + responderCrossChainAccountName + "/.env.encrypted"
     if os.path.isfile(ErgoPath):
         if InitiatorChain == "TestnetErgo":
-            if localChainAccountPassword != "":
-                localChainAccountEnvData = decrypt_file_return_contents(ErgoPath, localChainAccountPassword) 
-                localChainEncAccount = True
+            if crossChainAccountPassword != "":
+                crossChainAccountEnvData = decrypt_file_return_contents(ErgoPath, localChainAccountPassword) 
+                crossChainEncAccount = True
             else:
                 print("password required for encrypted env file!")
                 exit()
         elif ResponderChain == "TestnetErgo":
-            if crossChainAccountPassword != "":
-                crossChainAccountEnvData = decrypt_file_return_contents(ErgoPath, crossChainAccountPassword)
-                crossChainEncAccount = True
-            else:
-                print("password required for encrypted env file!")
-                exit()
-        #ergo encrypted
-    if os.path.isfile("EVM/Atomicity/" + responderLocalChainAccountName, + "/.env.encrypted"):
-        path = "EVM/Atomicity/" + responderLocalChainAccountName + "/.env.encrypted"
-        if InitiatorChain == "Sepolia":
             if localChainAccountPassword != "":
-                localChainAccountEnvData = decrypt_file_return_contents(path, localChainAccountPassword)
+                localChainAccountEnvData = decrypt_file_return_contents(ErgoPath, crossChainAccountPassword)
                 localChainEncAccount = True
             else:
                 print("password required for encrypted env file!")
                 exit()
-        elif ResponderChain == "Sepolia":
+        #ergo encrypted
+    if os.path.isfile("EVM/Atomicity/" + responderLocalChainAccountName + "/.env.encrypted"):
+        path = "EVM/Atomicity/" + responderLocalChainAccountName + "/.env.encrypted"
+        if InitiatorChain == "Sepolia":
             if crossChainAccountPassword != "":
-                crossChainAccountEnvData = decrypt_file_return_contents(path, crossChainAccountPassword)
+                crossChainAccountEnvData = decrypt_file_return_contents(path, localChainAccountPassword)
                 crossChainEncAccount = True
+            else:
+                print("password required for encrypted env file!")
+                exit()
+        elif ResponderChain == "Sepolia":
+            if localChainAccountPassword != "":
+                localChainAccountEnvData = decrypt_file_return_contents(path, crossChainAccountPassword)
+                localChainEncAccount = True
             else:
                 print("password required for encrypted env file!")
                 exit()
@@ -135,6 +136,7 @@ def GeneralizeENC_ResponseSubroutine(\
                     "ENC_finalizationPATH" : swapName + "/ENC_finalization.bin",
                     "DEC_finalizationPATH" : swapName + "/DEC_finalization.json",
                 }
+
     file_tools.clean_mkdir(mi["swapName"])
     file_tools.clean_file_open(mi["responderJSONPath"], "w", json.dumps(mi))
     resp_J = json_tools.ojf(mi["responderJSONPath"])
@@ -157,33 +159,33 @@ def GeneralizeENC_ResponseSubroutine(\
     json_tools.keyVal_list_update(temprenamelist, mi["responderJSONPath"])
     resp_J = json_tools.ojf(mi["responderJSONPath"])
     InitiatorEVMAddr = resp_J["InitiatorEVMAddr"]
-    response(DEC_Init_PATH, responderJSONPath, \
-            responsePATH, ElGamalKey) #ElGamalKeyPath)
+    response(
+            DEC_Init_PATH, responderJSONPath, \
+            responsePATH, ElGamalKey
+    ) #ElGamalKeyPath)
     #TODO: replace sr and x paths with master json update
     xG = json.loads(file_tools.clean_file_open(responsePATH, "r"))["xG"]
     AtomicityInterface.Atomicity_buildScalarContract(ResponderChain, InitiatorEVMAddr,  xG, MIN_REFUND_LOCKTIME_SEPOLIA, swapname)
-    addr = AtomicityInterface.Atomicity_deployEVMContract(swapname, customGas=SEPOLIA_EVM_GAS_CONTROL, customGasMod=SEPOLIA_EVM_GASMOD_CONTROL)
+    addr = AtomicityInterface.Atomicity_deployEVMContract(swapname, customGas=SEPOLIA_EVM_GAS_CONTROL, customGasMod=SEPOLIA_EVM_GASMOD_CONTROL, password=localChainAccountPassword)
     if addr != "fail":
         #ASSUMING ITS ENDING WITH \n
         addr  =  addr[:-1]
     else:
         print("fail: deployContract() didnt return a contract addr")
         exit()
-
     #add contract addr and chain name to response here then encrypt
     #convert swap amount to wei
     #0.00059eth
 #        oneWei = 1000000000000000000
 #        responderFundingAmountWei = int(float(swapAmount) * oneWei)
     responderFundingAmountWei = price_tools.EthToWei(swapAmount)
-
-    AtomicityInterface.Atomicity_SendFunds(addr, responderFundingAmountWei, swapname, gas=SEPOLIA_EVM_GAS_CONTROL, gasMod=SEPOLIA_EVM_GASMOD_CONTROL)
+    AtomicityInterface.Atomicity_SendFunds(addr, responderFundingAmountWei, swapname, gas=SEPOLIA_EVM_GAS_CONTROL, gasMod=SEPOLIA_EVM_GASMOD_CONTROL, password=localChainAccountPassword)
     update_response_keyValList = [{"responderLocalChain":ResponderChain}, \
             {"responderContractAddr":addr},\
             {"ResponderErgoAddr":ResponderErgoAddr}]
     json_tools.keyVal_list_update(update_response_keyValList, responsePATH)
     j_response = json_tools.ojf(responsePATH)
-    while int(AtomicityInterface.Atomicity_CheckContractFunds(swapname, j_response)) <= 0:
+    while int(AtomicityInterface.Atomicity_CheckContractFunds(swapname, j_response, password=localChainAccountPassword)) <= 0:
         print("contract not funded yet waiting...")
         time.sleep(5)
     responseLIST = json_tools.json_to_keyValList(responsePATH)
@@ -246,20 +248,20 @@ def GeneralizedENC_ResponderClaimSubroutine(responderJSONPath):
         SigmaParticleInterface.responderClaimAtomicSchnorr(swapName, 2500)
     ################################################################################
 
-def Responder_CheckLockTimeRefund(swapName):
+def Responder_CheckLockTimeRefund(swapName, password=""):
     resp_J = json_tools.ojf(swapName + "/responder.json")
     j_response = json_tools.ojf(resp_J["responsePATH"])
     swapName = resp_J["swapName"]
     while True:
-        if AtomicityInterface.Atomicity_RemainingLockTimeAtomicMultisig_v_002(j_response, swapName) <= 0 and int(AtomicityInterface.Atomicity_CheckContractFunds(j_response)) != 0:
-            print(AtomicityInterface.Atomicity_Refund(swapName, "responder"))
+        if AtomicityInterface.Atomicity_RemainingLockTimeAtomicMultisig_v_002(j_response, swapName, password=password) <= 0 and int(AtomicityInterface.Atomicity_CheckContractFunds(j_response, password=password)) != 0:
+            print(AtomicityInterface.Atomicity_Refund(swapName, "responder", password=password))
             time.sleep(10)
             #we may want to alter the smart contract to enforce that funds are in the 
             #contract before sender reclaim can be called
             #will completely prevent fee waste on mainnet
             print("lock time expired, refund attempted")
         else:
-            if int(AtomicityInterface.Atomicity_CheckContractFunds(swapName, j_response)) != 0:
+            if int(AtomicityInterface.Atomicity_CheckContractFunds(swapName, j_response, password=password)) != 0:
                 time.sleep(3)
                 continue
             else:

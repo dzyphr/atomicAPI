@@ -54,6 +54,8 @@ elif len(args) == 3:
     if args[1] == "generateNewElGamalPubKey": #specific q
         ElGamalInterface.generateNewElGamalPubKey(q=args[2])
 elif len(args) == 4:
+    if args[1] == "Responder_CheckLockTimeRefund":
+        responderInterface.Responder_CheckLockTimeRefund(args[2], password=args[3])
     if args[1] == "updateMainEnv":
         updateMainEnv(args[2], args[3])
     if args[1] == "init":
