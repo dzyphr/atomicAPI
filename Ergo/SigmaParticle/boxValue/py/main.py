@@ -17,21 +17,20 @@ def main(contractName, ergo, wallet_mnemonic, mnemonic_password, senderAddress, 
         if filepath == None:
             inputBox = java.util.Arrays.asList(ergo._ctx.getBoxesById(boxId)) 
     #       sys.stdout.write(str(inputBox[0].getValue()))
-            print(str(inputBox[0].getValue()))
+            sys.stdout.write(str(inputBox[0].getValue()))
         else:
             value = java.util.Arrays.asList(ergo._ctx.getBoxesById(boxId))[0].getValue()
-            print(value)
+            sys.stdout.write(str(value))
             f = open(filepath, "w")
             f.write(str(value))
             f.close()
 
-    if len(args) > 1:
-        if len(args) > 2:
-            boxVal(args[1], args[2])
-            exit()
+    if len(args) == 2:
         boxVal(args[1])
         exit()
-
+    elif len(args) >= 3:
+        boxVal(args[1], filepath=args[2])
+        exit()
     else:
-        print("enter boxId as argument")
+        print("enter boxId , filepath (optional), password (optional) as argument")
 

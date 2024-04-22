@@ -54,6 +54,8 @@ elif len(args) == 3:
     if args[1] == "generateNewElGamalPubKey": #specific q
         ElGamalInterface.generateNewElGamalPubKey(q=args[2])
 elif len(args) == 4:
+    if args[1] == "SigmaParticle_box_to_addr":
+        sys.stdout.write(SigmaParticleInterface.SigmaParticle_box_to_addr(args[2], args[3]))
     if args[1] == "Responder_CheckLockTimeRefund":
         responderInterface.Responder_CheckLockTimeRefund(args[2], password=args[3])
     if args[1] == "updateMainEnv":
@@ -69,8 +71,17 @@ elif len(args) == 4:
     if args[1] == "proveEncEnvFilePasswordKnowledge":
         proveEncEnvFilePasswordKnowledge(args[2], args[3])
 elif len(args) == 5:
+    if args[1] == "SigmaParticle_box_to_addr":
+        sys.stdout.write(SigmaParticleInterface.SigmaParticle_box_to_addr(args[2], args[3], password=args[4]))
     if args[1] == "GeneralizedENC_InitiatorClaimSubroutine":
         initiatorInterface.GeneralizedENC_InitiatorClaimSubroutine(args[2], localchainpassword=args[3], crosschainpassword=args[4])
+    if args[1] == "GeneralizedENC_ResponderClaimSubroutine":
+        responderInterface.GeneralizedENC_ResponderClaimSubroutine(\
+                args[2], \
+                localChainAccountPassword=args[3], \
+                crossChainAccountPassword=args[4]\
+        )
+
     if args[1] == "requestEncryptedInitiation_ClientEndpoint":
         requestEncryptedInitiation_ClientEndpoint(args[2], args[3], args[4])
     if args[1] == "submitEncryptedResponse_ClientEndpoint":
@@ -89,6 +100,11 @@ elif len(args) == 6:
     if args[1] == "test2pAtomicSwap":
         test2pAtomicSwap(args[2], args[3], args[4], args[5])
 elif len(args) == 7:
+    if args[1] == "checkBoxValue":
+        sys.stdout.write(SigmaParticleInterface.checkBoxValue(\
+                args[2], args[3], args[4], ergopassword=args[5], \
+                otherchainpassword=args[6]\
+        ))#boxID, boxValPATH, swapName, password
     if args[1] == "GeneralizedENC_FinalizationSubroutine":#initiator refund checking starts here
         initiatorInterface.GeneralizedENC_FinalizationSubroutine(args[2], args[3], args[4], args[5], args[6])
 elif len(args) == 9:

@@ -16,6 +16,7 @@ def connect(password=""):
         ergo = appkit.ErgoAppKit(node_url=node_url, api_url=api_url)
         wallet_mnemonic = os.getenv('mnemonic')
         mnemonic_password = os.getenv('mnemonicPass')
+        senderEIP3Secret = os.getenv('senderEIP3Secret')
         if mnemonic_password != "":
             usingMnemonicPass = True
         else:
@@ -27,13 +28,14 @@ def connect(password=""):
         else:
             #WITHOUT MNEMONIC PASSWORD
             senderAddress = helper_functions.get_wallet_address(ergo=ergo, amount=1, wallet_mnemonic=wallet_mnemonic)
+        return ergo, wallet_mnemonic, mnemonic_password, senderAddress, senderEIP3Secret
     else:
         envdata = decrypt_file_return_contents(".env.encrypted", password)
         node_url = get_val_from_envdata_key('testnetNode', envdata).strip('\"')
         api_url = get_val_from_envdata_key("apiURL", envdata).strip('\"')
         wallet_mnemonic = get_val_from_envdata_key('mnemonic', envdata).strip('\"')
         mnemonic_password = get_val_from_envdata_key('mnemonicPass', envdata).strip('\"')
-        
+        senderEIP3Secret = get_val_from_envdata_key('senderEIP3Secret', envdata).strip('\"')
         ergo = appkit.ErgoAppKit(node_url=node_url, api_url=api_url)
         if mnemonic_password != "":
             usingMnemonicPass = True
@@ -43,5 +45,7 @@ def connect(password=""):
         if usingMnemonicPass == True:
             #WITH MNEMONIC PASSWORD
             senderAddress = helper_functions.get_wallet_address(ergo=ergo, amount=1, wallet_mnemonic=wallet_mnemonic, mnemonic_password=mnemonic_password)
+        else:
+            senderAddress = helper_functions.get_wallet_address(ergo=ergo, amount=1, wallet_mnemonic=wallet_mnemonic)
 
-    return ergo, wallet_mnemonic, mnemonic_password, senderAddress
+        return ergo, wallet_mnemonic, mnemonic_password, senderAddress, senderEIP3Secret

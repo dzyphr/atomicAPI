@@ -12,36 +12,39 @@ def connect(password=""):
     if password == "":
         load_dotenv()
         node_url = os.getenv('testnetNode') # MainNet or TestNet
-        api_url = os.getenv('apiURL')
-        ergo = appkit.ErgoAppKit(node_url=node_url, api_url=api_url)
-        wallet_mnemonic = os.getenv('mnemonic')
-        mnemonic_password = os.getenv('mnemonicPass')
-        if mnemonic_password != "":
-            usingMnemonicPass = True
-        else:
-            usingMnemonicPass = False
+        testnetAPIKey = os.getenv('testnetAPIKey')
+ #       api_url = os.getenv('apiURL')
+#        ergo = appkit.ErgoAppKit(node_url=node_url, api_url=api_url)
+#        wallet_mnemonic = os.getenv('mnemonic')
+#        mnemonic_password = os.getenv('mnemonicPass')
+        #if mnemonic_password != "":
+         #   usingMnemonicPass = True
+      #  else:
+       #     usingMnemonicPass = False
 
-        if usingMnemonicPass == True:
+     #   if usingMnemonicPass == True:
             #WITH MNEMONIC PASSWORD
-            senderAddress = helper_functions.get_wallet_address(ergo=ergo, amount=1, wallet_mnemonic=wallet_mnemonic, mnemonic_password=mnemonic_password)
-        else:
+#            senderAddress = helper_functions.get_wallet_address(ergo=ergo, amount=1, wallet_mnemonic=wallet_mnemonic, mnemonic_password=mnemonic_password)
+        #else:
             #WITHOUT MNEMONIC PASSWORD
-            senderAddress = helper_functions.get_wallet_address(ergo=ergo, amount=1, wallet_mnemonic=wallet_mnemonic)
+ #           senderAddress = helper_functions.get_wallet_address(ergo=ergo, amount=1, wallet_mnemonic=wallet_mnemonic)
+        return node_url, testnetAPIKey
     else:
         envdata = decrypt_file_return_contents(".env.encrypted", password)
         node_url = get_val_from_envdata_key('testnetNode', envdata).strip('\"')
-        api_url = get_val_from_envdata_key("apiURL", envdata).strip('\"')
-        wallet_mnemonic = get_val_from_envdata_key('mnemonic', envdata).strip('\"')
-        mnemonic_password = get_val_from_envdata_key('mnemonicPass', envdata).strip('\"')
+        testnetAPIKey = get_val_from_envdata_key('testnetAPIKey', envdata).strip('\"')
+#        api_url = get_val_from_envdata_key("apiURL", envdata).strip('\"')
+#        wallet_mnemonic = get_val_from_envdata_key('mnemonic', envdata).strip('\"')
+ #       mnemonic_password = get_val_from_envdata_key('mnemonicPass', envdata).strip('\"')
         
-        ergo = appkit.ErgoAppKit(node_url=node_url, api_url=api_url)
-        if mnemonic_password != "":
-            usingMnemonicPass = True
-        else:
-            usingMnemonicPass = False
+ #       ergo = appkit.ErgoAppKit(node_url=node_url, api_url=api_url)
+#        if mnemonic_password != "":
+ #           usingMnemonicPass = True
+  #      else:
+   #         usingMnemonicPass = False
 
-        if usingMnemonicPass == True:
+    #    if usingMnemonicPass == True:
             #WITH MNEMONIC PASSWORD
-            senderAddress = helper_functions.get_wallet_address(ergo=ergo, amount=1, wallet_mnemonic=wallet_mnemonic, mnemonic_password=mnemonic_password)
+#            senderAddress = helper_functions.get_wallet_address(ergo=ergo, amount=1, wallet_mnemonic=wallet_mnemonic, mnemonic_password=mnemonic_password)
 
-    return ergo, wallet_mnemonic, mnemonic_password, senderAddress
+        return node_url, testnetAPIKey

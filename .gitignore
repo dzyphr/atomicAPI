@@ -1,5 +1,16 @@
 *.env
+Ergo/SigmaParticle/boxTrees/*
+Ergo/SigmaParticle/treeAddrs/*
 *.env.encrypted
+addrtest
+checkBoxValueScriptDebug
+getTreeFromBoxScriptDebug
+lockHeightScriptDebug
+newframesigmaparticlescriptdebug
+responderVerifyErgoScriptdebug
+sigmaresponderclaimscriptdebug
+treeToAddrScriptTestDebug
+currentHeightCMDDeubug
 accepted_private_api_keys.json
 accepted_public_api_keys.json
 starterAPIKeys.json

@@ -94,11 +94,12 @@ def initSepoliaAccountNonInteractive(\
     createNonInteractive(fulldirpath, fullenvpath, envFormat, enc, password)
 
 
-def initErgoAccountNonInteractive(testnetNode, mnemonic, mnemonicPass, senderEIP3Secret, senderPubKey, 
+def initErgoAccountNonInteractive(testnetNode, testnetAPIKey, mnemonic, mnemonicPass, senderEIP3Secret, senderPubKey, 
         apiURL, fulldirpath, fullenvpath, enc=False, password=""):
     #TODO use hardcoded (fornow) chain frameworkpath instead of fullpaths to build paths on fly w less args
     envFormat = \
         "[default]\n" +\
+        "testnetAPIKey=\"" + testnetAPIKey +  "\"\n" +\
         "testnetNode=\"" + testnetNode + "\"\n" +\
         "mnemonic=\"" + mnemonic + "\"\n" +\
         "mnemonicPass=\"" + mnemonicPass + "\"\n" +\
@@ -221,6 +222,8 @@ def initializeAccount(accountName, chain): #interactive command line function to
                     "You may disconnect internet while doing this if concerned about any connected applications.")
             print("Enter the URL address of the ", chain, " node you want to connect to. (May be testnet or mainnet):")
             testnetNode = input()
+            print('Enter your testnet Node API Key:')
+            testnetAPIKey = input()
             print("(REMINDER: You may disconnect internet while doing this if concerned about any connected applications.)", \
                     "\nEnter your Ergo private mnemonic seed words:")
             mnemonic = input()
@@ -232,16 +235,15 @@ def initializeAccount(accountName, chain): #interactive command line function to
             senderPubKey = input()
             print("Enter your explorer api URL (default: https://tn-ergo-explorer.anetabtc.io/)")
             apiURL = input()
-
             envFormat = \
                 "[default]\n" +\
+                "testnetAPIKey=\"" + testnetAPIKey +  "\"\n" +\
                 "testnetNode=\"" + testnetNode + "\"\n" +\
                 "mnemonic=\"" + mnemonic + "\"\n" +\
                 "mnemonicPass=\"" + mnemonicPass + "\"\n" +\
                 "senderEIP3Secret=" + senderEIP3Secret + "\n" +\
                 "senderPubKey=\"" + senderPubKey + "\"\n" +\
                 "apiURL=\"" + apiURL + "\"\n"
-
             enc = False
             enc_env_loop(fulldirpath, fullenvpath, envFormat)
 

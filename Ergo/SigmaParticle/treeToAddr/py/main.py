@@ -14,20 +14,22 @@ import waits
 import coinSelection
 import scalaPipe
 from passwordFileEncryption import get_val_from_envdata_key, decrypt_file_return_contents
-def main(contractName, ergo, wallet_mnemonic, mnemonic_password, senderAddress, args):
+def main(contractName, node_url, testnetAPIKey, args):
     
     def treeToAddr(tree, filepath=None, password=""):
+        '''
         node = ""
         if password == "":
             node = os.getenv('testnetNode')          
         else:
             envdata = decrypt_file_return_contents(".env.encrypted", password)
             node = get_val_from_envdata_key('testnetNode', envdata).strip('\"')
-        url = node  + "utils/ergoTreeToAddress"
+        '''
+        url = node_url  + "utils/ergoTreeToAddress"
         headers = {\
             "accept": 'application/json',\
             "Content-type": 'application/json',\
-            "api_key": os.getenv('testnetAPIKEY')
+            "api_key": testnetAPIKey
         }
         if tree.startswith("\"") == False:
             tree = "\"" + tree

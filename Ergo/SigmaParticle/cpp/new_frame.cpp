@@ -1,4 +1,6 @@
 #include <bits/stdc++.h>
+#include <iostream>
+#include <filesystem>
 #include <vector>
 using std::cout, std::string, std::vector;
 void makeNewContractFrame(string ContractName);
@@ -18,8 +20,18 @@ int main(int argc, char* argv[])
 
 void makeNewContractFrame(string ContractName)
 {
-	string command = "cp -r basic_framework " + ContractName;
-	system(command.c_str());	
+	std::string dirpath = ContractName;
+	if (std::filesystem::exists(dirpath) && std::filesystem::is_directory(dirpath))
+	{
+		string command = "cp -r basic_framework/* " + ContractName;
+		system(command.c_str());	
+	}
+	else
+	{
+		//if it doesnt exist yet copy and create, this will copy folder into existing folder if it existed
+		string command = "cp -r basic_framework " + ContractName;
+                system(command.c_str());
+	}
 }
 
 void echoContractName(string ContractName)

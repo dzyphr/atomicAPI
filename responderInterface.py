@@ -193,7 +193,7 @@ def GeneralizeENC_ResponseSubroutine(\
     encrypted_response = ElGamalInterface.ElGamal_Encrypt(ElGamalKey, ElGamalKeyPath, responsePATH, ENC_Response_PATH)
     return ENC_Response_PATH
 
-def GeneralizedENC_ResponderClaimSubroutine(responderJSONPath):
+def GeneralizedENC_ResponderClaimSubroutine(responderJSONPath, localChainAccountPassword="", crossChainAccountPassword=""):
  ############## RESPONDER #######################################################
     resp_J = json_tools.ojf(responderJSONPath)
     if resp_J["InitiatorChain"] == "TestnetErgo" and resp_J["ResponderChain"] == "Sepolia":
@@ -208,22 +208,42 @@ def GeneralizedENC_ResponderClaimSubroutine(responderJSONPath):
         finalization_list = json_tools.json_to_keyValList(DEC_finalizationPATH)
         json_tools.keyVal_list_update(finalization_list, responderJSONPath)
         boxID = json.loads(DEC_finalization)["boxId"]
-        boxValue = SigmaParticleInterface.checkBoxValue(boxID, swapName + "/testBoxValPath.bin", swapName, role="responder")
+        boxValue = SigmaParticleInterface.checkBoxValue(
+                boxID, 
+                swapName + "/testBoxValPath.bin", 
+                swapName, 
+                role="responder", 
+                ergopassword=crossChainAccountPassword,
+                otherchainpassword=localChainAccountPassword
+        )
         j_response = json_tools.ojf(resp_J["responsePATH"])
         if boxValue == 0:
             print("refund tried, swap aborting")
             while True:
-                if AtomicityInterface.Atomicity_RemainingLockTimeAtomicMultisig_v_002(j_response, swapName) <= 0:
-                    AtomicityInterface.Atomicity_Refund(swapName, "responder", gas=SEPOLIA_EVM_GAS_CONTROL, gasMod=SEPOLIA_EVM_GASMOD_CONTROL)
+                if AtomicityInterface.Atomicity_RemainingLockTimeAtomicMultisig_v_002(\
+                        j_response, swapName, password=localChainAccountPassword\
+                ) <= 0:
+                    AtomicityInterface.Atomicity_Refund(\
+                            swapName, "responder", gas=SEPOLIA_EVM_GAS_CONTROL, \
+                            gasMod=SEPOLIA_EVM_GASMOD_CONTROL, password=localChainAccountPassword
+                    )
                     break
                 time.sleep(3)
             exit()
         #other than just the box value responder should verify the scalars in the contract match those expected
-        remoteLockTime = SigmaParticleInterface.SigmaParticle_CheckLockTimeAtomicSchnorr(swapName, boxID)
+        remoteLockTime = SigmaParticleInterface.SigmaParticle_CheckLockTimeAtomicSchnorr(\
+                swapName, boxID, password=crossChainAccountPassword\
+        )
         if remoteLockTime < MIN_CLAIM_LOCKTIME_ERGOTESTNET:
             while True:
-                if AtomicityInterface.Atomicity_RemainingLockTimeAtomicMultisig_v_002(j_response, swapName) <= 0:
-                    AtomicityInterface.Atomicity_Refund(swapName, "responder",  gas=SEPOLIA_EVM_GAS_CONTROL, gasMod=SEPOLIA_EVM_GASMOD_CONTROL)
+                if AtomicityInterface.Atomicity_RemainingLockTimeAtomicMultisig_v_002(
+                        j_response, swapName, password=localChainAccountPassword
+                ) <= 0:
+                    AtomicityInterface.Atomicity_Refund(
+                            swapName, "responder",  \
+                            gas=SEPOLIA_EVM_GAS_CONTROL, gasMod=SEPOLIA_EVM_GASMOD_CONTROL, \
+                            password=localChainAccountPassword
+                    )
                     break
                 time.sleep(3)
             print("lock time is below safe minimum for claiming, refunding swap")
@@ -231,8 +251,13 @@ def GeneralizedENC_ResponderClaimSubroutine(responderJSONPath):
         minBoxValue = 1123841 #1123841
         if int(boxValue) < int(minBoxValue):
             while True:
-                if AtomicityInterface.Atomicity_RemainingLockTimeAtomicMultisig_v_002(j_response, swapName) <= 0:
-                    AtomicityInterface.Atomicity_Refund(swapName, "responder",  gas=SEPOLIA_EVM_GAS_CONTROL, gasMod=SEPOLIA_EVM_GASMOD_CONTROL)
+                if AtomicityInterface.Atomicity_RemainingLockTimeAtomicMultisig_v_002(\
+                        j_response, swapName, password=localChainAccountPassword\
+                ) <= 0:
+                    AtomicityInterface.Atomicity_Refund(\
+                            swapName, "responder",  \
+                            gas=SEPOLIA_EVM_GAS_CONTROL, gasMod=SEPOLIA_EVM_GASMOD_CONTROL\
+                    )
                     break
                 time.sleep(3)
             print("not enough nanoerg in contract, refunging swap")
@@ -240,12 +265,12 @@ def GeneralizedENC_ResponderClaimSubroutine(responderJSONPath):
         SigmaParticleInterface.SigmaParticle_newFrame(swapName)
         SigmaParticleInterface.SigmaParticle_updateKeyEnv(swapName, responderErgoAccountName)
         SigmaParticleInterface.responderGenerateAtomicSchnorr(swapName, DEC_finalizationPATH, responderJSONPath, boxValue)
-        expectedErgoTree = SigmaParticleInterface.SigmaParticle_getTreeFromBox(boxID)
-        if SigmaParticleInterface.responderVerifyErgoScript(swapName, expectedErgoTree) == False:
+        expectedErgoTree = SigmaParticleInterface.SigmaParticle_getTreeFromBox(boxID, swapName, password=crossChainAccountPassword)
+        if SigmaParticleInterface.responderVerifyErgoScript(swapName, expectedErgoTree, password=crossChainAccountPassword) == False:
             print("ergoScript verification returned false, wont fulfil swap")
             exit()
     #    print("ergo contract verification status:", responderVerifyErgoScript(swapName, expectedErgoTree))
-        SigmaParticleInterface.responderClaimAtomicSchnorr(swapName, 2500)
+        SigmaParticleInterface.responderClaimAtomicSchnorr(swapName, 2500, password=crossChainAccountPassword)
     ################################################################################
 
 def Responder_CheckLockTimeRefund(swapName, password=""):
@@ -253,7 +278,7 @@ def Responder_CheckLockTimeRefund(swapName, password=""):
     j_response = json_tools.ojf(resp_J["responsePATH"])
     swapName = resp_J["swapName"]
     while True:
-        if AtomicityInterface.Atomicity_RemainingLockTimeAtomicMultisig_v_002(j_response, swapName, password=password) <= 0 and int(AtomicityInterface.Atomicity_CheckContractFunds(j_response, password=password)) != 0:
+        if AtomicityInterface.Atomicity_RemainingLockTimeAtomicMultisig_v_002(j_response, swapName, password=password) <= 0 and int(AtomicityInterface.Atomicity_CheckContractFunds(swapName, j_response, password=password)) != 0:
             print(AtomicityInterface.Atomicity_Refund(swapName, "responder", password=password))
             time.sleep(10)
             #we may want to alter the smart contract to enforce that funds are in the 
