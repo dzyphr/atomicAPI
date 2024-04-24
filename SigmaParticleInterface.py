@@ -71,6 +71,13 @@ def SigmaParticle_CheckLockTimeAtomicSchnorr(swapName, boxId, password=""):
 #                            " 8 ../../../" + swapName + "/localChain_lockHeight " + password
 #    file_tools.clean_file_open("lockHeightScriptDebug", "w" , lockHeightCMD)
 #    print(os.popen(lockHeightCMD).read())
+    lockHeightPath = SigmaParticlePath + swapName + "/lockHeight"
+    if os.path.isfile(lockHeightPath) == False:
+        lockHeightCMD = \
+                        "cd " + SigmaParticlePath + "boxConstantByIndex && ./deploy.sh " + boxId + \
+                        " 8 ../" + swapName + "/lockHeight " + password
+        file_tools.clean_file_open("lockHeightScriptDebug", "w" , lockHeightCMD)
+        print(os.popen(lockHeightCMD).read())
     currentHeightCMD = \
                     "cd " + SigmaParticlePath + "currentHeight && ./deploy.sh ../../../" + \
                     swapName + "/localChain_currentHeight " + password

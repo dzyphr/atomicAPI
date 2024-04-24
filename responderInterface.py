@@ -231,6 +231,7 @@ def GeneralizedENC_ResponderClaimSubroutine(responderJSONPath, localChainAccount
                 time.sleep(3)
             exit()
         #other than just the box value responder should verify the scalars in the contract match those expected
+        SigmaParticleInterface.SigmaParticle_newFrame(swapName)
         remoteLockTime = SigmaParticleInterface.SigmaParticle_CheckLockTimeAtomicSchnorr(\
                 swapName, boxID, password=crossChainAccountPassword\
         )
@@ -262,7 +263,6 @@ def GeneralizedENC_ResponderClaimSubroutine(responderJSONPath, localChainAccount
                 time.sleep(3)
             print("not enough nanoerg in contract, refunging swap")
             exit()
-        SigmaParticleInterface.SigmaParticle_newFrame(swapName)
         SigmaParticleInterface.SigmaParticle_updateKeyEnv(swapName, responderErgoAccountName)
         SigmaParticleInterface.responderGenerateAtomicSchnorr(swapName, DEC_finalizationPATH, responderJSONPath, boxValue)
         expectedErgoTree = SigmaParticleInterface.SigmaParticle_getTreeFromBox(boxID, swapName, password=crossChainAccountPassword)
