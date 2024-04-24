@@ -43,6 +43,7 @@ def SigmaParticle_box_to_addr(boxId, swapName, password=""):
             tree = SigmaParticle_getTreeFromBox(boxId, swapName, password=password).replace("\n", "")
             if tree != None and tree != "":
                 hashedtree = str(hashlib.sha256(tree.encode()).hexdigest())#for deterministic proper size filename
+                file_tools.clean_mkdir(SigmaParticlePath + "/treeAddrs")
                 treeToAddrCmd = \
                             "cd " + SigmaParticlePath + "treeToAddr && ./deploy.sh " + \
                             tree + " " + \
