@@ -149,14 +149,22 @@ def Atomicity_claimScalarContract(initiatorMasterJSONPath, swapName, gas=None, g
     claimScript = \
             "cd " + Atomicity + swapName + " && ./deploy.sh claim " + contractAddr + " " + str(x) + \
             " " + str(gas) + " " + str(gasMod) + " " + password
+    file_tools.clean_file_open("initiatorClaimScriptDebug", "w", claimScript)
     return os.popen(claimScript).read()
 
 
 def Atomicity_updateKeyEnv(swapName, targetKeyEnvDirName): #TODO check for .env.encrypted?
     swapName = "Swap_" + swapName.replace("-", "")
-    update = file_tools.clean_file_open(Atomicity + targetKeyEnvDirName + "/.env", "r")
-    update.replace("[default]", "")
-    cmd = \
-        "echo \"" + update + "\"" + " >> " + Atomicity + swapName + "/.env"
-    os.popen(cmd).read()
+    if os.path.isfile(Atomicity + targetKeyEnvDirName + "/.env") == True:
+        update = file_tools.clean_file_open(Atomicity + targetKeyEnvDirName + "/.env", "r")
+        update.replace("[default]", "")
+        cmd = \
+            "echo \"" + update + "\"" + " >> " + Atomicity + swapName + "/.env"
+        os.popen(cmd).read()
+    elif os.path.isfile(Atomicity + targetKeyEnvDirName + "/.env.encrypted") == True:
+        origin = Atomicity + targetKeyEnvDirName + "/.env.encrypted"
+        dest = Atomicity + swapName + "/.env.encrypted"
+        cmd = "cp " + origin + " " + dest
+        os.popen(cmd).read()
+
 

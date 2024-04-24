@@ -16,6 +16,9 @@ if args[1] == "deposit":
         if args[2] == "verifyTreeOnly":
             if len(args) == 4:
                 password = args[3]
+        else:
+            if len(args) == 3:
+                password = args[2]
 elif args[1] == "claim":
     if len(args) == 3:
         password = args[2]

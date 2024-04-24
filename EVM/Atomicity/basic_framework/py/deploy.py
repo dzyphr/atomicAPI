@@ -11,6 +11,7 @@ import json
 import sys
 from passwordFileEncryption import get_val_from_envdata_key, decrypt_file_return_contents
 
+
 solcV = os.getenv('SolidityCompilerVersion') #solidity compiler version
 contractName = os.getenv('ContractName') #this variable is set when creating a new_frame
 if contractName == None:
@@ -26,7 +27,7 @@ contractFile = contractName + xsol
 constructorArgs = bool(os.getenv('ConstructorArgs'))
 gasMod = 1
 chain = os.getenv('CurrentChain') #set the current chain in .env
-
+from decimal import Decimal
 
 if bool(os.getenv('VerifyBlockExplorer')) == True:
     verifyBlockExplorer = True
@@ -48,8 +49,8 @@ def senderReclaim(addr, gas=None, gasMod=None, password=""):
         {
             'chainId': chain_id,
             'from': senderAddr,
-            'gasPrice': rpc.eth.gas_price * gasMod,
-            'gas': gas,
+            'gasPrice':int(Decimal( rpc.eth.gas_price) * Decimal(gasMod)),
+            'gas': int(gas),
             'nonce': rpc.eth.get_transaction_count(senderAddr)
         }
     )
@@ -63,21 +64,18 @@ def claim(addr, x, gas=None, gasMod=None, password=""):
         gas = 8000000
     if gasMod == None:
         gasMod = 1
-    rpc, chain_id, senderAddr, senderPrivKey, url = pickChain(password)
+    rpc, chain_id, senderAddr, senderPrivKey, url = pickChain(password=password)
     f = open("../AtomicMultisig_ABI_0.0.1.json")
     abi = f.read()
     f.close()
-    if chain == "Goerli":
-        rpc = Web3(Web3.HTTPProvider(os.getenv('Goerli')))
-    elif chain == "Sepolia":
-        rpc = Web3(Web3.HTTPProvider(os.getenv('Sepolia')))
     contract = rpc.eth.contract(address=addr, abi=abi)
+    gasPrice = int(Decimal(rpc.eth.gas_price) * Decimal(gasMod))
     tx = contract.functions.receiverWithdraw(int(x)).buildTransaction(
         {
             'chainId': chain_id,
             'from': senderAddr,
-            'gasPrice': rpc.eth.gas_price * gasMod,
-            'gas': gas,
+            'gasPrice': gasPrice,
+            'gas': int(gas),
             'nonce': rpc.eth.get_transaction_count(senderAddr)
         }
     )
@@ -174,7 +172,7 @@ def sendAmount(amount, receiver, password=""):
         'to': receiver,
         'from': senderAddr,
         'value': int(amount),
-        'gasPrice': rpc.eth.gas_price * gasMod,
+        'gasPrice': int(Decimal( rpc.eth.gas_price) * Decimal(gasMod)),
         'gas': 7000000,
         'nonce': rpc.eth.get_transaction_count(senderAddr)
     }
@@ -328,7 +326,7 @@ def uploadContract(rpc, abi, bytecode, gas=None, gasModExtra=None):
                 "from": senderAddr, 
                 "nonce": rpc.eth.getTransactionCount(senderAddr), 
                 "gas": int(gas),
-                "gasPrice": rpc.eth.gas_price * int(gasModExtra)
+                "gasPrice": int(Decimal(rpc.eth.gas_price) * Decimal(int(gasModExtra)))
             }
         )
     else:
@@ -338,7 +336,7 @@ def uploadContract(rpc, abi, bytecode, gas=None, gasModExtra=None):
                 "from": senderAddr,
                 "nonce": rpc.eth.getTransactionCount(senderAddr),
                 "gas": int(gas),
-                "gasPrice": rpc.eth.gas_price * int(gasModExtra)
+                "gasPrice": int(Decimal(rpc.eth.gas_price) * Decimal(int(gasModExtra)))
             }
         )
     signedTx = rpc.eth.account.sign_transaction(tx, private_key=senderPrivKey)
@@ -459,7 +457,8 @@ def grabExistingContractAddr():
     else:
         print("contract addr not found (not deployed yet?)")
         exit()
-
+#print(sys.argv)
+#print(len(sys.argv))
 args_n = len(sys.argv)
 if args_n > 1:
     if sys.argv[1] == "getAccount":
@@ -529,7 +528,7 @@ if args_n > 1:
         if args_n == 6:
             claim(sys.argv[2], sys.argv[3], gas=sys.argv[4], gasMod=sys.argv[5])
             exit()
-        if args_n > 6:
+        if args_n == 7:
             claim(sys.argv[2], sys.argv[3], gas=sys.argv[4], gasMod=sys.argv[5], password=sys.argv[6])
             exit()
         else :

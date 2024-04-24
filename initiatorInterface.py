@@ -293,7 +293,7 @@ def GeneralizedENC_InitiatorClaimSubroutine(initiatorJSONPath, localchainpasswor
         if SigmaParticleInterface.checkSchnorrTreeForClaim(boxID, swapName, initiatorJSONPath, password=localchainpassword) == False:
             print("refund attempted due to timelock expiry")
             exit()
-        SigmaParticleInterface.deduceX_fromAtomicSchnorrClaim(initiatorJSONPath, swapName)
+        SigmaParticleInterface.deduceX_fromAtomicSchnorrClaim(initiatorJSONPath, swapName, password=localchainpassword)
         AtomicityInterface.Atomicity_updateKeyEnv(swapName, initiatorEVMAccountName)
         AtomicityInterface.Atomicity_claimScalarContract(initiatorJSONPath, swapName, gasMod=3, password=crosschainpassword)
     ################################################################################

@@ -41,3 +41,7 @@ OrderTypes.json
 publishNewOrderType_ServerEndpoint.sh
 requestEncryptedInitiation.sh
 generateEncryptedResponse.sh
+boxFilterCmdDebug
+checkcontractfundsdebug
+initiatorClaimScriptDebug
+initiatorDeployErgoContractDebug

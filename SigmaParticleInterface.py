@@ -66,18 +66,18 @@ def SigmaParticle_box_to_addr(boxId, swapName, password=""):
     return "attempts exhausted looking for this box: " + boxId
 
 def SigmaParticle_CheckLockTimeAtomicSchnorr(swapName, boxId, password=""):
-    lockHeightCMD = \
-                            "cd " + SigmaParticlePath + "boxConstantByIndex && ./deploy.sh " + boxId + \
-                            " 8 ../../../" + swapName + "/localChain_lockHeight " + password
-    file_tools.clean_file_open("lockHeightScriptDebug", "w" , lockHeightCMD)
-    print(os.popen(lockHeightCMD).read())
+#    lockHeightCMD = \
+#                            "cd " + SigmaParticlePath + "boxConstantByIndex && ./deploy.sh " + boxId + \
+#                            " 8 ../../../" + swapName + "/localChain_lockHeight " + password
+#    file_tools.clean_file_open("lockHeightScriptDebug", "w" , lockHeightCMD)
+#    print(os.popen(lockHeightCMD).read())
     currentHeightCMD = \
                     "cd " + SigmaParticlePath + "currentHeight && ./deploy.sh ../../../" + \
                     swapName + "/localChain_currentHeight " + password
     file_tools.clean_file_open("currentHeightCMDDeubug", "w", currentHeightCMD)
     print(os.popen(currentHeightCMD).read())
-    if os.path.isfile(swapName + "/localChain_lockHeight") == True and os.path.isfile(swapName + "/localChain_currentHeight") == True:
-        lockHeight = file_tools.clean_file_open(swapName + "/localChain_lockHeight", "r")
+    if os.path.isfile(SigmaParticlePath + swapName + "/lockHeight") == True and os.path.isfile(swapName + "/localChain_currentHeight") == True:
+        lockHeight = file_tools.clean_file_open(SigmaParticlePath + swapName + "/lockHeight", "r")
         currentHeight = file_tools.clean_file_open(swapName + "/localChain_currentHeight", "r")
         if currentHeight.isnumeric() == True and lockHeight.isnumeric() == True:
             if int(currentHeight) <= int(lockHeight):
@@ -241,6 +241,7 @@ def SigmaParticle_getTreeFromBox(boxID, swapName, password=""):
 
 def deployErgoContract(swapName, password=""):
     command = "cd " + SigmaParticlePath + swapName + " && ./deploy.sh deposit " + password
+    file_tools.clean_file_open("initiatorDeployErgoContractDebug", "w", command)
     os.popen(command).read()
 
 def getBoxID(swapName):
@@ -284,7 +285,11 @@ def checkBoxValue(boxID, boxValPATH, swapName, role=None, ergopassword="", other
 
 def checkSchnorrTreeForClaim(boxID, swapName, initiatorMasterJSONPath, password=""):
     while True:
-        tree = file_tools.clean_file_open(SigmaParticlePath + swapName + "/ergoTree", "r").replace("\n", "")
+        tree = ""
+        if os.path.isfile(SigmaParticlePath + swapName + "/ergoTree") == True:
+            tree = file_tools.clean_file_open(SigmaParticlePath + swapName + "/ergoTree", "r").replace("\n", "")
+        else:
+            tree = SigmaParticle_getTreeFromBox(boxID, swapName, password=password)
         treeToAddrCmd = \
                 "cd " + SigmaParticlePath + "treeToAddr && ./deploy.sh " + tree + " ../" + \
                 swapName + "/scriptAddr " + password
@@ -292,7 +297,8 @@ def checkSchnorrTreeForClaim(boxID, swapName, initiatorMasterJSONPath, password=
         addr = json.loads(os.popen(treeToAddrCmd).read())["address"]
         boxFilterCmd = \
                 "cd " + SigmaParticlePath + "boxFilter && " + \
-                "./deploy.sh " + addr + " " + boxID + " ../../../" + swapName + "/atomicClaim"
+                "./deploy.sh " + addr + " " + boxID + " ../../../" + swapName + "/atomicClaim " + password
+        file_tools.clean_file_open("boxFilterCmdDebug", "w", boxFilterCmd)
         os.popen(boxFilterCmd).read()
         if os.path.isfile(swapName + "/atomicClaim_tx1") == True:
             j = json.loads(file_tools.clean_file_open(swapName + "/atomicClaim_tx1", "r"))
@@ -322,14 +328,14 @@ def checkSchnorrTreeForClaim(boxID, swapName, initiatorMasterJSONPath, password=
 #This function takes a Register from the Responder's claim transaction from the Atomic Schnorr contract.
 #It applies a subtraction against a previously known partial equation
 #which allows Initiator to learn x (responders ephemoral secret).
-def deduceX_fromAtomicSchnorrClaim(initiatorMasterJSONPath, swapName):
+def deduceX_fromAtomicSchnorrClaim(initiatorMasterJSONPath, swapName, password=""):
     masterJSON = json.loads(file_tools.clean_file_open(initiatorMasterJSONPath, "r"))
     sr_ = masterJSON["sr_"]
     responderContractAddr = masterJSON["responderContractAddr"] 
     responderLocalChain = masterJSON["responderLocalChain"]
     enc_sr = masterJSON["sr"]
     decode_sr_cmd = \
-            "cd " + SigmaParticlePath + "valFromHex && ./deploy.sh " + enc_sr + " ../../../" + swapName + "/decoded_sr.bin"
+            "cd " + SigmaParticlePath + "valFromHex && ./deploy.sh " + enc_sr + " ../../../" + swapName + "/decoded_sr.bin " + password 
     decode = os.popen(decode_sr_cmd).read()
     sr = file_tools.clean_file_open(swapName + "/decoded_sr.bin", "r")
     deduction_cmd = \

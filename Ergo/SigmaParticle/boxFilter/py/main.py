@@ -14,9 +14,8 @@ import waits
 import coinSelection
 import scalaPipe
 def main(contractName, ergo, wallet_mnemonic, mnemonic_password, senderAddress, args):
-    
     def txBoxFilter(address, boxId, filepath=None):
-        node = os.getenv('testnetNode')          
+        node = ergo._node_url  
         url = node  + "blockchain/transaction/byAddress"
         params = {\
                 "limit": 5,\
