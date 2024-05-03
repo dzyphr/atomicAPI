@@ -77,6 +77,7 @@ def Atomicity_buildScalarContract(chain, counterpartyChainPub, xG, locktimeDurat
     cmd = "cd " + Atomicity + "&& ./new_frame " + swapName + \
             " -M -CA 4 " + "\\\"" + counterpartyChainPub + "\\\" " + \
             str(ast.literal_eval(xG)[0]) + " " + str(ast.literal_eval(xG)[1]) + " " + str(locktimeDuration)
+    file_tools.clean_file_open("AtomicityNewFrameConstructorArgsDebug", "w", cmd)
     new_frame = os.popen(cmd).read()
     file_tools.wait_for_file(Atomicity + swapName + "/contracts/" + swapName + ".sol")
     os.remove(Atomicity + swapName + "/contracts/" + swapName + ".sol")

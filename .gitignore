@@ -1,4 +1,5 @@
 *.env
+AtomicityNewFrameConstructorArgsDebug
 Ergo/SigmaParticle/boxTrees/*
 Ergo/SigmaParticle/treeAddrs/*
 *.env.encrypted
