@@ -13,6 +13,8 @@ py = "python3 -u "
 AtomicSwapECCPath = "Ergo/SigmaParticle/AtomicMultiSigECC/py/deploy.py " #TODO Ergo Specific
 s_ = " "
 
+
+
 MIN_CLAIM_LOCKTIME_ERGOTESTNET = int(config_tools.valFromConf(".env", "MIN_CLAIM_LOCKTIME_ERGOTESTNET"))
 MIN_REFUND_LOCKTIME_SEPOLIA = int(config_tools.valFromConf(".env", "MIN_REFUND_LOCKTIME_SEPOLIA"))
 SEPOLIA_EVM_GAS_CONTROL = int(config_tools.valFromConf(".env", "SEPOLIA_EVM_GAS_CONTROL"))
@@ -47,7 +49,21 @@ def response(DEC_initiation_filepath, responderMasterJSONPATH, response_filepath
 def GeneralizeENC_ResponseSubroutine(\
         swapName, responderCrossChainAccountName, responderLocalChainAccountName, \
         ElGamalKey, ElGamalKeyPath, InitiatorChain, ResponderChain, swapAmount,
-        localChainAccountPassword="", crossChainAccountPassword=""):
+        localChainAccountPassword="", crossChainAccountPassword="", hotReloadSwapState=""):
+    if hotReloadSwapState != "":
+        print("hot reloading swap: ", swapName)
+        if hotReloadSwapState == swap_tools.PossibleSwapStates[0]:
+            resp_J = json_tool.ojf(swapName + "/responder.json")
+            DEC_Init_PATH = resp_J["DEC_Init_PATH"]
+            responderJSONPath = swapName + "/responder.json"
+            responsePATH = resp_J["responsePATH"]
+            ElGamalKey = resp_J["ElGamalKey"]
+            ResponderChain = resp_J["ResponderChain"]
+            InitiatorEVMAddr = resp_J["InitiatorEVMAddr"]
+            addr = startResponse(DEC_Init_PATH, responderJSONPath, responsePATH, ElGamalKey, ResponderChain, InitiatorEVMAddr, swapName, localChainAccountPassword=localChainAccountPassword)
+            completeResponse(addr, swapAmount, ResponderChain, ResponderErgoAddr, responsePATH, responderJSONPath, ElGamalKey, ElGamalKeyPath, ENC_Response_PATH, localChainAccountPassword=localChainAccountPassword)
+            #TODO return some data to indicate that this swap needs to be resumed from its next step
+            #probably inform UI or rest server that it needs to keep track of its state from that point forward
     def setup(swapName, responderCrossChainAccountName, responderLocalChainAccountName, \
         ElGamalKey, ElGamalKeyPath, InitiatorChain, ResponderChain, swapAmount,
         localChainAccountPassword="", crossChainAccountPassword=""):
@@ -224,80 +240,96 @@ def GeneralizedENC_ResponderClaimSubroutine(responderJSONPath, localChainAccount
  ############## RESPONDER #######################################################
     resp_J = json_tools.ojf(responderJSONPath)
     if resp_J["InitiatorChain"] == "TestnetErgo" and resp_J["ResponderChain"] == "Sepolia":
-        swapName = resp_J["swapName"]
-        ENC_finalizationPATH = resp_J["ENC_finalizationPATH"]
-        ElGamalKey = resp_J["ElGamalKey"]
-        ElGamalKeyPath = resp_J["ElGamalKeyPath"]
-        DEC_finalizationPATH = resp_J["DEC_finalizationPATH"]
-        responderErgoAccountName = resp_J["responderErgoAccountName"]
-        DEC_finalization = ElGamalInterface.ElGamal_Decrypt(ENC_finalizationPATH, ElGamalKey, ElGamalKeyPath)
-        file_tools.clean_file_open(DEC_finalizationPATH, "w", DEC_finalization)
-        swap_tools.setSwapState(swapName, "finalized")
-        finalization_list = json_tools.json_to_keyValList(DEC_finalizationPATH)
-        json_tools.keyVal_list_update(finalization_list, responderJSONPath)
-        boxID = json.loads(DEC_finalization)["boxId"]
-        boxValue = SigmaParticleInterface.checkBoxValue(
-                boxID, 
-                swapName + "/testBoxValPath.bin", 
-                swapName, 
-                role="responder", 
-                ergopassword=crossChainAccountPassword,
-                otherchainpassword=localChainAccountPassword
-        )
-        j_response = json_tools.ojf(resp_J["responsePATH"])
-        if boxValue == 0:
-            print("refund tried, swap aborting")
-            while True:
-                if AtomicityInterface.Atomicity_RemainingLockTimeAtomicMultisig_v_002(\
-                        j_response, swapName, password=localChainAccountPassword\
-                ) <= 0:
-                    AtomicityInterface.Atomicity_Refund(\
-                            swapName, "responder", gas=SEPOLIA_EVM_GAS_CONTROL, \
-                            gasMod=SEPOLIA_EVM_GASMOD_CONTROL, password=localChainAccountPassword
-                    )
-                    break
-                time.sleep(3)
-            exit()
-        #other than just the box value responder should verify the scalars in the contract match those expected
-        SigmaParticleInterface.SigmaParticle_newFrame(swapName)
-        remoteLockTime = SigmaParticleInterface.SigmaParticle_CheckLockTimeAtomicSchnorr(\
-                swapName, boxID, password=crossChainAccountPassword\
-        )
-        if remoteLockTime < MIN_CLAIM_LOCKTIME_ERGOTESTNET:
-            while True:
-                if AtomicityInterface.Atomicity_RemainingLockTimeAtomicMultisig_v_002(
-                        j_response, swapName, password=localChainAccountPassword
-                ) <= 0:
-                    AtomicityInterface.Atomicity_Refund(
-                            swapName, "responder",  \
-                            gas=SEPOLIA_EVM_GAS_CONTROL, gasMod=SEPOLIA_EVM_GASMOD_CONTROL, \
-                            password=localChainAccountPassword
-                    )
-                    break
-                time.sleep(3)
-            print("lock time is below safe minimum for claiming, refunding swap")
-            exit()
-        minBoxValue = 1123841 #1123841
-        if int(boxValue) < int(minBoxValue):
-            while True:
-                if AtomicityInterface.Atomicity_RemainingLockTimeAtomicMultisig_v_002(\
-                        j_response, swapName, password=localChainAccountPassword\
-                ) <= 0:
-                    AtomicityInterface.Atomicity_Refund(\
-                            swapName, "responder",  \
-                            gas=SEPOLIA_EVM_GAS_CONTROL, gasMod=SEPOLIA_EVM_GASMOD_CONTROL\
-                    )
-                    break
-                time.sleep(3)
-            print("not enough nanoerg in contract, refunging swap")
-            exit()
-        SigmaParticleInterface.SigmaParticle_updateKeyEnv(swapName, responderErgoAccountName)
-        SigmaParticleInterface.responderGenerateAtomicSchnorr(swapName, DEC_finalizationPATH, responderJSONPath, boxValue)
-        expectedErgoTree = SigmaParticleInterface.SigmaParticle_getTreeFromBox(boxID, swapName, password=crossChainAccountPassword)
-        if SigmaParticleInterface.responderVerifyErgoScript(swapName, expectedErgoTree, password=crossChainAccountPassword) == False:
-            print("ergoScript verification returned false, wont fulfil swap")
-            exit()
-    #    print("ergo contract verification status:", responderVerifyErgoScript(swapName, expectedErgoTree))
+        def setup(resp_J):
+            swapName = resp_J["swapName"]
+            ENC_finalizationPATH = resp_J["ENC_finalizationPATH"]
+            ElGamalKey = resp_J["ElGamalKey"]
+            ElGamalKeyPath = resp_J["ElGamalKeyPath"]
+            DEC_finalizationPATH = resp_J["DEC_finalizationPATH"]
+            responderErgoAccountName = resp_J["responderErgoAccountName"]
+            DEC_finalization = ElGamalInterface.ElGamal_Decrypt(ENC_finalizationPATH, ElGamalKey, ElGamalKeyPath)
+            file_tools.clean_file_open(DEC_finalizationPATH, "w", DEC_finalization)
+            swap_tools.setSwapState(swapName, "finalized")
+            return swapName, ENC_finalizationPATH, ElGamalKey, \
+                    ElGamalKeyPath, DEC_finalizationPATH, responderErgoAccountName, DEC_finalization
+                    
+        swapName, ENC_finalizationPATH, ElGamalKey, ElGamalKeyPath, DEC_finalizationPATH, responderErgoAccountName, DEC_finalization = \
+                        setup(resp_J)
+        def verify(\
+                DEC_finalizationPATH, responderJSONPath, DEC_finalization,\
+                swapName, responderErgoAccountName, localChainAccountPassword="", crossChainAccountPassword=""\
+            ):                
+            finalization_list = json_tools.json_to_keyValList(DEC_finalizationPATH)
+            json_tools.keyVal_list_update(finalization_list, responderJSONPath)
+            boxID = json.loads(DEC_finalization)["boxId"]
+            swap_tools.setSwapState(swapName, "verifyingFinalizedContractValues")
+            boxValue = SigmaParticleInterface.checkBoxValue(
+                    boxID, 
+                    swapName + "/testBoxValPath.bin", 
+                    swapName, 
+                    role="responder", 
+                    ergopassword=crossChainAccountPassword,
+                    otherchainpassword=localChainAccountPassword
+            )
+            j_response = json_tools.ojf(resp_J["responsePATH"])
+            if boxValue == 0:
+                print("refund tried, swap aborting")
+                while True:
+                    if AtomicityInterface.Atomicity_RemainingLockTimeAtomicMultisig_v_002(\
+                            j_response, swapName, password=localChainAccountPassword\
+                    ) <= 0:
+                        AtomicityInterface.Atomicity_Refund(\
+                                swapName, "responder", gas=SEPOLIA_EVM_GAS_CONTROL, \
+                                gasMod=SEPOLIA_EVM_GASMOD_CONTROL, password=localChainAccountPassword
+                        )
+                        break
+                    time.sleep(3)
+                exit()
+            #other than just the box value responder should verify the scalars in the contract match those expected
+            SigmaParticleInterface.SigmaParticle_newFrame(swapName)
+            remoteLockTime = SigmaParticleInterface.SigmaParticle_CheckLockTimeAtomicSchnorr(\
+                    swapName, boxID, password=crossChainAccountPassword\
+            )
+            if remoteLockTime < MIN_CLAIM_LOCKTIME_ERGOTESTNET:
+                while True:
+                    if AtomicityInterface.Atomicity_RemainingLockTimeAtomicMultisig_v_002(
+                            j_response, swapName, password=localChainAccountPassword
+                    ) <= 0:
+                        AtomicityInterface.Atomicity_Refund(
+                                swapName, "responder",  \
+                                gas=SEPOLIA_EVM_GAS_CONTROL, gasMod=SEPOLIA_EVM_GASMOD_CONTROL, \
+                                password=localChainAccountPassword
+                        )
+                        break
+                    time.sleep(3)
+                print("lock time is below safe minimum for claiming, refunding swap")
+                exit()
+            minBoxValue = 1123841 #1123841
+            if int(boxValue) < int(minBoxValue):
+                while True:
+                    if AtomicityInterface.Atomicity_RemainingLockTimeAtomicMultisig_v_002(\
+                            j_response, swapName, password=localChainAccountPassword\
+                    ) <= 0:
+                        AtomicityInterface.Atomicity_Refund(\
+                                swapName, "responder",  \
+                                gas=SEPOLIA_EVM_GAS_CONTROL, gasMod=SEPOLIA_EVM_GASMOD_CONTROL\
+                        )
+                        break
+                    time.sleep(3)
+                print("not enough nanoerg in contract, refunging swap")
+                exit()
+            SigmaParticleInterface.SigmaParticle_updateKeyEnv(swapName, responderErgoAccountName)
+            SigmaParticleInterface.responderGenerateAtomicSchnorr(swapName, DEC_finalizationPATH, responderJSONPath, boxValue)
+            expectedErgoTree = SigmaParticleInterface.SigmaParticle_getTreeFromBox(boxID, swapName, password=crossChainAccountPassword)
+            if SigmaParticleInterface.responderVerifyErgoScript(swapName, expectedErgoTree, password=crossChainAccountPassword) == False:
+                print("ergoScript verification returned false, wont fulfil swap")
+                exit()
+        #    print("ergo contract verification status:", responderVerifyErgoScript(swapName, expectedErgoTree))
+        verify(\
+                DEC_finalizationPATH, responderJSONPath, \
+                DEC_finalization, swapName, responderErgoAccountName, \
+                localChainAccountPassword=localChainAccountPassword, crossChainAccountPassword=crossChainAccountPassword\
+            )
         swap_tools.setSwapState(swapName, "claiming")
         SigmaParticleInterface.responderClaimAtomicSchnorr(swapName, 2500, password=crossChainAccountPassword)
     ################################################################################

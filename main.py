@@ -12,6 +12,7 @@ import functional_tests
 import json_tools
 import time
 import file_tools
+import swap_tools
 from ServerEndpoints import logInToPasswordEncryptedAccount_ServerEndpoint, publishNewOrderType_ServerEndpoint
 from ClientEndpoints import submitEncryptedResponse_ClientEndpoint, requestEncryptedInitiation_ClientEndpoint, logInToPasswordEncryptedAccount_ClientEndpoint
 from config_tools import firstRunCheck, updateMainEnv, initErgoAccountNonInteractive, initSepoliaAccountNonInteractive 
@@ -38,6 +39,8 @@ if len(args) == 2:
         add_RESTAPI_key_to_public_accepted_keys_JSON(generate_bearer_RESTAPI_key())
     if args[1] == "generate_starter_RESTAPI_key":
         starterAPIKeys(add_RESTAPI_key_to_public_accepted_keys_JSON(generate_bearer_RESTAPI_key()))
+    if args[1] == "scanAllSwapStates":
+        swap_tools.scanAllSwapStates()
 elif len(args) == 3:
     if args[1] == "generate_bearer_RESTAPI_key":
         generate_bearer_RESTAPI_key(length=args[2])

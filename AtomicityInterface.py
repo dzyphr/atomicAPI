@@ -95,6 +95,11 @@ def Atomicity_buildScalarContract(chain, counterpartyChainPub, xG, locktimeDurat
           swapName + "/.env").read()
 
 def Atomicity_deployEVMContract(swapName, customGas=None, customGasMod=None, password=""):
+    #TODO:
+    #There are many different potential errors that many occur when deploying a contract
+    #so far we only follow the happy path so we should catch any errors we can expect
+    #in order to give good UX feedback in the unfortunate case that there is an error
+    #errors related to gas usage for example are expected in EVM
     custom = False
     swapName = "Swap_" + swapName.replace("-", "")
     gas = "9000000"
