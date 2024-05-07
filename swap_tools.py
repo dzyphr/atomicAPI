@@ -1,6 +1,6 @@
 import file_tools, os, uuid, responderInterface
 
-PossibleSwapStates = ["initiated", "uploadingResponseContract", "fundingResponseContract", "responded", "finalized", "verifyingFinalizedContractValues", "claiming", "refunding", "claimed", "refunded", "terminated", "tbd"]
+PossibleSwapStates = ["initiated", "uploadingResponseContract", "uploadedResponseContract", "fundingResponseContract", "fundedResponseContract", "responding", "responded", "finalized", "verifyingFinalizedContractValues", "claiming", "refunding", "claimed", "refunded", "terminated", "tbd"]
 
 def setSwapState(swapName, state):
     if state not in PossibleSwapStates:
