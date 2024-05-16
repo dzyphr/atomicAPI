@@ -2,7 +2,7 @@ import os, json
 import file_tools
 def keyVal_list_update(keyValList, jsonPath): #update a json file with a list of key value pairs
     if type(keyValList) is not list:
-        print("must be a list of key value pairs")
+        print("must be a list of key value pairs. actual:", keyValList, "path: ", jsonPath)
         return False
     try:
         j = json.loads(str(file_tools.clean_file_open(jsonPath, "r")))

@@ -260,7 +260,8 @@ def getBoxID(swapName):
         return False
 
 def checkBoxValue(boxID, boxValPATH, swapName, role=None, ergopassword="", otherchainpassword=""):
-    while True:
+    tries = 200
+    while tries > 0:
         cmd = \
                 "cd " + SigmaParticlePath + \
                 "/boxValue/ && ./deploy.sh " + \
@@ -271,7 +272,8 @@ def checkBoxValue(boxID, boxValPATH, swapName, role=None, ergopassword="", other
         pipe = subprocess.Popen(cmd, shell=True, stdout=devnull, stderr=devnull, close_fds=True)
         pipe.wait()
         response = file_tools.clean_file_open(boxValPATH, "r")
-        if "error" in str(response) or type(response) == type(None): 
+        tries = tries - 1
+        if str(response) in ["error"] or type(response) == type(None): 
             if role == "responder":
                 masterjsonpath = swapName + "/responder.json"
                 responderChain = json_tools.ojf(masterjsonpath)["ResponderChain"]

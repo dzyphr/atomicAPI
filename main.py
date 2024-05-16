@@ -56,6 +56,8 @@ elif len(args) == 3:
         sys.stdout.write(SigmaParticleInterface.SigmaParticle_box_to_addr(args[2]))
     if args[1] == "generateNewElGamalPubKey": #specific q
         ElGamalInterface.generateNewElGamalPubKey(q=args[2])
+    if args[1] == "watchSwapLoop":
+        swap_tools.watchSwapLoop(args[2])
 elif len(args) == 4:
     if args[1] == "SigmaParticle_box_to_addr":
         sys.stdout.write(SigmaParticleInterface.SigmaParticle_box_to_addr(args[2], args[3]))
@@ -73,6 +75,10 @@ elif len(args) == 4:
         ElGamalInterface.generateNewElGamalPubKey(q=q, g=g)
     if args[1] == "proveEncEnvFilePasswordKnowledge":
         proveEncEnvFilePasswordKnowledge(args[2], args[3])
+    if args[1] == "GeneralizeENC_ResponseSubroutine_hotreload":
+        responderInterface.GeneralizeENC_ResponseSubroutine(args[2], "", "", "", "", "", "", "", hotReloadSwapState=args[3])
+    if args[1] == "GeneralizedENC_ResponderClaimSubroutine_hotreload":
+        responderInterface.GeneralizedENC_ResponderClaimSubroutine(args[2], hotReloadSwapState=args[3])
 elif len(args) == 5:
     if args[1] == "SigmaParticle_box_to_addr":
         sys.stdout.write(SigmaParticleInterface.SigmaParticle_box_to_addr(args[2], args[3], password=args[4]))
@@ -95,6 +101,8 @@ elif len(args) == 5:
         sys.stdout.write(ElGamalInterface.ElGamal_Decrypt(args[2], args[3], args[4]))#subjectFilePath, senderPubKey, userKeyFileName
     if args[1] == "checkBoxValue":
         sys.stdout.write(SigmaParticleInterface.checkBoxValue(args[2], args[3], args[4]))#boxID, boxValPATH, swapName
+    if args[1] == "watchSwapLoop":
+        swap_tools.watchSwapLoop(args[2], localChainAccountPassword=args[3], crossChainAccountPassword=args[4])
 elif len(args) == 6:
     if args[1] == "logInToPasswordEncryptedAccount_Server":
         logInToPasswordEncryptedAccount_ServerEndpoint(args[2], args[3], args[4], args[5])
@@ -102,6 +110,15 @@ elif len(args) == 6:
         logInToPasswordEncryptedAccount_ClientEndpoint(args[2], args[3], args[4], args[5])
     if args[1] == "test2pAtomicSwap":
         test2pAtomicSwap(args[2], args[3], args[4], args[5])
+    if args[1] == "GeneralizeENC_ResponseSubroutine_hotreload":
+        responderInterface.GeneralizeENC_ResponseSubroutine(
+                args[2], "", "", "", "", "", "", "", 
+                localChainAccountPassword=args[3], crossChainAccountPassword=args[4], hotReloadSwapState=args[5]
+        )
+    if args[1] == "GeneralizedENC_ResponderClaimSubroutine_hotreload":
+        responderInterface.GeneralizedENC_ResponderClaimSubroutine(
+                args[2], localChainAccountPassword=args[3], crossChainAccountPassword=args[4], hotReloadSwapState=args[5]
+        )
 elif len(args) == 7:
     if args[1] == "checkBoxValue":
         sys.stdout.write(SigmaParticleInterface.checkBoxValue(\
