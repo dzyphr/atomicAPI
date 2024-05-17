@@ -65,19 +65,40 @@ def SigmaParticle_box_to_addr(boxId, swapName, password=""):
             continue
     return "attempts exhausted looking for this box: " + boxId
 
+def is_file_contents_int(file_path):
+    try:
+        with open(file_path, 'r') as file:
+            contents = file.read().strip()
+        
+        # Split contents into individual elements assuming they are space-separated
+        elements = contents.split()
+        
+        # Check if all elements are integers
+        for element in elements:
+            if not element.isdigit() and not (element.startswith('-') and element[1:].isdigit()):
+                return False
+        return True
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        return False
+
+
 def SigmaParticle_CheckLockTimeAtomicSchnorr(swapName, boxId, password=""):
 #    lockHeightCMD = \
 #                            "cd " + SigmaParticlePath + "boxConstantByIndex && ./deploy.sh " + boxId + \
 #                            " 8 ../../../" + swapName + "/localChain_lockHeight " + password
 #    file_tools.clean_file_open("lockHeightScriptDebug", "w" , lockHeightCMD)
 #    print(os.popen(lockHeightCMD).read())
+    
     lockHeightPath = SigmaParticlePath + swapName + "/lockHeight"
     if os.path.isfile(lockHeightPath) == False:
-        lockHeightCMD = \
-                        "cd " + SigmaParticlePath + "boxConstantByIndex && ./deploy.sh " + boxId + \
-                        " 8 ../" + swapName + "/lockHeight " + password
-        file_tools.clean_file_open("lockHeightScriptDebug", "w" , lockHeightCMD)
-        print(os.popen(lockHeightCMD).read())
+        while is_file_contents_int(lockHeightPath) == False:
+            lockHeightCMD = \
+                            "cd " + SigmaParticlePath + "boxConstantByIndex && ./deploy.sh " + boxId + \
+                            " 8 ../" + swapName + "/lockHeight " + password
+            file_tools.clean_file_open("lockHeightScriptDebug", "w" , lockHeightCMD)
+            print(os.popen(lockHeightCMD).read())
+            time.sleep(5)
     currentHeightCMD = \
                     "cd " + SigmaParticlePath + "currentHeight && ./deploy.sh ../../../" + \
                     swapName + "/localChain_currentHeight " + password

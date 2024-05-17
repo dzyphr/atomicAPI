@@ -104,13 +104,24 @@ def watchSwapLoop(swapName, localChainAccountPassword="", crossChainAccountPassw
                                     swapName, MarketPublicRequestsURL, ENC_response, MarketAPIKey
                             ).replace("\\n", "\n").replace("\"", "")
                             file_tools.clean_file_open(swapName + "/ENC_finalization.bin", "w", ENC_finalization)
-                            DecryptCommand = [
-                                    "python3", "-u", "main.py", 
-                                    "ElGamal_decrypt", swapName + "/ENC_finalization.bin",
-                                    ServerElGamalKey, ElGamalKeyPath
-                            ]
-                            DEC_finalization = subprocess.run(DecryptCommand, capture_output=True, text=True).stdout
-                            print(json.loads(DEC_finalization))
+                            setSwapState(swapName, PossibleSwapStates[7]) #responded submitted
+                            responderInterface.GeneralizedENC_ResponderClaimSubroutine(
+                                swapName + "/responder.json", 
+                                localChainAccountPassword=localChainAccountPassword, 
+                                crossChainAccountPassword=crossChainAccountPassword
+                            )
+
+#                            DecryptCommand = [
+#                                    "python3", "-u", "main.py", 
+#                                    "ElGamal_decrypt", swapName + "/ENC_finalization.bin",
+#                                    ServerElGamalKey, ElGamalKeyPath
+#                            ]
+#                            DEC_finalization = subprocess.run(DecryptCommand, capture_output=True, text=True).stdout
+#                            print(json.loads(DEC_finalization))
+#                            file_tools.clean_file_open(swapName + "/DEC_finalization.json", "w", DEC_finalization)
+#                            setSwapState(swapName, PossibleSwapStates[8]) #finalized
+
+
 
 
 
