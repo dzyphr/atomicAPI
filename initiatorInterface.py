@@ -240,6 +240,8 @@ def GeneralizedENC_FinalizationSubroutine(initiatorJSONPath, CoinA_Price, CoinB_
         addr = init_J["responderContractAddr"]
         responderLocalChain = init_J["responderLocalChain"]
         xG = ast.literal_eval(init_J["xG"])
+                #TODO check for existing swapfile
+        #if yes check for finalization / funded contract
         AtomicityInterface.Atomicity_newFrame(swapName, responderLocalChain)
         print("wait for contract upload and funding")
         time.sleep(30)

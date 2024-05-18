@@ -1,4 +1,5 @@
 *.env
+hs_err_pid*.log
 SwapStateMap
 AtomicityNewFrameConstructorArgsDebug
 Ergo/SigmaParticle/boxTrees/*

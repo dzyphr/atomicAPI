@@ -313,6 +313,29 @@ def checkBoxValue(boxID, boxValPATH, swapName, role=None, ergopassword="", other
             return response #returns box value in nano Ergs (nΣ)
             break
 
+def key_path_exists(data, key_path):
+    """
+    Check if a nested key path exists in a dictionary or list.
+
+    Args:
+        data (dict or list): The data structure to check.
+        key_path (list): The list of keys and/or indices representing the path.
+    Returns:
+        bool: True if the path exists, False otherwise.
+    """
+    try:
+        for key in key_path:
+            if isinstance(data, list) and isinstance(key, int):
+                data = data[key]
+            elif isinstance(data, dict):
+                data = data[key]
+            else:
+    return False
+        return True
+    except (KeyError, IndexError, TypeError):
+        return False
+
+
 def checkSchnorrTreeForClaim(boxID, swapName, initiatorMasterJSONPath, password=""):
     while True:
         tree = ""
@@ -332,11 +355,13 @@ def checkSchnorrTreeForClaim(boxID, swapName, initiatorMasterJSONPath, password=
         os.popen(boxFilterCmd).read()
         if os.path.isfile(swapName + "/atomicClaim_tx1") == True:
             j = json.loads(file_tools.clean_file_open(swapName + "/atomicClaim_tx1", "r"))
-            R4 = j["outputs"][0]["additionalRegisters"]["R4"]
-            sr_list = [{"sr":R4}]
-            json_tools.keyVal_list_update(sr_list, initiatorMasterJSONPath)
-#            print("atomic swap was claimed by responder!")
-            return True
+            keypath = ["outputs", 0, "additionalRegisters", "R4"]
+            if key_path_exists(j, keypath):
+                R4 = j["outputs"][0]["additionalRegisters"]["R4"]
+                sr_list = [{"sr":R4}]
+                json_tools.keyVal_list_update(sr_list, initiatorMasterJSONPath)
+    #            print("atomic swap was claimed by responder!")
+                return True
         else:
 #            print("no atomic swap claim found...")
             #check contract lock time here for refund
