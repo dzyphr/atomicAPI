@@ -70,6 +70,8 @@ def is_file_contents_int(file_path):
         with open(file_path, 'r') as file:
             contents = file.read().strip()
         
+        if not contents: #checks for empty file
+            return False
         # Split contents into individual elements assuming they are space-separated
         elements = contents.split()
         
@@ -81,6 +83,8 @@ def is_file_contents_int(file_path):
     except Exception as e:
         print(f"An error occurred: {e}")
         return False
+
+
 
 
 def SigmaParticle_CheckLockTimeAtomicSchnorr(swapName, boxId, password=""):
@@ -280,6 +284,9 @@ def getBoxID(swapName):
         print("Path:", path, "not found!")
         return False
 
+def is_numeric_string(value):
+    return isinstance(value, str) and value.isdigit()
+
 def checkBoxValue(boxID, boxValPATH, swapName, role=None, ergopassword="", otherchainpassword=""):
     tries = 200
     while tries > 0:
@@ -290,8 +297,10 @@ def checkBoxValue(boxID, boxValPATH, swapName, role=None, ergopassword="", other
                 " " + ergopassword
         file_tools.clean_file_open("checkBoxValueScriptDebug", "w", cmd)
         devnull = open(os.devnull, 'wb')
-        pipe = subprocess.Popen(cmd, shell=True, stdout=devnull, stderr=devnull, close_fds=True)
-        pipe.wait()
+        while is_numeric_string(file_tools.clean_file_open(boxValPATH, "r")) == False:
+            pipe = subprocess.Popen(cmd, shell=True, stdout=devnull, stderr=devnull, close_fds=True)
+            pipe.wait()
+            time.sleep(5)
         response = file_tools.clean_file_open(boxValPATH, "r")
         tries = tries - 1
         if str(response) in ["error"] or type(response) == type(None): 
