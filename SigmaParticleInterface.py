@@ -329,6 +329,7 @@ def key_path_exists(data, key_path):
     Args:
         data (dict or list): The data structure to check.
         key_path (list): The list of keys and/or indices representing the path.
+
     Returns:
         bool: True if the path exists, False otherwise.
     """
@@ -339,11 +340,10 @@ def key_path_exists(data, key_path):
             elif isinstance(data, dict):
                 data = data[key]
             else:
-    return False
+                return False
         return True
     except (KeyError, IndexError, TypeError):
         return False
-
 
 def checkSchnorrTreeForClaim(boxID, swapName, initiatorMasterJSONPath, password=""):
     while True:
