@@ -2,7 +2,7 @@ import file_tools, os, uuid, responderInterface, json_tools, subprocess, sys, js
 
 PossibleSwapStates = ["initiated", "uploadingResponseContract", "uploadedResponseContract", "fundingResponseContract", "fundedResponseContract", "responding", "responded_unsubmitted", "responded_submitted", "finalized", "verifyingFinalizedContractValues", "verifiedFinalizedContractValues", "claiming", "refunding", "claimed", "refunded", "terminated", "tbd"]
 
-def setSwapState(swapName, state):
+def setSwapState(swapName, state, setMap=False):
     if state not in PossibleSwapStates:
         print("Please provide valid state argument choice.\nChoices: initiated, uploadingResponseContract, fundingResponseContract, responded, finalized, verifyingFinalizedContractValues, claiming, refunding, claimed, refunded, terminated, tbd")
         return False
@@ -10,6 +10,12 @@ def setSwapState(swapName, state):
         print("Swap directory named: ", swapName, "not found!\nMake sure swap dir is created before setting it's state.")
         return False
     else:
+        if setMap == True:
+            SwapStateMap = json_tools.ojf("SwapStateMap")
+            SwapStateMap[swapName]["SwapState"] = state
+#            file_tools.clean_file_open("SwapStateMap", "w", SwapStateMap)
+            mapfile = open('SwapStateMap', 'w') 
+            json.dump(SwapStateMap, mapfile, indent=2)
         file_tools.clean_file_open(swapName + "/SwapState", "w", state)
         return True
 
@@ -94,32 +100,72 @@ def watchSwapLoop(swapName, localChainAccountPassword="", crossChainAccountPassw
                             crossChainAccountPassword=crossChainAccountPassword, 
                         )                       
                         #TODO run checklocktimerefund loop since contract is funded here
-                        #TODO update SwapStateMap with active swap state
                         file_tools.wait_for_file(swapName + "/ENC_response_path.bin")
                         ActiveSwapState = file_tools.clean_file_open(swapName + "/SwapState", "r")
-#                        print(ActiveSwapState, PossibleSwapStates[6])
-                        if ActiveSwapState == PossibleSwapStates[6]: #responded unsubmitted
-                            ENC_response = file_tools.clean_file_open(swapName + "/ENC_response_path.bin", "r")
-                            ENC_finalization = submitEncryptedResponse_ClientEndpoint(
-                                    swapName, MarketPublicRequestsURL, ENC_response, MarketAPIKey
-                            ).replace("\\n", "\n").replace("\"", "")
-                            file_tools.clean_file_open(swapName + "/ENC_finalization.bin", "w", ENC_finalization)
-                            setSwapState(swapName, PossibleSwapStates[7]) #responded submitted
-                            responderInterface.GeneralizedENC_ResponderClaimSubroutine(
-                                swapName + "/responder.json", 
-                                localChainAccountPassword=localChainAccountPassword, 
-                                crossChainAccountPassword=crossChainAccountPassword
-                            )
+                        setSwapState(swapName, ActiveSwapState, setMap=True)
+#                        if ActiveSwapState == PossibleSwapStates[6]: #responded unsubmitted
+                        ENC_response = file_tools.clean_file_open(swapName + "/ENC_response_path.bin", "r")
+                        ENC_finalization = submitEncryptedResponse_ClientEndpoint(
+                                swapName, MarketPublicRequestsURL, ENC_response, MarketAPIKey
+                        ).replace("\\n", "\n").replace("\"", "")
+                        file_tools.clean_file_open(swapName + "/ENC_finalization.bin", "w", ENC_finalization)
+                        setSwapState(swapName, PossibleSwapStates[7], setMap=True) #responded submitted
+                        responderInterface.GeneralizedENC_ResponderClaimSubroutine(
+                            swapName + "/responder.json", 
+                            localChainAccountPassword=localChainAccountPassword, 
+                            crossChainAccountPassword=crossChainAccountPassword
+                        )
+                    elif swapState in [
+                            PossibleSwapStates[1], PossibleSwapStates[2], PossibleSwapStates[3], PossibleSwapStates[4],
+                            PossibleSwapStates[5]
+                    ]:
+                        responderInterface.GeneralizeENC_ResponseSubroutine(
+                            swapName, "", "", "", "", "", "", "",
+                            localChainAccountPassword=localChainAccountPassword,
+                            crossChainAccountPassword=crossChainAccountPassword,
+                            hotReloadSwapState=swapState
+                        )
+                        file_tools.wait_for_file(swapName + "/ENC_response_path.bin")
+                        ActiveSwapState = file_tools.clean_file_open(swapName + "/SwapState", "r")
+                        setSwapState(swapName, ActiveSwapState, setMap=True)
+#                       if ActiveSwapState == PossibleSwapStates[6]: #responded unsubmitted
+                        ENC_response = file_tools.clean_file_open(swapName + "/ENC_response_path.bin", "r")
+                        ENC_finalization = submitEncryptedResponse_ClientEndpoint(
+                                swapName, MarketPublicRequestsURL, ENC_response, MarketAPIKey
+                        ).replace("\\n", "\n").replace("\"", "")
+                        file_tools.clean_file_open(swapName + "/ENC_finalization.bin", "w", ENC_finalization)
+                        setSwapState(swapName, PossibleSwapStates[7], setMap=True) #responded submitted
+                        responderInterface.GeneralizedENC_ResponderClaimSubroutine(
+                            swapName + "/responder.json",
+                            localChainAccountPassword=localChainAccountPassword,
+                            crossChainAccountPassword=crossChainAccountPassword
+                        )
+                    elif swapState == PossibleSwapStates[6]:
+                        ENC_response = file_tools.clean_file_open(swapName + "/ENC_response_path.bin", "r")
+                        ENC_finalization = submitEncryptedResponse_ClientEndpoint(
+                                swapName, MarketPublicRequestsURL, ENC_response, MarketAPIKey
+                        ).replace("\\n", "\n").replace("\"", "")
+                        file_tools.clean_file_open(swapName + "/ENC_finalization.bin", "w", ENC_finalization)
+                        setSwapState(swapName, PossibleSwapStates[7], setMap=True) #responded submitted
+                        responderInterface.GeneralizedENC_ResponderClaimSubroutine(
+                            swapName + "/responder.json",
+                            localChainAccountPassword=localChainAccountPassword,
+                            crossChainAccountPassword=crossChainAccountPassword
+                        )
+                    elif swapState in [
+                            PossibleSwapStates[7], PossibleSwapStates[8], PossibleSwapStates[9], PossibleSwapStates[10],
+                            PossibleSwapStates[11]
+                    ]:
+                        file_tools.clean_file_open(swapName + "/ENC_finalization.bin", "w", ENC_finalization)
+                        setSwapState(swapName, PossibleSwapStates[7], setMap=True) #responded submitted
+                        responderInterface.GeneralizedENC_ResponderClaimSubroutine(
+                            swapName + "/responder.json",
+                            localChainAccountPassword=localChainAccountPassword,
+                            crossChainAccountPassword=crossChainAccountPassword,
+                            hotReloadSwapState=swapState
+                        )
 
-#                            DecryptCommand = [
-#                                    "python3", "-u", "main.py", 
-#                                    "ElGamal_decrypt", swapName + "/ENC_finalization.bin",
-#                                    ServerElGamalKey, ElGamalKeyPath
-#                            ]
-#                            DEC_finalization = subprocess.run(DecryptCommand, capture_output=True, text=True).stdout
-#                            print(json.loads(DEC_finalization))
-#                            file_tools.clean_file_open(swapName + "/DEC_finalization.json", "w", DEC_finalization)
-#                            setSwapState(swapName, PossibleSwapStates[8]) #finalized
+
 
 
 

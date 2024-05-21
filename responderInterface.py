@@ -168,7 +168,7 @@ def GeneralizeENC_ResponseSubroutine(\
         json_tools.keyVal_list_update(temprenamelist, mi["responderJSONPath"])
         resp_J = json_tools.ojf(mi["responderJSONPath"])
         InitiatorEVMAddr = resp_J["InitiatorEVMAddr"]
-        swap_tools.setSwapState(swapName, "initiated") #set swap state to initiated
+        swap_tools.setSwapState(swapName, "initiated", setMap=True) #set swap state to initiated
         return \
                 ENC_Init_PATH, DEC_Init_PATH, ElGamalKey, \
                 ElGamalKeyPath, responsePATH, ENC_Response_PATH, \
@@ -187,7 +187,7 @@ def GeneralizeENC_ResponseSubroutine(\
         #TODO: replace sr and x paths with master json update
         xG = json.loads(file_tools.clean_file_open(responsePATH, "r"))["xG"]
         AtomicityInterface.Atomicity_buildScalarContract(ResponderChain, InitiatorEVMAddr,  xG, MIN_REFUND_LOCKTIME_SEPOLIA, swapName)
-        swap_tools.setSwapState(swapName, "uploadingResponseContract")
+        swap_tools.setSwapState(swapName, "uploadingResponseContract", setMap=True)
         addr = AtomicityInterface.Atomicity_deployEVMContract(
                 swapName, customGas=SEPOLIA_EVM_GAS_CONTROL,
                 customGasMod=SEPOLIA_EVM_GASMOD_CONTROL, password=localChainAccountPassword
@@ -201,37 +201,37 @@ def GeneralizeENC_ResponseSubroutine(\
         swapAmount = json_tools.ojf(responderJSONPath)["SwapAmount"]
         responderFundingAmountWei = price_tools.EthToWei(swapAmount)
         #TODO save to resp_J?
-        swap_tools.setSwapState(swapName, "uploadedResponseContract")
+        swap_tools.setSwapState(swapName, "uploadedResponseContract", setMap=True)
         return addr, responderFundingAmountWei
         
     def fund(
             addr, responderFundingAmountWei, ResponderChain, ResponderErgoAddr, responsePATH
         ):
-        swap_tools.setSwapState(swapName, "fundingResponseContract")
-        AtomicityInterface.Atomicity_SendFunds(
-                addr, responderFundingAmountWei, swapName,
-                gas=SEPOLIA_EVM_GAS_CONTROL, gasMod=SEPOLIA_EVM_GASMOD_CONTROL, password=localChainAccountPassword
-        )
+        swap_tools.setSwapState(swapName, "fundingResponseContract", setMap=True)
         update_response_keyValList = [{"responderLocalChain":ResponderChain}, \
                 {"responderContractAddr":addr},\
                 {"ResponderErgoAddr":ResponderErgoAddr}]
         json_tools.keyVal_list_update(update_response_keyValList, responsePATH)
         j_response = json_tools.ojf(responsePATH)
+        AtomicityInterface.Atomicity_SendFunds(
+                addr, responderFundingAmountWei, swapName,
+                gas=SEPOLIA_EVM_GAS_CONTROL, gasMod=SEPOLIA_EVM_GASMOD_CONTROL, password=localChainAccountPassword
+        )
         while int(AtomicityInterface.Atomicity_CheckContractFunds(swapName, j_response, password=localChainAccountPassword)) <= 0:
             print("contract not funded yet waiting...")
             time.sleep(5)
-        swap_tools.setSwapState(swapName, "fundedResponseContract")
+        swap_tools.setSwapState(swapName, "fundedResponseContract", setMap=True)
 
     def completeResponse(
             addr, swapAmount,
             responsePATH, responderJSONPath, ElGamalKey, ElGamalKeyPath,
             ENC_Response_PATH, localChainAccountPassword=""
         ):
-        swap_tools.setSwapState(swapName, "responding")
+        swap_tools.setSwapState(swapName, "responding", setMap=True)
         responseLIST = json_tools.json_to_keyValList(responsePATH)
         json_tools.keyVal_list_update(responseLIST, responderJSONPath)
         encrypted_response = ElGamalInterface.ElGamal_Encrypt(ElGamalKey, ElGamalKeyPath, responsePATH, ENC_Response_PATH)
-        swap_tools.setSwapState(swapName, "responded_unsubmitted")
+        swap_tools.setSwapState(swapName, "responded_unsubmitted", setMap=True)
 
     if hotReloadSwapState != "":
         print("hot reloading swap: ", swapName)
@@ -279,8 +279,11 @@ def GeneralizeENC_ResponseSubroutine(\
             ElGamalKeyPath = resp_J["ElGamalKeyPath"]
             ENC_Response_PATH = resp_J["ENC_Response_PATH"]
             responderFundingAmountWei = price_tools.EthToWei(swapAmount)
-            fund(addr, responderFundingAmountWei, ResponderChain, ResponderErgoAddr,
-                    responsePATH)
+            j_response = json.tools.ojf(responsePATH)
+            if int(AtomicityInterface.Atomicity_CheckContractFunds(swapName, j_response, password=localChainAccountPassword)) <= 0:
+                #TODO check against specific funding amount
+                fund(addr, responderFundingAmountWei, ResponderChain, ResponderErgoAddr,
+                        responsePATH)
 
             completeResponse(
                     addr, swapAmount,  responsePATH, responderJSONPath, ElGamalKey, ElGamalKeyPath,
@@ -345,7 +348,7 @@ def GeneralizedENC_ResponderClaimSubroutine(
             responderErgoAccountName = resp_J["responderErgoAccountName"]
             DEC_finalization = ElGamalInterface.ElGamal_Decrypt(ENC_finalizationPATH, ElGamalKey, ElGamalKeyPath)
             file_tools.clean_file_open(DEC_finalizationPATH, "w", DEC_finalization)
-            swap_tools.setSwapState(swapName, "finalized")
+            swap_tools.setSwapState(swapName, "finalized", setMap=True)
             return swapName, ENC_finalizationPATH, ElGamalKey, \
                     ElGamalKeyPath, DEC_finalizationPATH, responderErgoAccountName, DEC_finalization
 
@@ -353,7 +356,7 @@ def GeneralizedENC_ResponderClaimSubroutine(
                 DEC_finalizationPATH, responderJSONPath, DEC_finalization,\
                 swapName, responderErgoAccountName, localChainAccountPassword="", crossChainAccountPassword=""\
             ):
-            swap_tools.setSwapState(swapName, "verifyingFinalizedContractValues")
+            swap_tools.setSwapState(swapName, "verifyingFinalizedContractValues", setMap=True)
             finalization_list = json_tools.json_to_keyValList(DEC_finalizationPATH)
             json_tools.keyVal_list_update(finalization_list, responderJSONPath)
             boxID = json.loads(DEC_finalization)["boxId"]
@@ -421,18 +424,15 @@ def GeneralizedENC_ResponderClaimSubroutine(
             if SigmaParticleInterface.responderVerifyErgoScript(swapName, expectedErgoTree, password=crossChainAccountPassword) == False:
                 print("ergoScript verification returned false, wont fulfil swap")
                 exit()
-            swap_tools.setSwapState(swapName, "verifiedFinalizedContractValues")
+            swap_tools.setSwapState(swapName, "verifiedFinalizedContractValues", setMap=True)
 
         def claim():
-            swap_tools.setSwapState(swapName, "claiming")
+            swap_tools.setSwapState(swapName, "claiming", setMap=True)
             SigmaParticleInterface.responderClaimAtomicSchnorr(swapName, 2500, password=crossChainAccountPassword)
-            swap_tools.setSwapState(swapName, "claimed") #TODO ensure it was claimed w contract balance call
+            swap_tools.setSwapState(swapName, "claimed", setMap=True) #TODO ensure it was claimed w contract balance call
 
         if hotReloadSwapState != "":
             if hotReloadSwapState == swap_tools.PossibleSwapStates[7]: #responded_submitted
-                #TODO when in "responded" state, we may have not actually responded to the swap server yet
-                #if so we have to send feedback to UI to submit the response to the server
-                #ie responded_submitted or responded_unsubmitted
                 swapName, ENC_finalizationPATH, ElGamalKey, \
                 ElGamalKeyPath, DEC_finalizationPATH, \
                 responderErgoAccountName, DEC_finalization = \
@@ -480,9 +480,9 @@ def Responder_CheckLockTimeRefund(swapName, password=""):
         if \
                 AtomicityInterface.Atomicity_RemainingLockTimeAtomicMultisig_v_002(j_response, swapName, password=password) <= 0 and \
                 int(AtomicityInterface.Atomicity_CheckContractFunds(swapName, j_response, password=password)) != 0:
-            swap_tools.setSwapState(swapName, "refunding")
+            swap_tools.setSwapState(swapName, "refunding", setMap=True)
             print(AtomicityInterface.Atomicity_Refund(swapName, "responder", password=password))
-            swap_tools.setSwapState(swapName, "refunded") #TODO verify it was refunded w a contract balance call
+            swap_tools.setSwapState(swapName, "refunded", setMap=True) #TODO verify it was refunded w a contract balance call
             time.sleep(10)
             #we may want to alter the smart contract to enforce that funds are in the 
             #contract before sender reclaim can be called
