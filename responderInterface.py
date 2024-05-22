@@ -49,7 +49,7 @@ def response(DEC_initiation_filepath, responderMasterJSONPATH, response_filepath
 def GeneralizeENC_ResponseSubroutine(\
         swapName, responderCrossChainAccountName, responderLocalChainAccountName, \
         ElGamalKey, ElGamalKeyPath, InitiatorChain, ResponderChain, swapAmount,
-        localChainAccountPassword="", crossChainAccountPassword="", hotReloadSwapState=""):
+        localChainAccountPassword="", crossChainAccountPassword="", reloadSwapState=""):
     def setup(
             swapName, responderCrossChainAccountName, responderLocalChainAccountName, \
             ElGamalKey, ElGamalKeyPath, InitiatorChain, ResponderChain, swapAmount,
@@ -68,14 +68,14 @@ def GeneralizeENC_ResponseSubroutine(\
                     crossChainEncAccount = True
                 else:
                     print("password required for encrypted env file!")
-                    exit()
+                    return
             elif ResponderChain == "TestnetErgo":
                 if localChainAccountPassword != "":
                     localChainAccountEnvData = decrypt_file_return_contents(ErgoPath, crossChainAccountPassword)
                     localChainEncAccount = True
                 else:
                     print("password required for encrypted env file!")
-                    exit()
+                    return
             #ergo encrypted
         if os.path.isfile("EVM/Atomicity/" + responderLocalChainAccountName + "/.env.encrypted"):
             path = "EVM/Atomicity/" + responderLocalChainAccountName + "/.env.encrypted"
@@ -85,14 +85,14 @@ def GeneralizeENC_ResponseSubroutine(\
                     crossChainEncAccount = True
                 else:
                     print("password required for encrypted env file!")
-                    exit()
+                    return
             elif ResponderChain == "Sepolia":
                 if localChainAccountPassword != "":
                     localChainAccountEnvData = decrypt_file_return_contents(path, crossChainAccountPassword)
                     localChainEncAccount = True
                 else:
                     print("password required for encrypted env file!")
-                    exit()
+                    return
             #sepolia encrypted
         if localChainEncAccount == False and crossChainEncAccount == False:
             if InitiatorChain.strip("\"") == "TestnetErgo" and ResponderChain.strip("\"") == "Sepolia":
@@ -197,7 +197,7 @@ def GeneralizeENC_ResponseSubroutine(\
             addr  =  addr[:-1]
         else:
             print("fail: deployContract() didnt return a contract addr")
-            exit()
+            return
         swapAmount = json_tools.ojf(responderJSONPath)["SwapAmount"]
         responderFundingAmountWei = price_tools.EthToWei(swapAmount)
         #TODO save to resp_J?
@@ -233,9 +233,9 @@ def GeneralizeENC_ResponseSubroutine(\
         encrypted_response = ElGamalInterface.ElGamal_Encrypt(ElGamalKey, ElGamalKeyPath, responsePATH, ENC_Response_PATH)
         swap_tools.setSwapState(swapName, "responded_unsubmitted", setMap=True)
 
-    if hotReloadSwapState != "":
-        print("hot reloading swap: ", swapName)
-        if hotReloadSwapState in [swap_tools.PossibleSwapStates[0], swap_tools.PossibleSwapStates[1]]: 
+    if reloadSwapState != "":
+        print("reloading swap: ", swapName)
+        if reloadSwapState in [swap_tools.PossibleSwapStates[0], swap_tools.PossibleSwapStates[1]]: 
             #initiated or uploadingResponseContract 
 
             #TODO if uploading make sure its not in progress aka that its a failed tx and ensure it should continue:
@@ -245,6 +245,7 @@ def GeneralizeENC_ResponseSubroutine(\
             responderJSONPath = swapName + "/responder.json"
             responsePATH = resp_J["responsePATH"]
             ElGamalKey = resp_J["ElGamalKey"]
+            ElGamalKeyPath = resp_J["ElGamalKeyPath"]
             ResponderChain = resp_J["ResponderChain"]
             InitiatorEVMAddr = resp_J["InitiatorEVMAddr"]
             ResponderErgoAddr = resp_J["ResponderErgoAddr"]
@@ -262,11 +263,11 @@ def GeneralizeENC_ResponseSubroutine(\
                     ENC_Response_PATH, localChainAccountPassword=localChainAccountPassword
             )
 
-            exit()
+            return
             #TODO return some data to indicate that this swap needs to be resumed from its next step
             #inform UI or rest server that it needs to keep track of its state from that point forward
             #maybe just give feedback to ui while running the claim loop after a response reload
-        if hotReloadSwapState in [swap_tools.PossibleSwapStates[2], swap_tools.PossibleSwapStates[3]]  : #funding response contract #TODO verify it hasnt been funded yet
+        if reloadSwapState in [swap_tools.PossibleSwapStates[2], swap_tools.PossibleSwapStates[3]]  : #funding response contract #TODO verify it hasnt been funded yet
                                                                                         #w a contract balance call
             resp_J = json_tools.ojf(swapName + "/responder.json")
             addr = resp_J["responderContractAddr"]
@@ -289,8 +290,8 @@ def GeneralizeENC_ResponseSubroutine(\
                     addr, swapAmount,  responsePATH, responderJSONPath, ElGamalKey, ElGamalKeyPath,
                     ENC_Response_PATH, localChainAccountPassword=localChainAccountPassword
             )
-            exit()
-        if hotReloadSwapState in [swap_tools.PossibleSwapStates[4], swap_tools.PossibleSwapStates[5]]: #funded or responding
+            return
+        if reloadSwapState in [swap_tools.PossibleSwapStates[4], swap_tools.PossibleSwapStates[5]]: #funded or responding
             resp_J = json_tools.ojf(swapName + "/responder.json")
             addr = resp_J["responderContractAddr"]
             swapAmount = resp_J["swapAmount"]
@@ -305,7 +306,7 @@ def GeneralizeENC_ResponseSubroutine(\
                     addr, swapAmount,  responsePATH, responderJSONPath, ElGamalKey, ElGamalKeyPath,
                     ENC_Response_PATH, localChainAccountPassword=localChainAccountPassword
             )
-            exit()
+            return
 
 
     ENC_Init_PATH, DEC_Init_PATH, ElGamalKey, \
@@ -335,7 +336,7 @@ def GeneralizeENC_ResponseSubroutine(\
     return ENC_Response_PATH
 
 def GeneralizedENC_ResponderClaimSubroutine(
-        responderJSONPath, localChainAccountPassword="", crossChainAccountPassword="", hotReloadSwapState=""
+        responderJSONPath, localChainAccountPassword="", crossChainAccountPassword="", reloadSwapState=""
     ):
     resp_J = json_tools.ojf(responderJSONPath)
     if resp_J["InitiatorChain"] == "TestnetErgo" and resp_J["ResponderChain"] == "Sepolia":
@@ -378,10 +379,10 @@ def GeneralizedENC_ResponderClaimSubroutine(
                         AtomicityInterface.Atomicity_Refund(\
                                 swapName, "responder", gas=SEPOLIA_EVM_GAS_CONTROL, \
                                 gasMod=SEPOLIA_EVM_GASMOD_CONTROL, password=localChainAccountPassword
-                        )
+                                  )
                         break
                     time.sleep(3)
-                exit()
+                return
             #other than just the box value responder should verify the scalars in the contract match those expected
             SigmaParticleInterface.SigmaParticle_newFrame(swapName)
             remoteLockTime = SigmaParticleInterface.SigmaParticle_CheckLockTimeAtomicSchnorr(\
@@ -389,7 +390,7 @@ def GeneralizedENC_ResponderClaimSubroutine(
             )
             if type(remoteLockTime) != int:
                 print("error in remoteLockTime value: ", remoteLockTime)
-                exit()
+                return
             if remoteLockTime < MIN_CLAIM_LOCKTIME_ERGOTESTNET:
                 while True:
                     if AtomicityInterface.Atomicity_RemainingLockTimeAtomicMultisig_v_002(
@@ -403,7 +404,7 @@ def GeneralizedENC_ResponderClaimSubroutine(
                         break
                     time.sleep(3)
                 print("lock time is below safe minimum for claiming, refunding swap")
-                exit()
+                return
             minBoxValue = 1123841 #1123841
             if int(boxValue) < int(minBoxValue):
                 while True:
@@ -417,13 +418,13 @@ def GeneralizedENC_ResponderClaimSubroutine(
                         break
                     time.sleep(3)
                 print("not enough nanoerg in contract, refunging swap")
-                exit()
+                return
             SigmaParticleInterface.SigmaParticle_updateKeyEnv(swapName, responderErgoAccountName)
             SigmaParticleInterface.responderGenerateAtomicSchnorr(swapName, DEC_finalizationPATH, responderJSONPath, boxValue)
             expectedErgoTree = SigmaParticleInterface.SigmaParticle_getTreeFromBox(boxID, swapName, password=crossChainAccountPassword)
             if SigmaParticleInterface.responderVerifyErgoScript(swapName, expectedErgoTree, password=crossChainAccountPassword) == False:
                 print("ergoScript verification returned false, wont fulfil swap")
-                exit()
+                return
             swap_tools.setSwapState(swapName, "verifiedFinalizedContractValues", setMap=True)
 
         def claim():
@@ -431,8 +432,8 @@ def GeneralizedENC_ResponderClaimSubroutine(
             SigmaParticleInterface.responderClaimAtomicSchnorr(swapName, 2500, password=crossChainAccountPassword)
             swap_tools.setSwapState(swapName, "claimed", setMap=True) #TODO ensure it was claimed w contract balance call
 
-        if hotReloadSwapState != "":
-            if hotReloadSwapState == swap_tools.PossibleSwapStates[7]: #responded_submitted
+        if reloadSwapState != "":
+            if reloadSwapState == swap_tools.PossibleSwapStates[7]: #responded_submitted
                 swapName, ENC_finalizationPATH, ElGamalKey, \
                 ElGamalKeyPath, DEC_finalizationPATH, \
                 responderErgoAccountName, DEC_finalization = \
@@ -444,8 +445,8 @@ def GeneralizedENC_ResponderClaimSubroutine(
                         localChainAccountPassword=localChainAccountPassword, crossChainAccountPassword=crossChainAccountPassword\
                     )
                 claim()
-
-            if hotReloadSwapState in [swap_tools.PossibleSwapStates[8], swap_tools.PossibleSwapStates[9]]: #finalized or verifying
+                return
+            if reloadSwapState in [swap_tools.PossibleSwapStates[8], swap_tools.PossibleSwapStates[9]]: #finalized or verifying
                 DEC_finalizationPATH = resp_J["DEC_finalizationPATH"]
                 responderJSONPath = resp_J["responderJSONPath"]
                 DEC_finalization = file_tools.clean_file_open(DEC_finalizationPATH, "r")
@@ -457,10 +458,10 @@ def GeneralizedENC_ResponderClaimSubroutine(
                     localChainAccountPassword=localChainAccountPassword, crossChainAccountPassword=crossChainAccountPassword\
                 )
                 claim()
-                exit()
-            if hotReloadSwapState in [swap_tools.PossibleSwapStates[10], swap_tools.PossibleSwapStates[11]]: #verified or claiming
+                return
+            if reloadSwapState in [swap_tools.PossibleSwapStates[10], swap_tools.PossibleSwapStates[11]]: #verified or claiming
                 claim()
-                exit()
+                return
         else:            
             swapName, ENC_finalizationPATH, ElGamalKey, ElGamalKeyPath, DEC_finalizationPATH, responderErgoAccountName, DEC_finalization = \
                             setup(resp_J)

@@ -32,7 +32,7 @@ int main(int argc, char* argv[])
 void standardOperations(string arg1)
 {
 	string newFrameName = arg1;		//VVV  make contract dir && copy basic framework to there && copy hidden .env file to there VVV
-	string command = "mkdir " + newFrameName + " && cp -r basic_framework/* " + newFrameName + "/ && cp -r basic_framework/. " + newFrameName;
+	string command = "mkdir -p " + newFrameName + " && cp -r basic_framework/* " + newFrameName + "/ && cp -r basic_framework/. " + newFrameName;
 	system(command.c_str());
 	string newContract = "echo \'// SPDX-License-Identifier: GPL-3.0-only\npragma solidity >=0.8.0 <0.9.0;\n\ncontract "+ newFrameName +"\n{\n\n}\' > " + newFrameName + "/contracts/" + newFrameName + ".sol";
 	system(newContract.c_str());

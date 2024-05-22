@@ -44,3 +44,17 @@ def requestEncryptedInitiation_ClientEndpoint(url, OrderTypeUUID, ElGamalPubkey)
     swapname = respObj["SwapTicketID"]
     file_tools.clean_mkdir(swapname) #swapname
     file_tools.clean_file_open(respObj["SwapTicketID"] + "/ENC_init.bin", "w", respObj["ENC_init.bin"])
+    
+def submitEncryptedResponse_ClientEndpoint(swapID, marketPublicRequestsURL, ENC_response, auth):
+    import requests, uuid
+    url = marketPublicRequestsURL #server private requests url
+    ID = str(uuid.uuid4())
+    headers = {"Authorization": "Bearer " + auth}
+    requestobj = {
+            "id": ID,
+            "request_type": "submitEncryptedResponse",
+            "SwapTicketID": swapID,
+            "encryptedResponseBIN": ENC_response
+    }
+    return requests.post(url, headers=headers,  json = requestobj).text
+

@@ -1,5 +1,6 @@
 *.env
 hs_err_pid*.log
+ElGEncTest
 SwapStateMap
 AtomicityNewFrameConstructorArgsDebug
 Ergo/SigmaParticle/boxTrees/*

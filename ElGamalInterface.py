@@ -87,6 +87,7 @@ def ElGamal_Encrypt(receiverPubKey, userKeyFileName, subject, filePath):
             userKeyFileName + s_ + \
             " $subject " + s_ + \
             filePath
+#    file_tools.clean_file_open("ElGEncTest", "w" , command)
     return os.popen(command).read()
 
 def ElGamal_Decrypt(subjectFilePath, senderPubKey, userKeyFileName):
