@@ -12,7 +12,7 @@ npm install
 
 cd ../../../Ergo/SigmaParticle/ && ./comp_new_frame.sh #compile Ergo framework binary
 
-git clone https://github.com/ScorexFoundation/sigmastate-interpreter --branch v5.0.7 ~/Downloads/sigmastate-interpreter/ #get sigmastate interpreter 5.0.7
+git clone https://github.com/ScorexFoundation/sigmastate-interpreter --branch v5.0.14 ~/Downloads/sigmastate-interpreter/ #get sigmastate interpreter 5.0.14
 
 #sbt install https://www.scala-sbt.org/download.html
 echo "deb https://repo.scala-sbt.org/scalasbt/debian all main" | sudo tee /etc/apt/sources.list.d/sbt.list
