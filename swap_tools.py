@@ -1,9 +1,13 @@
 import file_tools, os, uuid, responderInterface, json_tools, subprocess, sys, json, ClientEndpoints
 
 PossibleSwapStates = ["initiated", "uploadingResponseContract", "uploadedResponseContract", "fundingResponseContract", "fundedResponseContract", "responding", "responded_unsubmitted", "responded_submitted", "finalized", "verifyingFinalizedContractValues", "verifiedFinalizedContractValues", "claiming", "refunding", "claimed", "refunded", "terminated", "tbd"]
+#TODO possibleSwapStates Responder and possibleSwapStates Initiatior should be seperated
+#probably also seperate based on specific swap scenarios down the line
+
+PossibleSwapStatesInitiator = ["initiating", "initiated_unsubmitted", "initiated_submitted", "responded", "verifying_response", "verified_response", "finalizing", "finalized_unsubmitted", "finalized_submitted", "claiming", "refunding", "claimed", "refunded", "terminated", "tbd"]
 
 def setSwapState(swapName, state, setMap=False):
-    if state not in PossibleSwapStates:
+    if state not in PossibleSwapStates and state not in PossibleSwapStatesInitiator:
         print("Please provide valid state argument choice.\nChoices: initiated, uploadingResponseContract, fundingResponseContract, responded, finalized, verifyingFinalizedContractValues, claiming, refunding, claimed, refunded, terminated, tbd")
         return False
     if os.path.isdir(swapName) == False:
@@ -11,11 +15,17 @@ def setSwapState(swapName, state, setMap=False):
         return False
     else:
         if setMap == True:
+            if os.path.isfile("SwapStateMap") == False:
+                file_tools.clean_file_open("SwapStateMap", "w", "{}")
             SwapStateMap = json_tools.ojf("SwapStateMap")
-            SwapStateMap[swapName]["SwapState"] = state
-#            file_tools.clean_file_open("SwapStateMap", "w", SwapStateMap)
-            mapfile = open('SwapStateMap', 'w') 
-            json.dump(SwapStateMap, mapfile, indent=2)
+            if swapName not in SwapStateMap.keys():
+                keyValList = [{swapName: {"SwapState": state}}]
+                json_tools.keyVal_list_update(keyValList, "SwapStateMap")
+            else:
+                SwapStateMap[swapName]["SwapState"] = state
+    #            file_tools.clean_file_open("SwapStateMap", "w", SwapStateMap)
+                mapfile = open('SwapStateMap', 'w') 
+                json.dump(SwapStateMap, mapfile, indent=2)
         file_tools.clean_file_open(swapName + "/SwapState", "w", state)
         return True
 
@@ -49,14 +59,14 @@ def watchSwapLoop(swapName, localChainAccountPassword="", crossChainAccountPassw
         CrossChain = SwapStateMap[swapName]["CrossChain"]
         LocalChainAccountName = SwapStateMap[swapName]["LocalChainAccount"]
         CrossChainAccountName = SwapStateMap[swapName]["CrossChainAccount"]
-        ClientElGamalKey = SwapStateMap[swapName]["ElGamalKey"]
-        ServerElGamalKey = SwapStateMap[swapName]["ServerElGamalKey"]
         ElGamalKeyPath = SwapStateMap[swapName]["ElGamalKeyPath"]
-        MarketAPIKey = SwapStateMap[swapName]["MarketAPIKey"]
-        SwapAmount = SwapStateMap[swapName]["SwapAmount"]
-        MarketOrderTypesURL = SwapStateMap[swapName]["MarketURL"]
-        MarketPublicRequestsURL = MarketOrderTypesURL.replace("ordertypes", "publicrequests")
         if role == "Responder":
+            SwapAmount = SwapStateMap[swapName]["SwapAmount"]
+            ClientElGamalKey = SwapStateMap[swapName]["ElGamalKey"]
+            MarketAPIKey = SwapStateMap[swapName]["MarketAPIKey"]
+            ServerElGamalKey = SwapStateMap[swapName]["ServerElGamalKey"]
+            MarketOrderTypesURL = SwapStateMap[swapName]["MarketURL"]
+            MarketPublicRequestsURL = MarketOrderTypesURL.replace("ordertypes", "publicrequests")
             if LocalChain == "Sepolia" and CrossChain == "TestnetErgo":
                 if swapState in PossibleSwapStates:
                     if swapState == PossibleSwapStates[0]:
@@ -129,6 +139,18 @@ def watchSwapLoop(swapName, localChainAccountPassword="", crossChainAccountPassw
                             crossChainAccountPassword=crossChainAccountPassword,
                             reloadSwapState=swapState
                         )
+        elif role == "Initiator":
+            if LocalChain == "TestnetErgo" and CrossChain == "Sepolia":
+                if swapState in PossibleSwapStatesInitiator:
+                    if swapState == PossibleSwapStatesInitiator[0]:
+                        GeneralizedENC_InitiationSubroutine(\
+                            swapName, LocalChainAccountName, CrossChainAccountName, \
+                            ElGamalKey, ElGamalKeyPath, LocalChain, CrossChain,\
+                            localChainAccountPassword=localChainAccountPassword, crossChainAccountPassword=crossChainAccountPassword
+                        )
+
+
+
 
 
 

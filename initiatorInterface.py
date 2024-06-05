@@ -14,6 +14,7 @@ import enum_tools
 import price_tools
 import file_tools
 import config_tools
+from swap_tools import setSwapState
 from passwordFileEncryption import get_val_from_envdata_key, decrypt_file_return_contents
 py = "python3 -u "
 AtomicSwapECCPath = "Ergo/SigmaParticle/AtomicMultiSigECC/py/deploy.py " #TODO Ergo Specific
@@ -93,129 +94,141 @@ def GeneralizedENC_InitiationSubroutine(\
         swapName, LocalChainAccountName, CrossChainAccountName, \
         ElGamalKey, ElGamalKeyPath, InitiatorChain, ResponderChain,\
         localChainAccountPassword="", crossChainAccountPassword=""
-): 
-    mi = {} #master input json
-    localChainAccountEnvData = ""
-    crossChainAccountEnvData = ""
-    crossChainEncAccount = False
-    localChainEncAccount = False
-#    .strip("\"").rstrip()
-    InitiatorChain = InitiatorChain.strip("\"").rstrip()
-    ResponderChain = ResponderChain.strip("\"").rstrip()
-    ErgoPath = "Ergo/SigmaParticle/" + LocalChainAccountName + "/.env.encrypted"
-    if os.path.isfile(ErgoPath):
-        if InitiatorChain == "TestnetErgo":
-            if localChainAccountPassword != "":
-                localChainAccountEnvData = decrypt_file_return_contents(ErgoPath, localChainAccountPassword) #need to get password from somewhere
-                                                                        #server will be logged in passively
-                localChainEncAccount = True
-            else:
-                print("password required for encrypted env file!")
-                exit()
-        elif ResponderChain == "TestnetErgo":
-            if crossChainAccountPassword != "":
-                crossChainAccountEnvData = decrypt_file_return_contents(ErgoPath, crossChainAccountPassword)
-                crossChainEncAccount = True
-            else:
-                print("password required for encrypted env file!")
-                exit()
-        #ergo encrypted
-    if os.path.isfile("EVM/Atomicity/" + CrossChainAccountName + "/.env.encrypted"):
-        path = "EVM/Atomicity/" + CrossChainAccountName + "/.env.encrypted"
-        if InitiatorChain == "Sepolia":
-            if localChainAccountPassword != "":
-                localChainAccountEnvData = decrypt_file_return_contents(path, localChainAccountPassword)
-                localChainEncAccount = True
-            else:
-                print("password required for encrypted env file!")
-                exit()
-        elif ResponderChain == "Sepolia":
-            if crossChainAccountPassword != "":
-                crossChainAccountEnvData = decrypt_file_return_contents(path, crossChainAccountPassword)
-                crossChainEncAccount = True
-            else:
-                print("password required for encrypted env file!")
-                exit()
-        #sepolia encrypted
-    if localChainEncAccount == False and crossChainEncAccount == False:
-        if InitiatorChain.strip("\"") == "TestnetErgo" and ResponderChain.strip("\"") == "Sepolia":
-            mi = {
-                "ElGamalKey" : ElGamalKey.strip("\"").rstrip(),
-                "ElGamalKeyPath" : ElGamalKeyPath.strip("\"").rstrip(),
-                "swapName" : swapName.strip("\"").rstrip(),
-                "InitiatorChain" : InitiatorChain.strip("\"").rstrip(),
-                "ResponderChain" : ResponderChain.strip("\"").rstrip(),
-                "initiatorJSONPath" : swapName.strip("\"").rstrip() + "/initiator.json", #initiators local swap session json state
-                "initiatorEVMAddr" : \
-                    config_tools.valFromConf("EVM/Atomicity/" + CrossChainAccountName + "/.env", 'SepoliaSenderAddr'),
-                "InitiatorEIP3Secret".replace('"', '').rstrip() : \
-                    config_tools.valFromConf("Ergo/SigmaParticle/" + \
-                    LocalChainAccountName.strip("\"").rstrip()  + "/.env", 'senderEIP3Secret').replace('"', '').rstrip(),
-                "InitiatorErgoAddr" : \
-                    config_tools.valFromConf("Ergo/SigmaParticle/" + \
-                    LocalChainAccountName.strip("\"").rstrip() + "/.env", 'senderPubKey').replace('"', '').rstrip(),
-                "privateInitPATH" : swapName.strip("\"").rstrip() + "/priv_init.json",
-                "publicInitPATH" : swapName.strip("\"").rstrip() + "/public_init.json",
-                "ENC_Init_PATH" : swapName.strip("\"").rstrip()+ "/ENC_init.bin",
-                "ENC_Response_PATH" : swapName.strip("\"").rstrip() + "/ENC_response_path.bin",
-                "DEC_Response_PATH" : swapName.strip("\"").rstrip() + "/DEC_response.json",
-                "finalizationPATH" : swapName.strip("\"").rstrip() + "/finalization.json",
-                "ENC_finalizationPATH" : swapName.strip("\"").rstrip() + "/ENC_finalization.bin",
-                "InitiatorEVMAccountName": CrossChainAccountName
-            }
-    elif localChainEncAccount == True and crossChainEncAccount == True:
-        if InitiatorChain.strip("\"") == "TestnetErgo" and ResponderChain.strip("\"") == "Sepolia":
-            mi = {
-                "ElGamalKey" : ElGamalKey.strip("\"").rstrip(),
-                "ElGamalKeyPath" : ElGamalKeyPath.strip("\"").rstrip(),
-                "swapName" : swapName.strip("\"").rstrip(),
-                "InitiatorChain" : InitiatorChain.strip("\"").rstrip(),
-                "ResponderChain" : ResponderChain.strip("\"").rstrip(),
-                "initiatorJSONPath" : swapName.strip("\"").rstrip() + "/initiator.json", #initiators local swap session json state
-                "initiatorEVMAddr" : \
-                get_val_from_envdata_key('SepoliaSenderAddr', crossChainAccountEnvData),
-                "InitiatorEIP3Secret".replace('"', '').rstrip() : \
-                get_val_from_envdata_key('senderEIP3Secret', localChainAccountEnvData).replace('"', '').rstrip(),
+):
+    def setup(swapName, LocalChainAccountName, CrossChainAccountName, \
+        ElGamalKey, ElGamalKeyPath, InitiatorChain, ResponderChain,\
+        localChainAccountPassword="", crossChainAccountPassword=""):
+        mi = {} #master input json
+
+        localChainAccountEnvData = ""
+        crossChainAccountEnvData = ""
+        crossChainEncAccount = False
+        localChainEncAccount = False
+    #    .strip("\"").rstrip()
+        InitiatorChain = InitiatorChain.strip("\"").rstrip()
+        ResponderChain = ResponderChain.strip("\"").rstrip()
+        ErgoPath = "Ergo/SigmaParticle/" + LocalChainAccountName + "/.env.encrypted"
+        if os.path.isfile(ErgoPath):
+            if InitiatorChain == "TestnetErgo":
+                if localChainAccountPassword != "":
+                    localChainAccountEnvData = decrypt_file_return_contents(ErgoPath, localChainAccountPassword) #need to get password from somewhere
+                                                                            #server will be logged in passively
+                    localChainEncAccount = True
+                else:
+                    print("password required for encrypted env file!")
+                    exit()
+            elif ResponderChain == "TestnetErgo":
+                if crossChainAccountPassword != "":
+                    crossChainAccountEnvData = decrypt_file_return_contents(ErgoPath, crossChainAccountPassword)
+                    crossChainEncAccount = True
+                else:
+                    print("password required for encrypted env file!")
+                    exit()
+            #ergo encrypted
+        if os.path.isfile("EVM/Atomicity/" + CrossChainAccountName + "/.env.encrypted"):
+            path = "EVM/Atomicity/" + CrossChainAccountName + "/.env.encrypted"
+            if InitiatorChain == "Sepolia":
+                if localChainAccountPassword != "":
+                    localChainAccountEnvData = decrypt_file_return_contents(path, localChainAccountPassword)
+                    localChainEncAccount = True
+                else:
+                    print("password required for encrypted env file!")
+                    exit()
+            elif ResponderChain == "Sepolia":
+                if crossChainAccountPassword != "":
+                    crossChainAccountEnvData = decrypt_file_return_contents(path, crossChainAccountPassword)
+                    crossChainEncAccount = True
+                else:
+                    print("password required for encrypted env file!")
+                    exit()
+            #sepolia encrypted
+        if localChainEncAccount == False and crossChainEncAccount == False:
+            if InitiatorChain.strip("\"") == "TestnetErgo" and ResponderChain.strip("\"") == "Sepolia":
+                mi = {
+                    "ElGamalKey" : ElGamalKey.strip("\"").rstrip(),
+                    "ElGamalKeyPath" : ElGamalKeyPath.strip("\"").rstrip(),
+                    "swapName" : swapName.strip("\"").rstrip(),
+                    "InitiatorChain" : InitiatorChain.strip("\"").rstrip(),
+                    "ResponderChain" : ResponderChain.strip("\"").rstrip(),
+                    "initiatorJSONPath" : swapName.strip("\"").rstrip() + "/initiator.json", #initiators local swap session json state
+                    "initiatorEVMAddr" : \
+                        config_tools.valFromConf("EVM/Atomicity/" + CrossChainAccountName + "/.env", 'SepoliaSenderAddr'),
+                    "InitiatorEIP3Secret".replace('"', '').rstrip() : \
+                        config_tools.valFromConf("Ergo/SigmaParticle/" + \
+                        LocalChainAccountName.strip("\"").rstrip()  + "/.env", 'senderEIP3Secret').replace('"', '').rstrip(),
                     "InitiatorErgoAddr" : \
-                get_val_from_envdata_key('senderPubKey', localChainAccountEnvData).replace('"', '').rstrip(),
-                "privateInitPATH" : swapName.strip("\"").rstrip() + "/priv_init.json",
-                "publicInitPATH" : swapName.strip("\"").rstrip() + "/public_init.json",
-                "ENC_Init_PATH" : swapName.strip("\"").rstrip()+ "/ENC_init.bin",
-                "ENC_Response_PATH" : swapName.strip("\"").rstrip() + "/ENC_response_path.bin",
-                "DEC_Response_PATH" : swapName.strip("\"").rstrip() + "/DEC_response.json",
-                "finalizationPATH" : swapName.strip("\"").rstrip() + "/finalization.json",
-                "ENC_finalizationPATH" : swapName.strip("\"").rstrip() + "/ENC_finalization.bin",
-                "InitiatorEVMAccountName": CrossChainAccountName
-            }
-    print("swapName:", mi["swapName"]);
-    file_tools.clean_mkdir(mi["swapName"])
-    file_tools.clean_file_open(mi["initiatorJSONPath"], "w", "{}")
-    class initiatorInputEnum(Enum):
-        ElGamalKey = mi["ElGamalKey"]
-        ElGamalKeyPath = mi["ElGamalKeyPath"]
-        swapName = mi["swapName"]
-        InitiatorChain = mi["InitiatorChain"]
-        ResponderChain = mi["ResponderChain"]
-        initiatorJSONPath = mi["initiatorJSONPath"] #initiators local swap session json state
-        InitiatorEVMAddr = mi["initiatorEVMAddr"]
-        InitiatorEIP3Secret = mi["InitiatorEIP3Secret"]
-        InitiatorErgoAddr = mi["InitiatorErgoAddr"]
-        privateInitPATH = mi["privateInitPATH"]
-        publicInitPATH = mi["publicInitPATH"]
-        ENC_Init_PATH = mi["ENC_Init_PATH"]
-        ENC_Response_PATH = mi["ENC_Response_PATH"]
-        DEC_Response_PATH = mi["DEC_Response_PATH"]
-        finalizationPATH = mi["finalizationPATH"]
-        ENC_finalizationPATH = mi["ENC_finalizationPATH"]
-        InitiatorEVMAccountName = mi["InitiatorEVMAccountName"]
-    json_tools.keyVal_list_update(enum_tools.keynum(initiatorInputEnum), mi["initiatorJSONPath"])
-    privateInit = initiation(mi["initiatorEVMAddr"], InitiatorChain, ResponderChain)
-    file_tools.clean_file_open(mi["privateInitPATH"], "w", privateInit)
-    initiation_keyValList = json_tools.json_to_keyValList(mi["privateInitPATH"])
-    json_tools.keyVal_list_update(initiation_keyValList, mi["initiatorJSONPath"])
-    publicInit = sanitizeInitiation(privateInit)
-    file_tools.clean_file_open(mi["publicInitPATH"], "w", publicInit)
-    encrypt = ElGamalInterface.ElGamal_Encrypt(mi["ElGamalKey"], mi["ElGamalKeyPath"], mi["publicInitPATH"], mi["ENC_Init_PATH"])
+                        config_tools.valFromConf("Ergo/SigmaParticle/" + \
+                        LocalChainAccountName.strip("\"").rstrip() + "/.env", 'senderPubKey').replace('"', '').rstrip(),
+                    "privateInitPATH" : swapName.strip("\"").rstrip() + "/priv_init.json",
+                    "publicInitPATH" : swapName.strip("\"").rstrip() + "/public_init.json",
+                    "ENC_Init_PATH" : swapName.strip("\"").rstrip()+ "/ENC_init.bin",
+                    "ENC_Response_PATH" : swapName.strip("\"").rstrip() + "/ENC_response_path.bin",
+                    "DEC_Response_PATH" : swapName.strip("\"").rstrip() + "/DEC_response.json",
+                    "finalizationPATH" : swapName.strip("\"").rstrip() + "/finalization.json",
+                    "ENC_finalizationPATH" : swapName.strip("\"").rstrip() + "/ENC_finalization.bin",
+                    "InitiatorEVMAccountName": CrossChainAccountName
+                }
+        elif localChainEncAccount == True and crossChainEncAccount == True:
+            if InitiatorChain.strip("\"") == "TestnetErgo" and ResponderChain.strip("\"") == "Sepolia":
+                mi = {
+                    "ElGamalKey" : ElGamalKey.strip("\"").rstrip(),
+                    "ElGamalKeyPath" : ElGamalKeyPath.strip("\"").rstrip(),
+                    "swapName" : swapName.strip("\"").rstrip(),
+                    "InitiatorChain" : InitiatorChain.strip("\"").rstrip(),
+                    "ResponderChain" : ResponderChain.strip("\"").rstrip(),
+                    "initiatorJSONPath" : swapName.strip("\"").rstrip() + "/initiator.json", #initiators local swap session json state
+                    "initiatorEVMAddr" : \
+                    get_val_from_envdata_key('SepoliaSenderAddr', crossChainAccountEnvData),
+                    "InitiatorEIP3Secret".replace('"', '').rstrip() : \
+                    get_val_from_envdata_key('senderEIP3Secret', localChainAccountEnvData).replace('"', '').rstrip(),
+                        "InitiatorErgoAddr" : \
+                    get_val_from_envdata_key('senderPubKey', localChainAccountEnvData).replace('"', '').rstrip(),
+                    "privateInitPATH" : swapName.strip("\"").rstrip() + "/priv_init.json",
+                    "publicInitPATH" : swapName.strip("\"").rstrip() + "/public_init.json",
+                    "ENC_Init_PATH" : swapName.strip("\"").rstrip()+ "/ENC_init.bin",
+                    "ENC_Response_PATH" : swapName.strip("\"").rstrip() + "/ENC_response_path.bin",
+                    "DEC_Response_PATH" : swapName.strip("\"").rstrip() + "/DEC_response.json",
+                    "finalizationPATH" : swapName.strip("\"").rstrip() + "/finalization.json",
+                    "ENC_finalizationPATH" : swapName.strip("\"").rstrip() + "/ENC_finalization.bin",
+                    "InitiatorEVMAccountName": CrossChainAccountName
+                }
+        print("swapName:", mi["swapName"]);
+        file_tools.clean_mkdir(mi["swapName"])
+        return mi
+    mi = setup(swapName, LocalChainAccountName, CrossChainAccountName, \
+        ElGamalKey, ElGamalKeyPath, InitiatorChain, ResponderChain,\
+        localChainAccountPassword, crossChainAccountPassword)
+    def init(mi):
+        setSwapState(swapName, "initiating", setMap=True)
+        file_tools.clean_file_open(mi["initiatorJSONPath"], "w", "{}")
+        class initiatorInputEnum(Enum):
+            ElGamalKey = mi["ElGamalKey"]
+            ElGamalKeyPath = mi["ElGamalKeyPath"]
+            swapName = mi["swapName"]
+            InitiatorChain = mi["InitiatorChain"]
+            ResponderChain = mi["ResponderChain"]
+            initiatorJSONPath = mi["initiatorJSONPath"] #initiators local swap session json state
+            InitiatorEVMAddr = mi["initiatorEVMAddr"]
+            InitiatorEIP3Secret = mi["InitiatorEIP3Secret"]
+            InitiatorErgoAddr = mi["InitiatorErgoAddr"]
+            privateInitPATH = mi["privateInitPATH"]
+            publicInitPATH = mi["publicInitPATH"]
+            ENC_Init_PATH = mi["ENC_Init_PATH"]
+            ENC_Response_PATH = mi["ENC_Response_PATH"]
+            DEC_Response_PATH = mi["DEC_Response_PATH"]
+            finalizationPATH = mi["finalizationPATH"]
+            ENC_finalizationPATH = mi["ENC_finalizationPATH"]
+            InitiatorEVMAccountName = mi["InitiatorEVMAccountName"]
+        json_tools.keyVal_list_update(enum_tools.keynum(initiatorInputEnum), mi["initiatorJSONPath"])
+        privateInit = initiation(mi["initiatorEVMAddr"], InitiatorChain, ResponderChain)
+        file_tools.clean_file_open(mi["privateInitPATH"], "w", privateInit)
+        initiation_keyValList = json_tools.json_to_keyValList(mi["privateInitPATH"])
+        json_tools.keyVal_list_update(initiation_keyValList, mi["initiatorJSONPath"])
+        publicInit = sanitizeInitiation(privateInit)
+        file_tools.clean_file_open(mi["publicInitPATH"], "w", publicInit)
+        encrypt = ElGamalInterface.ElGamal_Encrypt(mi["ElGamalKey"], mi["ElGamalKeyPath"], mi["publicInitPATH"], mi["ENC_Init_PATH"])
+        setSwapState(swapName, "initiated_unsubmitted", setMap=True)
+    init(mi)
     return mi["ENC_Init_PATH"]
 
 
@@ -223,66 +236,85 @@ def GeneralizedENC_InitiationSubroutine(\
 def GeneralizedENC_FinalizationSubroutine(initiatorJSONPath, CoinA_Price, CoinB_Price, localchainpassword="", crosschainpassword=""):
     init_J = json_tools.ojf(initiatorJSONPath)
     if init_J["InitiatorChain"] == "TestnetErgo" and init_J["ResponderChain"] == "Sepolia":
-        swapName = init_J["swapName"]
-        ENC_Response_PATH = init_J["ENC_Response_PATH"]
-        ElGamalKey = init_J["ElGamalKey"]
-        ElGamalKeyPath = init_J["ElGamalKeyPath"]
-        DEC_Response_PATH = init_J["DEC_Response_PATH"]
-        finalizationPATH = init_J["finalizationPATH"]
-        InitiatorEIP3Secret = init_J["InitiatorEIP3Secret"]
-        ENC_finalizationPATH = init_J["ENC_finalizationPATH"]
-        InitiatorErgoAddr = init_J["InitiatorErgoAddr"]
-        decrypted_response = ElGamalInterface.ElGamal_Decrypt(ENC_Response_PATH, ElGamalKey, ElGamalKeyPath)
-        file_tools.clean_file_open(DEC_Response_PATH, "w", decrypted_response)
-        response_list = json_tools.json_to_keyValList(DEC_Response_PATH)
-        json_tools.keyVal_list_update(response_list, initiatorJSONPath)
-        init_J = json_tools.ojf(initiatorJSONPath)
-        addr = init_J["responderContractAddr"]
-        responderLocalChain = init_J["responderLocalChain"]
-        xG = ast.literal_eval(init_J["xG"])
-                #TODO check for existing swapfile
-        #if yes check for finalization / funded contract
-        AtomicityInterface.Atomicity_newFrame(swapName, responderLocalChain)
-        print("wait for contract upload and funding")
-        time.sleep(30)
-        inspect_json = inspectResponse(DEC_Response_PATH, init_J["swapName"], password=crosschainpassword)
-        if inspect_json == "Error: response does not have expected keys":
-            print("fail")
-            exit()
-        file_tools.clean_file_open(swapName + "/inspectContractTest.json", "w", inspect_json)
-        inspect_list = json_tools.json_to_keyValList(swapName + "/inspectContractTest.json")
-        json_tools.keyVal_list_update(inspect_list, initiatorJSONPath)
-        minimum_wei = 0 #this is practically set for existential transfer calculations due to variable fee rates
-        contractFunds = json.loads(file_tools.clean_file_open(initiatorJSONPath, "r"))["counterpartyContractFundedAmount"]
-        remainingLockTime = json.loads(file_tools.clean_file_open(initiatorJSONPath, "r"))["remainingLockTime"]
-        if int(remainingLockTime) < int(MINIMUM_CLAIM_LOCKTIME_SEPOLIA):
-            print("remaining locktime is lower than", MINIMUM_CLAIM_LOCKTIME_SEPOLIA, "swap is at risk of double spending")
-            exit()
-        if int(contractFunds) < int(minimum_wei):
-            print("not enough wei in contract, fail")
-            exit()
-        if AtomicityInterface.Atomicity_compareScalarContractCoords(swapName, addr, xG[0], xG[1], password=crosschainpassword) == False:
-            print("on chain contract does not meet offchain contract spec, do not fulfil this swap!")
-            exit()
-        convList = price_tools.getPriceConversions(price_tools.weiToEth(contractFunds), CoinA_Price, CoinB_Price)
-        finalizeOBJ = finalizeSwap(initiatorJSONPath)
-        file_tools.clean_file_open(finalizationPATH, "w", finalizeOBJ)
-        finalizeOBJ_LIST = json_tools.json_to_keyValList(finalizationPATH)
-        json_tools.keyVal_list_update(finalizeOBJ_LIST, initiatorJSONPath)
-        #TODO impl passwords in sigmaparticleinterface fns
-        SigmaParticleInterface.BuildAtomicSchnorrContract(
-                initiatorJSONPath, MINIMUM_REFUND_LOCKTIME_ERGO, swapName, \
-                price_tools.ErgToNanoErg(convList[1]) \
-        )
-        SigmaParticleInterface.deployErgoContract(swapName, password=localchainpassword) #TODO generalize based on chain
-        boxId = SigmaParticleInterface.getBoxID(swapName)
-        InitiatorAtomicSchnorrLockHeight = file_tools.clean_file_open("Ergo/SigmaParticle/" + swapName + "/lockHeight", "r")
-        contractKeyValList = [{"boxId":boxId, "InitiatorAtomicSchnorrLockHeight":InitiatorAtomicSchnorrLockHeight, \
-                "InitiatorErgoAddr":InitiatorErgoAddr}]
-        json_tools.keyVal_list_update(contractKeyValList, initiatorJSONPath)
-        json_tools.keyVal_list_update(contractKeyValList, finalizationPATH)
-        ENC_finalization =  ElGamalInterface.ElGamal_Encrypt(ElGamalKey, ElGamalKeyPath, finalizationPATH, ENC_finalizationPATH)
-   
+        def init(init_J, initiatorJSONPath, CoinA_Price, CoinB_Price, localchainpassword="", crosschainpassword=""):
+            swapName = init_J["swapName"]
+            setSwapState(swapName, "responded", setMap=True)
+            ENC_Response_PATH = init_J["ENC_Response_PATH"]
+            ElGamalKey = init_J["ElGamalKey"]
+            ElGamalKeyPath = init_J["ElGamalKeyPath"]
+            DEC_Response_PATH = init_J["DEC_Response_PATH"]
+            finalizationPATH = init_J["finalizationPATH"]
+            InitiatorEIP3Secret = init_J["InitiatorEIP3Secret"]
+            ENC_finalizationPATH = init_J["ENC_finalizationPATH"]
+            InitiatorErgoAddr = init_J["InitiatorErgoAddr"]
+            decrypted_response = ElGamalInterface.ElGamal_Decrypt(ENC_Response_PATH, ElGamalKey, ElGamalKeyPath)
+            file_tools.clean_file_open(DEC_Response_PATH, "w", decrypted_response)
+            response_list = json_tools.json_to_keyValList(DEC_Response_PATH)
+            json_tools.keyVal_list_update(response_list, initiatorJSONPath)
+            init_J = json_tools.ojf(initiatorJSONPath)
+            addr = init_J["responderContractAddr"]
+            responderLocalChain = init_J["responderLocalChain"]
+            xG = ast.literal_eval(init_J["xG"])
+                    #TODO check for existing swapfile
+            #if yes check for finalization / funded contract
+            AtomicityInterface.Atomicity_newFrame(swapName, responderLocalChain)
+            print("wait for contract upload and funding")
+            time.sleep(30) #TODO make this better to avoid non uploaded or non funded related errors
+            return swapName, ENC_Response_PATH, ElGamalKey, ElGamalKeyPath, DEC_Response_PATH, finalizationPATH, InitiatorEIP3Secret, ENC_finalizationPATH, InitiatorErgoAddr, addr, responderLocalChain, xG
+
+        swapName, ENC_Response_PATH, ElGamalKey, ElGamalKeyPath, DEC_Response_PATH, finalizationPATH, InitiatorEIP3Secret, ENC_finalizationPATH, InitiatorErgoAddr, addr, responderLocalChain, xG = init(init_J, initiatorJSONPath, CoinA_Price, CoinB_Price, localchainpassword, crosschainpassword)
+
+        def verifyResponse(swapName, DEC_Response_PATH, crosschainpassword, initiatorJSONPath, addr, xG):
+            setSwapState(swapName, "verifying_response", setMap=True)
+            inspect_json = inspectResponse(DEC_Response_PATH, swapName, password=crosschainpassword)
+            if inspect_json == "Error: response does not have expected keys":
+                print("fail")
+                exit()
+            file_tools.clean_file_open(swapName + "/inspectContractTest.json", "w", inspect_json)
+            inspect_list = json_tools.json_to_keyValList(swapName + "/inspectContractTest.json")
+            json_tools.keyVal_list_update(inspect_list, initiatorJSONPath)
+            minimum_wei = 0 #this is practically set for existential transfer calculations due to variable fee rates
+            contractFunds = json.loads(file_tools.clean_file_open(initiatorJSONPath, "r"))["counterpartyContractFundedAmount"]
+            remainingLockTime = json.loads(file_tools.clean_file_open(initiatorJSONPath, "r"))["remainingLockTime"]
+            if int(remainingLockTime) < int(MINIMUM_CLAIM_LOCKTIME_SEPOLIA):
+                print("remaining locktime is lower than", MINIMUM_CLAIM_LOCKTIME_SEPOLIA, "swap is at risk of double spending")
+                exit()
+            if int(contractFunds) < int(minimum_wei):
+                print("not enough wei in contract, fail")
+                exit()
+            if AtomicityInterface.Atomicity_compareScalarContractCoords(swapName, addr, xG[0], xG[1], password=crosschainpassword) == False:
+                print("on chain contract does not meet offchain contract spec, do not fulfil this swap!")
+                exit()
+            setSwapState(swapName, "verified_response", setMap=True)
+            return contractFunds
+
+        contractFunds = verifyResponse(swapName, DEC_Response_PATH, crosschainpassword, initiatorJSONPath, addr, xG)
+        
+        def finalize(swapName, contractFunds, CoinA_Price, CoinB_Price, initiatorJSONPath, finalizationPATH, InitiatorErgoAddr, ElGamalKey, ElGamalKeyPath, ENC_finalizationPATH):
+            convList = price_tools.getPriceConversions(price_tools.weiToEth(contractFunds), CoinA_Price, CoinB_Price)
+            setSwapState(swapName, "finalizing", setMap=True)
+            #TODO if we re enter this section due to a state reload, we should check if we already sent something to the mempool
+            #or potentially it uploaded already if we hit the deploy function before state break
+            finalizeOBJ = finalizeSwap(initiatorJSONPath)
+            file_tools.clean_file_open(finalizationPATH, "w", finalizeOBJ)
+            finalizeOBJ_LIST = json_tools.json_to_keyValList(finalizationPATH)
+            json_tools.keyVal_list_update(finalizeOBJ_LIST, initiatorJSONPath)
+            #TODO impl passwords in sigmaparticleinterface fns
+            SigmaParticleInterface.BuildAtomicSchnorrContract(
+                    initiatorJSONPath, MINIMUM_REFUND_LOCKTIME_ERGO, swapName, \
+                    price_tools.ErgToNanoErg(convList[1]) \
+            )
+            SigmaParticleInterface.deployErgoContract(swapName, password=localchainpassword) #TODO generalize based on chain
+            boxId = SigmaParticleInterface.getBoxID(swapName)
+            InitiatorAtomicSchnorrLockHeight = file_tools.clean_file_open("Ergo/SigmaParticle/" + swapName + "/lockHeight", "r")
+            contractKeyValList = [{"boxId":boxId, "InitiatorAtomicSchnorrLockHeight":InitiatorAtomicSchnorrLockHeight, \
+                    "InitiatorErgoAddr":InitiatorErgoAddr}]
+            json_tools.keyVal_list_update(contractKeyValList, initiatorJSONPath)
+            json_tools.keyVal_list_update(contractKeyValList, finalizationPATH)
+            ENC_finalization =  ElGamalInterface.ElGamal_Encrypt(ElGamalKey, ElGamalKeyPath, finalizationPATH, ENC_finalizationPATH)
+            setSwapState(swapName, "finalized_unsubmitted", setMap=True)
+        
+        finalize(swapName, contractFunds, CoinA_Price, CoinB_Price, initiatorJSONPath, finalizationPATH, InitiatorErgoAddr, ElGamalKey, ElGamalKeyPath, ENC_finalizationPATH)
     #GeneralizedENC_InitiatorClaimSubroutine(init_J["initiatorJSONPath"])
 
 def GeneralizedENC_InitiatorClaimSubroutine(initiatorJSONPath, localchainpassword="", crosschainpassword=""):
@@ -290,6 +322,7 @@ def GeneralizedENC_InitiatorClaimSubroutine(initiatorJSONPath, localchainpasswor
     init_J = json.loads(file_tools.clean_file_open(initiatorJSONPath, "r"))
     if init_J["InitiatorChain"] == "TestnetErgo" and init_J["ResponderChain"] == "Sepolia":
         swapName = init_J["swapName"]
+        setSwapState(swapName, "claiming", setMap=True)
         boxID = init_J["boxId"]
         initiatorEVMAccountName = init_J["InitiatorEVMAccountName"] 
         if SigmaParticleInterface.checkSchnorrTreeForClaim(boxID, swapName, initiatorJSONPath, password=localchainpassword) == False:
@@ -298,5 +331,6 @@ def GeneralizedENC_InitiatorClaimSubroutine(initiatorJSONPath, localchainpasswor
         SigmaParticleInterface.deduceX_fromAtomicSchnorrClaim(initiatorJSONPath, swapName, password=localchainpassword)
         AtomicityInterface.Atomicity_updateKeyEnv(swapName, initiatorEVMAccountName)
         AtomicityInterface.Atomicity_claimScalarContract(initiatorJSONPath, swapName, gasMod=3, password=crosschainpassword)
+        setSwapState(swapName, "claimed", setMap=True)
     ################################################################################
 
