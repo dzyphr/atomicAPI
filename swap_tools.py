@@ -1,4 +1,4 @@
-import file_tools, os, uuid, responderInterface, json_tools, subprocess, sys, json, ClientEndpoints
+import file_tools, os, uuid, responderInterface, json_tools, subprocess, sys, json, ClientEndpoints, initiatorInterface
 
 PossibleSwapStates = ["initiated", "uploadingResponseContract", "uploadedResponseContract", "fundingResponseContract", "fundedResponseContract", "responding", "responded_unsubmitted", "responded_submitted", "finalized", "verifyingFinalizedContractValues", "verifiedFinalizedContractValues", "claiming", "refunding", "claimed", "refunded", "terminated", "tbd"]
 #TODO possibleSwapStates Responder and possibleSwapStates Initiatior should be seperated
@@ -15,8 +15,8 @@ def setSwapState(swapName, state, setMap=False):
         return False
     else:
         if setMap == True:
-            if os.path.isfile("SwapStateMap") == False:
-                file_tools.clean_file_open("SwapStateMap", "w", "{}")
+#            if os.path.isfile("SwapStateMap") == False: #should be handled by REST APIS
+#                file_tools.clean_file_open("SwapStateMap", "w", "{}") 
             SwapStateMap = json_tools.ojf("SwapStateMap")
             if swapName not in SwapStateMap.keys():
                 keyValList = [{swapName: {"SwapState": state}}]
@@ -141,21 +141,67 @@ def watchSwapLoop(swapName, localChainAccountPassword="", crossChainAccountPassw
                         )
         elif role == "Initiator":
             if LocalChain == "TestnetErgo" and CrossChain == "Sepolia":
+                OrderTypeUUID = file_tools.clean_file_open(swapName + "/OrderTypeUUID", "r")
+                OrderTypesJSON =  json_tools.ojf("OrderTypes.json")
+                CoinA_Price = OrderTypesJSON[OrderTypeUUID]["CoinA_price"]
+                CoinB_Price = OrderTypesJSON[OrderTypeUUID]["CoinB_price"]
                 if swapState in PossibleSwapStatesInitiator:
-                    if swapState == PossibleSwapStatesInitiator[0]:
-                        GeneralizedENC_InitiationSubroutine(\
-                            swapName, LocalChainAccountName, CrossChainAccountName, \
-                            ElGamalKey, ElGamalKeyPath, LocalChain, CrossChain,\
-                            localChainAccountPassword=localChainAccountPassword, crossChainAccountPassword=crossChainAccountPassword
+                    initiatorJSONPath = swapName + "/initiator.json"
+
+                    if swapState == PossibleSwapStatesInitiator[0]: #initiating
+                        #swaps that break here should just be reinitiated
+                        #no reason to reload
+                        return
+                    if swapState == PossibleSwapStatesInitiator[1]: #initiated_unsubmitted
+                        #have to return because basically waiting for client to request initiation again from their state reload
+                        #probably very rare case
+                        return
+                    if swapState == PossibleSwapStatesInitiator[2]: #initiated_submitted
+                        #technically we're still waiting for a response here
+                        #so because of that we shouldn't move forward with finalizing
+                        return
+                    if swapState == PossibleSwapStatesInitiator[3]: #responded
+                        initiatorInterface.GeneralizedENC_FinalizationSubroutine(
+                            initiatorJSONPath, CoinA_Price, CoinB_Price, 
+                            localchainpassword=localChainAccountPassword, crosschainpassword=crossChainAccountPassword
+                        )
+                        initiatorInterface.GeneralizedENC_InitiatorClaimSubroutine(
+                            initiatorJSONPath, 
+                            localchainpassword=localChainAccountPassword, crosschainpassword=crossChainAccountPassword
+                        )
+                    if swapState in [
+                           PossibleSwapStatesInitiator[4], #verifying_response
+                           PossibleSwapStatesInitiator[5], #verified_response
+                           PossibleSwapStatesInitiator[6]  #finalizing
+                    ]:
+                        initiatorInterface.GeneralizedENC_FinalizationSubroutine(
+                            initiatorJSONPath, CoinA_Price, CoinB_Price,
+                            localchainpassword=localChainAccountPassword, crosschainpassword=crossChainAccountPassword,
+                            swapStateReload=swapState
+                        )
+                        initiatorInterface.GeneralizedENC_InitiatorClaimSubroutine(
+                            initiatorJSONPath, 
+                            localchainpassword=localChainAccountPassword, crosschainpasswordcross=ChainAccountPassword
+                        )
+                    if swapState in [
+                            PossibleSwapStatesInitiator[7], PossibleSwapStatesInitiator[8], 
+                            PossibleSwapStatesInitiator[9], PossibleSwapStatesInitiator[10]
+                    ]:      #finalized_unsubmitted finalized_submitted claiming or refunding
+                        initiatorInterface.GeneralizedENC_InitiatorClaimSubroutine(
+                            initiatorJSONPath, 
+                            localchainpassword=localChainAccountPassword, crosschainpassword=crossChainAccountPassword
                         )
 
-
-
-
-
-
-
-
+                    #if the state is something like initiating or responded in which case we had a shutdown when prompted to
+                    #generate swap data and return it to the client, we should generate the data, expecting that the client 
+                    #will reconnect because we cant force a reconnection to the client
+                    #client could call state reload if they shutdown or lose connection with server
+                    #this facilitates state reload for server although server still should
+                    #keep track of whether its already generated the swap data asked for
+                    #or if its already uploaded or is uploading the finalization contract
+                    #to prevent the server being confused and running duplicate commands for the same data
+                    #if the state is finalized we can run checkschnorrtreeforclaim aka GeneralizedENC_InitiatorClaimSubroutine
+                    #to handle a refund
 
 
     else:

@@ -199,7 +199,7 @@ def GeneralizedENC_InitiationSubroutine(\
         ElGamalKey, ElGamalKeyPath, InitiatorChain, ResponderChain,\
         localChainAccountPassword, crossChainAccountPassword)
     def init(mi):
-        setSwapState(swapName, "initiating", setMap=True)
+#        setSwapState(swapName, "initiating", setMap=True) #should be set by REST API 
         file_tools.clean_file_open(mi["initiatorJSONPath"], "w", "{}")
         class initiatorInputEnum(Enum):
             ElGamalKey = mi["ElGamalKey"]
@@ -233,9 +233,56 @@ def GeneralizedENC_InitiationSubroutine(\
 
 
 
-def GeneralizedENC_FinalizationSubroutine(initiatorJSONPath, CoinA_Price, CoinB_Price, localchainpassword="", crosschainpassword=""):
+def GeneralizedENC_FinalizationSubroutine(initiatorJSONPath, CoinA_Price, CoinB_Price, localchainpassword="", crosschainpassword="", swapStateReload=""):
     init_J = json_tools.ojf(initiatorJSONPath)
     if init_J["InitiatorChain"] == "TestnetErgo" and init_J["ResponderChain"] == "Sepolia":
+        if swapStateReload == [4]:#verifying_response
+            addr = init_J["responderContractAddr"]
+            DEC_Response_PATH = init_J["DEC_Response_PATH"]
+            xG = ast.literal_eval(init_J["xG"])
+            contractFunds = verifyResponse(swapName, DEC_Response_PATH, crosschainpassword, initiatorJSONPath, addr, xG)
+            finalizationPATH = init_J["finalizationPATH"]
+            InitiatorErgoAddr = init_J["InitiatorErgoAddr"]
+            ElGamalKey = init_J["ElGamalKey"]
+            ElGamalKeyPath = init_J["ElGamalKeyPath"]
+            ENC_finalizationPATH = init_J["ENC_finalizationPATH"]
+            finalize(
+                    swapName, contractFunds, 
+                    CoinA_Price, CoinB_Price, 
+                    initiatorJSONPath, finalizationPATH, 
+                    InitiatorErgoAddr, ElGamalKey, ElGamalKeyPath, ENC_finalizationPATH
+            )
+            return
+        if swapStateReload == [5]:#verified_response
+            contractFunds = json.loads(file_tools.clean_file_open(initiatorJSONPath, "r"))["counterpartyContractFundedAmount"]
+            finalizationPATH = init_J["finalizationPATH"]
+            InitiatorErgoAddr = init_J["InitiatorErgoAddr"]
+            ElGamalKey = init_J["ElGamalKey"]
+            ElGamalKeyPath = init_J["ElGamalKeyPath"]
+            ENC_finalizationPATH = init_J["ENC_finalizationPATH"]
+            finalize(
+                    swapName, contractFunds,
+                    CoinA_Price, CoinB_Price,
+                    initiatorJSONPath, finalizationPATH,
+                    InitiatorErgoAddr, ElGamalKey, ElGamalKeyPath, ENC_finalizationPATH
+            )
+            return
+        if swapStateReload == [6]:#finalizing
+            #may want to check if we already uploaded something to mempool here TODO
+            contractFunds = json.loads(file_tools.clean_file_open(initiatorJSONPath, "r"))["counterpartyContractFundedAmount"]
+            finalizationPATH = init_J["finalizationPATH"]
+            InitiatorErgoAddr = init_J["InitiatorErgoAddr"]
+            ElGamalKey = init_J["ElGamalKey"]
+            ElGamalKeyPath = init_J["ElGamalKeyPath"]
+            ENC_finalizationPATH = init_J["ENC_finalizationPATH"]
+            finalize(
+                    swapName, contractFunds,
+                    CoinA_Price, CoinB_Price,
+                    initiatorJSONPath, finalizationPATH,
+                    InitiatorErgoAddr, ElGamalKey, ElGamalKeyPath, ENC_finalizationPATH
+            )
+            return
+
         def init(init_J, initiatorJSONPath, CoinA_Price, CoinB_Price, localchainpassword="", crosschainpassword=""):
             swapName = init_J["swapName"]
             setSwapState(swapName, "responded", setMap=True)
