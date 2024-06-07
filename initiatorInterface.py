@@ -104,15 +104,13 @@ def GeneralizedENC_InitiationSubroutine(\
         crossChainAccountEnvData = ""
         crossChainEncAccount = False
         localChainEncAccount = False
-    #    .strip("\"").rstrip()
         InitiatorChain = InitiatorChain.strip("\"").rstrip()
         ResponderChain = ResponderChain.strip("\"").rstrip()
         ErgoPath = "Ergo/SigmaParticle/" + LocalChainAccountName + "/.env.encrypted"
         if os.path.isfile(ErgoPath):
             if InitiatorChain == "TestnetErgo":
                 if localChainAccountPassword != "":
-                    localChainAccountEnvData = decrypt_file_return_contents(ErgoPath, localChainAccountPassword) #need to get password from somewhere
-                                                                            #server will be logged in passively
+                    localChainAccountEnvData = decrypt_file_return_contents(ErgoPath, localChainAccountPassword) 
                     localChainEncAccount = True
                 else:
                     print("password required for encrypted env file!")

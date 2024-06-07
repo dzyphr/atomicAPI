@@ -1,4 +1,5 @@
 import sys
+import file_tools
 import os
 import time
 import random
@@ -49,9 +50,10 @@ def main(contractName, nodeurl, nodeAPIKey, args):
 #                print(inputbox)
                 tree =  json.loads(inputbox)["ergoTree"]
     #            print(tree)
-                f = open(filepath, "w")
-                f.write(str(tree))
-                f.close()
+#                f = open(filepath, "w")
+#                f.write(str(tree))
+ #               f.close()
+                file_tools.clean_file_open(filepath, "w", tree)
     #            sys.stdout.write(str(inputBox[0].getErgoTree().bytesHex()))
                 sys.stdout.write(tree)
             else:

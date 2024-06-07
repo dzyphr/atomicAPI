@@ -49,7 +49,7 @@ def SigmaParticle_box_to_addr(boxId, swapName, password=""):
                             tree + " " + \
                             "../treeAddrs/" + hashedtree + " " + \
                             password
-                file_tools.clean_file_open("treeToAddrScriptTestDebug", "w", treeToAddrCmd)
+#                file_tools.clean_file_open("treeToAddrScriptTestDebug", "w", treeToAddrCmd)
                 res = os.popen(treeToAddrCmd).read()
                 if is_json(res) == True:
                     addr = json.loads(res)["address"]
@@ -88,27 +88,23 @@ def is_file_contents_int(file_path):
 
 
 def SigmaParticle_CheckLockTimeAtomicSchnorr(swapName, boxId, password=""):
-#    lockHeightCMD = \
-#                            "cd " + SigmaParticlePath + "boxConstantByIndex && ./deploy.sh " + boxId + \
-#                            " 8 ../../../" + swapName + "/localChain_lockHeight " + password
-#    file_tools.clean_file_open("lockHeightScriptDebug", "w" , lockHeightCMD)
-#    print(os.popen(lockHeightCMD).read())
-    
     lockHeightPath = SigmaParticlePath + swapName + "/lockHeight"
     if os.path.isfile(lockHeightPath) == False:
         while is_file_contents_int(lockHeightPath) == False:
             lockHeightCMD = \
                             "cd " + SigmaParticlePath + "boxConstantByIndex && ./deploy.sh " + boxId + \
                             " 8 ../" + swapName + "/lockHeight " + password
-            file_tools.clean_file_open("lockHeightScriptDebug", "w" , lockHeightCMD)
+#            file_tools.clean_file_open("lockHeightScriptDebug", "w" , lockHeightCMD)
             print(os.popen(lockHeightCMD).read())
             time.sleep(5)
     currentHeightCMD = \
                     "cd " + SigmaParticlePath + "currentHeight && ./deploy.sh ../../../" + \
                     swapName + "/localChain_currentHeight " + password
-    file_tools.clean_file_open("currentHeightCMDDeubug", "w", currentHeightCMD)
+#    file_tools.clean_file_open("currentHeightCMDDeubug", "w", currentHeightCMD)
     print(os.popen(currentHeightCMD).read())
-    if os.path.isfile(SigmaParticlePath + swapName + "/lockHeight") == True and os.path.isfile(swapName + "/localChain_currentHeight") == True:
+    if \
+    os.path.isfile(SigmaParticlePath + swapName + "/lockHeight") == True and \
+    os.path.isfile(swapName + "/localChain_currentHeight") == True:
         lockHeight = file_tools.clean_file_open(SigmaParticlePath + swapName + "/lockHeight", "r")
         currentHeight = file_tools.clean_file_open(swapName + "/localChain_currentHeight", "r")
         if currentHeight.isnumeric() == True and lockHeight.isnumeric() == True:
@@ -203,13 +199,13 @@ def responderGenerateAtomicSchnorr(swapName, DEC_finalizationPATH, responderMast
 def responderVerifyErgoScript(swapName, expectedErgoTree, password=""):
     verifyCMD = \
         "cd " + SigmaParticlePath + swapName + " && ./deploy.sh deposit verifyTreeOnly " + password
-    file_tools.clean_file_open("responderVerifyErgoScriptdebug", "w", verifyCMD)
+#    file_tools.clean_file_open("responderVerifyErgoScriptdebug", "w", verifyCMD)
     os.popen(verifyCMD).read() 
     ergoTreePath = SigmaParticlePath + swapName + "/ergoTree"
     ergoTree = file_tools.clean_file_open(ergoTreePath, "r")
     fmt = "onchain:", expectedErgoTree, "offchain:", ergoTree
     print(fmt)
-    file_tools.clean_file_open(swapName + "/ergoTreeCompareTest", "w", fmt)
+#    file_tools.clean_file_open(swapName + "/ergoTreeCompareTest", "w", fmt)
     if expectedErgoTree.strip() == ergoTree.strip():
         return True
     else:
@@ -228,7 +224,7 @@ def responderClaimAtomicSchnorr(swapName, tries=None, password=""):
         rounds = tries
     claimCMD = \
             "cd " + SigmaParticlePath + swapName + " && ./deploy.sh claim " + password
-    file_tools.clean_file_open("sigmaresponderclaimscriptdebug", "w", claimCMD)
+#    file_tools.clean_file_open("sigmaresponderclaimscriptdebug", "w", claimCMD)
     while rounds > 0:
         response = os.popen(claimCMD).read()
         if response == None:
@@ -262,7 +258,7 @@ def SigmaParticle_getTreeFromBox(boxID, swapName, password=""):
         cmd = \
                 "cd " + SigmaParticlePath + "getTreeFromBox && ./deploy.sh " + boxID + \
                 " ../" + swapName + "/expectedErgoTree" + " " + password
-        file_tools.clean_file_open("getTreeFromBoxScriptDebug", "w", cmd)
+#        file_tools.clean_file_open("getTreeFromBoxScriptDebug", "w", cmd)
         result = os.popen(cmd).read()
         if "notfound" in result.lower():
             tries = tries - 1
@@ -273,7 +269,7 @@ def SigmaParticle_getTreeFromBox(boxID, swapName, password=""):
 
 def deployErgoContract(swapName, password=""):
     command = "cd " + SigmaParticlePath + swapName + " && ./deploy.sh deposit " + password
-    file_tools.clean_file_open("initiatorDeployErgoContractDebug", "w", command)
+ #   file_tools.clean_file_open("initiatorDeployErgoContractDebug", "w", command)
     os.popen(command).read()
 
 def getBoxID(swapName):
@@ -295,7 +291,7 @@ def checkBoxValue(boxID, boxValPATH, swapName, role=None, ergopassword="", other
                 "/boxValue/ && ./deploy.sh " + \
                 boxID + " " + "../../../" + boxValPATH + \
                 " " + ergopassword
-        file_tools.clean_file_open("checkBoxValueScriptDebug", "w", cmd)
+#        file_tools.clean_file_open("checkBoxValueScriptDebug", "w", cmd)
         devnull = open(os.devnull, 'wb')
         while is_numeric_string(file_tools.clean_file_open(boxValPATH, "r")) == False:
             pipe = subprocess.Popen(cmd, shell=True, stdout=devnull, stderr=devnull, close_fds=True)
@@ -355,12 +351,13 @@ def checkSchnorrTreeForClaim(boxID, swapName, initiatorMasterJSONPath, password=
         treeToAddrCmd = \
                 "cd " + SigmaParticlePath + "treeToAddr && ./deploy.sh " + tree + " ../" + \
                 swapName + "/scriptAddr " + password
-        file_tools.clean_file_open("treeToAddrScriptTestDebug", "w", treeToAddrCmd)
+#        file_tools.clean_file_open("treeToAddrScriptTestDebug", "w", treeToAddrCmd)
+
         addr = json.loads(os.popen(treeToAddrCmd).read())["address"]
         boxFilterCmd = \
                 "cd " + SigmaParticlePath + "boxFilter && " + \
                 "./deploy.sh " + addr + " " + boxID + " ../../../" + swapName + "/atomicClaim " + password
-        file_tools.clean_file_open("boxFilterCmdDebug", "w", boxFilterCmd)
+#        file_tools.clean_file_open("boxFilterCmdDebug", "w", boxFilterCmd)
         os.popen(boxFilterCmd).read()
         if os.path.isfile(swapName + "/atomicClaim_tx1") == True:
             j = json.loads(file_tools.clean_file_open(swapName + "/atomicClaim_tx1", "r"))

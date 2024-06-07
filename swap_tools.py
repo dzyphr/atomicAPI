@@ -15,15 +15,12 @@ def setSwapState(swapName, state, setMap=False):
         return False
     else:
         if setMap == True:
-#            if os.path.isfile("SwapStateMap") == False: #should be handled by REST APIS
-#                file_tools.clean_file_open("SwapStateMap", "w", "{}") 
             SwapStateMap = json_tools.ojf("SwapStateMap")
             if swapName not in SwapStateMap.keys():
                 keyValList = [{swapName: {"SwapState": state}}]
                 json_tools.keyVal_list_update(keyValList, "SwapStateMap")
             else:
                 SwapStateMap[swapName]["SwapState"] = state
-    #            file_tools.clean_file_open("SwapStateMap", "w", SwapStateMap)
                 mapfile = open('SwapStateMap', 'w') 
                 json.dump(SwapStateMap, mapfile, indent=2)
         file_tools.clean_file_open(swapName + "/SwapState", "w", state)
@@ -38,9 +35,6 @@ def getSwapState(swapName):
         return False
     else:
         return file_tools.clean_file_open(swapName + "/SwapState", "r")
-
-
-
 
 def watchSwapLoop(swapName, localChainAccountPassword="", crossChainAccountPassword=""):
     #watches a specific swap, called after scanning swapstatemap or initiation
@@ -80,7 +74,6 @@ def watchSwapLoop(swapName, localChainAccountPassword="", crossChainAccountPassw
                         file_tools.wait_for_file(swapName + "/ENC_response_path.bin")
                         ActiveSwapState = file_tools.clean_file_open(swapName + "/SwapState", "r")
                         setSwapState(swapName, ActiveSwapState, setMap=True)
-#                        if ActiveSwapState == PossibleSwapStates[6]: #responded unsubmitted
                         ENC_response = file_tools.clean_file_open(swapName + "/ENC_response_path.bin", "r")
                         ENC_finalization = ClientEndpoints.submitEncryptedResponse_ClientEndpoint(
                                 swapName, MarketPublicRequestsURL, ENC_response, MarketAPIKey
@@ -105,7 +98,6 @@ def watchSwapLoop(swapName, localChainAccountPassword="", crossChainAccountPassw
                         file_tools.wait_for_file(swapName + "/ENC_response_path.bin")
                         ActiveSwapState = file_tools.clean_file_open(swapName + "/SwapState", "r")
                         setSwapState(swapName, ActiveSwapState, setMap=True)
-#                       if ActiveSwapState == PossibleSwapStates[6]: #responded unsubmitted
                         ENC_response = file_tools.clean_file_open(swapName + "/ENC_response_path.bin", "r")
                         ENC_finalization = ClientEndpoints.submitEncryptedResponse_ClientEndpoint(
                                 swapName, MarketPublicRequestsURL, ENC_response, MarketAPIKey
@@ -191,7 +183,6 @@ def watchSwapLoop(swapName, localChainAccountPassword="", crossChainAccountPassw
                             initiatorJSONPath, 
                             localchainpassword=localChainAccountPassword, crosschainpassword=crossChainAccountPassword
                         )
-
                     #if the state is something like initiating or responded in which case we had a shutdown when prompted to
                     #generate swap data and return it to the client, we should generate the data, expecting that the client 
                     #will reconnect because we cant force a reconnection to the client
@@ -202,7 +193,6 @@ def watchSwapLoop(swapName, localChainAccountPassword="", crossChainAccountPassw
                     #to prevent the server being confused and running duplicate commands for the same data
                     #if the state is finalized we can run checkschnorrtreeforclaim aka GeneralizedENC_InitiatorClaimSubroutine
                     #to handle a refund
-
 
     else:
         print("swap: ", swapName, "not found in SwapStateMap!")

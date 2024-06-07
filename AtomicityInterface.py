@@ -55,7 +55,7 @@ def Atomicity_RemainingLockTimeAtomicMultisig_v_002(j_response, swapName, passwo
     responderChain = resp_j["responderLocalChain"]
     if responderChain == "Sepolia":
         addr = resp_j["responderContractAddr"]
-        file_tools.clean_file_open("addrtest", "w", addr)
+#        file_tools.clean_file_open("addrtest", "w", addr)
         cmd = \
                 "cd " + Atomicity + "Swap_" + swapName.replace("-", "") + " && ./deploy.sh lockTime " + \
                 addr + " ../../../" + swapName + "/remainingLockTime " + password
@@ -77,7 +77,7 @@ def Atomicity_buildScalarContract(chain, counterpartyChainPub, xG, locktimeDurat
     cmd = "cd " + Atomicity + "&& ./new_frame " + swapName + \
             " -M -CA 4 " + "\\\"" + counterpartyChainPub + "\\\" " + \
             str(ast.literal_eval(xG)[0]) + " " + str(ast.literal_eval(xG)[1]) + " " + str(locktimeDuration)
-    file_tools.clean_file_open("AtomicityNewFrameConstructorArgsDebug", "w", cmd)
+#    file_tools.clean_file_open("AtomicityNewFrameConstructorArgsDebug", "w", cmd)
     new_frame = os.popen(cmd).read()
     file_tools.wait_for_file(Atomicity + swapName + "/contracts/" + swapName + ".sol")
     os.remove(Atomicity + swapName + "/contracts/" + swapName + ".sol")
@@ -155,7 +155,7 @@ def Atomicity_claimScalarContract(initiatorMasterJSONPath, swapName, gas=None, g
     claimScript = \
             "cd " + Atomicity + swapName + " && ./deploy.sh claim " + contractAddr + " " + str(x) + \
             " " + str(gas) + " " + str(gasMod) + " " + password
-    file_tools.clean_file_open("initiatorClaimScriptDebug", "w", claimScript)
+#    file_tools.clean_file_open("initiatorClaimScriptDebug", "w", claimScript)
     return os.popen(claimScript).read()
 
 
