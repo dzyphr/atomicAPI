@@ -1,4 +1,5 @@
 import sys
+import priceFeeds
 import ast
 import json
 import shutil
@@ -42,6 +43,76 @@ if len(args) == 2:
     if args[1] == "scanAllSwapStates":
         swap_tools.scanAllSwapStates()
 elif len(args) == 3:
+    if args[1] == "BitPandaPrice":
+        print(priceFeeds.BitPandaPrice(args[2]))
+    if args[1] == "CoinGeckoAvgPrice":
+        print(priceFeeds.CoinGeckoAvgPrice(args[2]))
+    if args[1] == "CoinGeckoSimplePrice":
+        print(priceFeeds.CoinGeckoSimplePrice(args[2]))
+    if args[1] == "KucoinPrice":
+        print(priceFeeds.KucoinPrice(args[2]))
+    if args[1] == "KucoinPriceRounded":
+        print(priceFeeds.KucoinPrice(args[2], rounded=True))
+    if args[1] == "CoinExPriceLowHighAvg":
+        print(priceFeeds.CoinExPriceLowHighAvg(args[2]))
+    if args[1] == "CoinExPriceLowHighAvgRounded":
+        print(priceFeeds.CoinExPriceLowHighAvg(args[2], rounded=True))
+    if args[1] == "CoinExPriceLast":
+        print(priceFeeds.CoinExPriceLast(args[2]))
+    if args[1] == "CoinExPriceLastRounded":
+        print(priceFeeds.CoinExPriceLast(args[2], rounded=True))
+    if args[1] == "CoinExPriceLow":
+        print(priceFeeds.CoinExPriceLow(args[2]))
+    if args[1] == "CoinExPriceLowRounded":
+        print(priceFeeds.CoinExPriceLow(args[2], rounded=True))
+    if args[1] == "CoinExPriceHigh":
+        print(priceFeeds.CoinExPriceHigh(args[2]))
+    if args[1] == "CoinExPriceHighRounded":
+        print(priceFeeds.CoinExPriceHigh(args[2], rounded=True))
+    if args[1] == "KrakenPriceAsk":
+        print(priceFeeds.KrakenPrice(args[2], kind="ask"))
+    if args[1] == "KrakenPriceAskRounded":
+        print(priceFeeds.KrakenPrice(args[2], kind="ask", rounded=True))
+    if args[1] == "KrakenPriceBid":
+        print(priceFeeds.KrakenPrice(args[2], kind="bid"))
+    if args[1] == "KrakenPriceBidRounded":
+        print(priceFeeds.KrakenPrice(args[2], kind="bid", rounded=True))
+    if args[1] == "KrakenPriceVWAP":
+        print(priceFeeds.KrakenPrice(args[2], kind="vwap"))
+    if args[1] == "KrakenPriceVWAPRounded":
+        print(priceFeeds.KrakenPrice(args[2], kind="vwap", rounded=True))
+    if args[1] == "KrakenPriceLast":
+        print(priceFeeds.KrakenPrice(args[2], kind="last"))
+    if args[1] == "KrakenPriceLastRounded":
+        print(priceFeeds.KrakenPrice(args[2], kind="last", rounded=True))
+    if args[1] == "KrakenPriceLow":
+        print(priceFeeds.KrakenPrice(args[2], kind="low"))
+    if args[1] == "KrakenPriceLowRounded":
+        print(priceFeeds.KrakenPrice(args[2], kind="low", rounded=True))
+    if args[1] == "KrakenPriceHigh":
+        print(priceFeeds.KrakenPrice(args[2], kind="high"))
+    if args[1] == "KrakenPriceHighRounded":
+        print(priceFeeds.KrakenPrice(args[2], kind="high", rounded=True))
+    if args[1] == "KrakenPriceLowHighAvg":
+        print(priceFeeds.KrakenPrice(args[2], kind="lowhighavg"))
+    if args[1] == "KrakenPriceLowHighAvgRounded":
+        print(priceFeeds.KrakenPrice(args[2], kind="lowhighavg", rounded=True))
+    if args[1] == "CoinbasePriceSpot":
+        print(priceFeeds.CoinbasePrice(args[2], kind="spot"))
+    if args[1] == "CoinbasePriceSpotRounded":
+        print(priceFeeds.CoinbasePrice(args[2], kind="spot", rounded=True))
+    if args[1] == "CoinbasePriceBuy":
+        print(priceFeeds.CoinbasePrice(args[2], kind="buy"))
+    if args[1] == "CoinbasePriceBuyRounded":
+        print(priceFeeds.CoinbasePrice(args[2], kind="buy", rounded=True))
+    if args[1] == "CoinbasePriceSell":
+        print(priceFeeds.CoinbasePrice(args[2], kind="sell"))
+    if args[1] == "CoinbasePriceSellRounded":
+        print(priceFeeds.CoinbasePrice(args[2], kind="sell", rounded=True))
+    if args[1] == "BinancePrice":
+        print(priceFeeds.BinancePrice(args[2]))
+    if args[1] == "BinancePriceRounded":
+        print(priceFeeds.BinancePrice(args[2], rounded=True))
     if args[1] == "generate_bearer_RESTAPI_key":
         generate_bearer_RESTAPI_key(length=args[2])
     if args[1] == "generate_bearer_RESTAPI_key_add_to_private_accepted":
