@@ -45,10 +45,14 @@ if len(args) == 2:
 elif len(args) == 3:
     if args[1] == "BitPandaPrice":
         print(priceFeeds.BitPandaPrice(args[2]))
+    if args[1] == "BitPandaPriceRounded":
+        print(priceFeeds.BitPandaPrice(args[2], rounded=True))
     if args[1] == "CoinGeckoAvgPrice":
         print(priceFeeds.CoinGeckoAvgPrice(args[2]))
     if args[1] == "CoinGeckoSimplePrice":
         print(priceFeeds.CoinGeckoSimplePrice(args[2]))
+    if args[1] == "CoinGeckoSimplePriceRounded":
+        print(priceFeeds.CoinGeckoSimplePrice(args[2], rounded=True))
     if args[1] == "KucoinPrice":
         print(priceFeeds.KucoinPrice(args[2]))
     if args[1] == "KucoinPriceRounded":
