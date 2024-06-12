@@ -1,4 +1,4 @@
-import requests, os, json
+import requests, os, json, time
 import urllib.request
 from decimal import *
 from dotenv import load_dotenv
@@ -36,17 +36,23 @@ def CoinGeckoSimplePrice(coinname, rounded=False):
     request =  requests.get(url)
     if request.text == "{}":
         return f'{coinname} not found, make sure to use full name not ticker'
-    if rounded == False:
-        return Decimal(request.json()[coinname]["usd"])
-    else:
-        return Decimal(request.json()[coinname]["usd"]).quantize(Decimal('0.01'), ROUND_DOWN)
+    while True:
+        if coinname in request.json():
+            if rounded == False:
+                return Decimal(request.json()[coinname]["usd"])
+            else:
+                return Decimal(request.json()[coinname]["usd"]).quantize(Decimal('0.01'), ROUND_DOWN)
+        else:
+            print(request.json())
+            time.sleep(1)
+            continue
 
 
 def BitPandaTicker(ticker):
     url = "https://api.bitpanda.com/v1/ticker"
     requestJSON = requests.get(url).json()
     if ticker.upper() in requestJSON:
-        return Decimal(requestJSON[ticker.upper()])
+        return requestJSON[ticker.upper()]
     else:
         return f'{ticker} not found! Make sure to use ticker not full name.'
 

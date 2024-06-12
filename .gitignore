@@ -1,5 +1,5 @@
 *.env
-
+marketConfig.json
 hs_err_pid*.log
 ElGEncTest
 SwapStateMap

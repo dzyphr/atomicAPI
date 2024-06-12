@@ -1,6 +1,7 @@
 import sys
 import priceFeeds
 import ast
+import market_pricing
 import json
 import shutil
 import configparser
@@ -42,6 +43,8 @@ if len(args) == 2:
         starterAPIKeys(add_RESTAPI_key_to_public_accepted_keys_JSON(generate_bearer_RESTAPI_key()))
     if args[1] == "scanAllSwapStates":
         swap_tools.scanAllSwapStates()
+    if args[1] == "marketPricingLoop":
+        market_pricing.marketPricingLoop()
 elif len(args) == 3:
     if args[1] == "BitPandaPrice":
         print(priceFeeds.BitPandaPrice(args[2]))
@@ -202,6 +205,14 @@ elif len(args) == 7:
         ))#boxID, boxValPATH, swapName, password
     if args[1] == "GeneralizedENC_FinalizationSubroutine":#initiator refund checking starts here
         initiatorInterface.GeneralizedENC_FinalizationSubroutine(args[2], args[3], args[4], args[5], args[6])
+    if args[1] == "UpdateMarketOrderTypeUUIDsList":
+        market_pricing.UpdateMarketOrderTypeUUIDsList(
+            coins=ast.literal_eval(args[2]), 
+            marketConfigJSON=args[3], 
+            marketFeePercentage=args[4], 
+            coinAVolumeMinMax=ast.literal_eval(args[5]), 
+            rounded=ast.literal_eval(args[6])
+        )
 elif len(args) == 9:
     if args[1] == "GeneralizedENCInitiationSubroutine":    
         initiatorInterface.GeneralizedENC_InitiationSubroutine(args[2], args[3], args[4], args[5], args[6], args[7], args[8])
