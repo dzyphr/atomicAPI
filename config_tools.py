@@ -20,6 +20,13 @@ def valFromConf(confPath, val):
     confParser.read(confPath)
     return confParser['default'][val]
 
+def compareListsFindOutliers(actual, expected):
+    actualSet = set(actual)
+    expectedSet = set(expected)
+    actualOutliers = actualSet - expectedSet
+    expectedOutliers = expectedSet - actualSet
+    return list(actualOutliers), list(expectedOutliers)
+
 def firstRunCheck():
     userjsonpath = "user.json"
     add_RESTAPI_key_to_private_accepted_keys_JSON(generate_bearer_RESTAPI_key())
@@ -27,7 +34,7 @@ def firstRunCheck():
         userjson = \
         {
             "Chains": {
-                "Ergo": "True",
+                "TestnetErgo": "True",
                 "Sepolia": "True"
             }
         }
@@ -36,11 +43,31 @@ def firstRunCheck():
     for chain in ChainsList:
         if ChainsList[chain] == "True":
             initializeAccount("basic_framework", chain)
+            #look for other accounts
+            #if none prompt for first account name
+            #initialize that account
+            #in initializeAccount() ensure basic_framework accounts don't require private variables like seed phrase
             chain_framework_path = ""
-            if chain == "Ergo":
+            if chain == "TestnetErgo":
                 chain_framework_path = "Ergo/SigmaParticle/"
+                ExpectedDirs = [
+                    "AtomicMultiSig", "AtomicMultiSigECC", "basic_framework", "boxFilter", "boxValue",
+                    "cpp", "getTreeFromBox", "treeToAddr", "boxConstantByIndex",
+                    "boxToContract", "currentHeight", "currentHeight", "valFromHex", "testaccountname", "SwapKeyManager"
+                ]
+                #NOTE testaccountname and other expected folders that aren't always gonna be there should work being added to this check
+                #even if they aren't there majority of time in instance they are they wont cause false positive as real account
+                #TODO chain specific helper projects should likely be deleted and not used
             if chain == "Sepolia":
                 chain_framework_path = "EVM/Atomicity/"
+                ExpectedDirs = [
+                    "AtomicMultiSigSecp256k1", "AtomicMultiSigSecp256k1_0.0.1", "basic_framework",
+                    "cpp", "Goerli", "Sepolia", "solidity-flattener", "testaccountname"
+                ]
+
+                #NOTE w current logic this lsit must be updated anytime a helper project dir is added
+                #TODO maybe just a system to tag helper files vs real accounts would make it faster and easier
+            foundDirs = []
             for dirs in os.listdir(chain_framework_path):
                 if os.path.isdir(chain_framework_path + dirs):
                     if os.path.isfile(chain_framework_path + "basic_framework/.env"):
@@ -53,6 +80,22 @@ def firstRunCheck():
                             cmd = "cp " + chain_framework_path + "basic_framework/.env.encrypted " +\
                                     chain_framework_path + dirs + "/.env.encrypted"
                             os.popen(cmd).read()
+                    foundDirs.append(dirs)
+            actualOutliers, expectedOutliers = compareListsFindOutliers(foundDirs, ExpectedDirs)
+#            print("dir outliers(accounts): ", actualOutliers, "expected but not found:", expectedOutliers)
+            if len(actualOutliers) == 0: #no accounts created yet so one needs to be created
+                while True:
+                    print("No", chain, "account created yet. First account name:")
+                    accountName = input()
+                    print("Name Chosen: ", accountName, ", continue?")
+                    yn = input()
+                    if yn.upper() == "Y":
+                        initializeAccount(accountName, chain)
+                        break
+                    else:
+                        continue
+
+
 
 def createNonInteractive(fulldirpath, fullenvpath, envFormat, enc=False, password=""):
     if enc == False:
@@ -110,8 +153,14 @@ def initErgoAccountNonInteractive(testnetNode, testnetAPIKey, mnemonic, mnemonic
     createNonInteractive(fulldirpath, fullenvpath, envFormat, enc, password)
 
 def initializeAccount(accountName, chain): #interactive command line function to setup .env files
-    implemented_chains = ["Ergo", "Sepolia"]
+    implemented_chains = ["TestnetErgo", "Sepolia"]
     chain_framework_path = ""
+    #TODO
+    #remove sensetive data from basic_framework "accounts"
+    #stop treating basic_framework as legit account instead use it as holder for things like rpc urls only
+    #ensure an "account" other than basic_framework is created here too
+    #can potentially just create the other account first then export the public vars such as rpc url to basic_framework env
+    #will improve user accuount log in experience, not forcing users into basic_framework titled account 
     def create(fulldirpath, fullenvpath, envFormat, enc=False, password=""):
         if file_tools.clean_mkdir(fulldirpath) == False:
             if os.path.isfile(fullenvpath):
@@ -201,7 +250,7 @@ def initializeAccount(accountName, chain): #interactive command line function to
                 continue
 
     if chain in implemented_chains:
-        if chain == "Ergo":
+        if chain == "TestnetErgo":
             chain_framework_path = "Ergo/SigmaParticle/"
             fulldirpath = chain_framework_path + accountName
             fullenvpath = fulldirpath + "/.env"
