@@ -5,6 +5,7 @@ import shutil
 import configparser
 import json_tools
 import time
+import uuid
 import file_tools
 import passwordFileEncryption
 from passwordFileEncryption import encrypt_file
@@ -26,6 +27,26 @@ def compareListsFindOutliers(actual, expected):
     actualOutliers = actualSet - expectedSet
     expectedOutliers = expectedSet - actualSet
     return list(actualOutliers), list(expectedOutliers)
+
+def is_uuid(string):
+    try:
+        uuid_obj = uuid.UUID(string, version=4)
+        return str(uuid_obj) == string
+    except ValueError:
+        return False
+
+def remove_uuids_from_list(string_list):
+    return [string for string in string_list if not is_uuid(string)]
+
+def is_EVM_swap_dir(dirname):
+    if dirname.startswith('Swap_'):
+        return True
+    else:
+        return False
+
+def remove_EVM_swap_dirs_from_list(string_list):
+    return [string for string in string_list if not is_EVM_swap_dir(string)]
+
 
 def firstRunCheck():
     userjsonpath = "user.json"
@@ -81,8 +102,12 @@ def firstRunCheck():
                                     chain_framework_path + dirs + "/.env.encrypted"
                             os.popen(cmd).read()
                     foundDirs.append(dirs)
+            foundDirs =  remove_uuids_from_list(foundDirs)
+            #remove any type of UUID file from dirs
+            foundDirs = remove_EVM_swap_dirs_from_list(foundDirs)
+            #for evm they are formatted as Swap_uuidwithnodashes
             actualOutliers, expectedOutliers = compareListsFindOutliers(foundDirs, ExpectedDirs)
-#            print("dir outliers(accounts): ", actualOutliers, "expected but not found:", expectedOutliers)
+            print("dir outliers(accounts): ", actualOutliers, "expected but not found:", expectedOutliers)
             if len(actualOutliers) == 0: #no accounts created yet so one needs to be created
                 while True:
                     print("No", chain, "account created yet. First account name:")
@@ -254,7 +279,8 @@ def initializeAccount(accountName, chain): #interactive command line function to
             chain_framework_path = "Ergo/SigmaParticle/"
             fulldirpath = chain_framework_path + accountName
             fullenvpath = fulldirpath + "/.env"
-            if os.path.isfile(fullenvpath):
+            fullencenvpath = fulldirpath + "/.env.encrypted"
+            if os.path.isfile(fullenvpath) or os.path.isfile(fullencenvpath):
                 while True:
                     print("A(n)", chain, "Account named ", accountName, "was already found, overwrite?") 
                     #we added an upfront check for this, should we double check?
@@ -266,35 +292,48 @@ def initializeAccount(accountName, chain): #interactive command line function to
                     else:
                         print("unknown response: ", yn)
                         continue
-            print("Chain chosen:", chain, "\nAccount Name chosen:", accountName)
-            print("Setting up .env file which will include typing in private data, \n" +
-                    "You may disconnect internet while doing this if concerned about any connected applications.")
-            print("Enter the URL address of the ", chain, " node you want to connect to. (May be testnet or mainnet):")
-            testnetNode = input()
-            print('Enter your testnet Node API Key:')
-            testnetAPIKey = input()
-            print("(REMINDER: You may disconnect internet while doing this if concerned about any connected applications.)", \
-                    "\nEnter your Ergo private mnemonic seed words:")
-            mnemonic = input()
-            print("Enter your Ergo mnemonic password:")
-            mnemonicPass = input()
-            print("Enter your EIP3 Secret:")
-            senderEIP3Secret = input()
-            print("Enter your Ergo PubKey:")
-            senderPubKey = input()
-            print("Enter your explorer api URL (default: https://tn-ergo-explorer.anetabtc.io/)")
-            apiURL = input()
-            envFormat = \
-                "[default]\n" +\
-                "testnetAPIKey=\"" + testnetAPIKey +  "\"\n" +\
-                "testnetNode=\"" + testnetNode + "\"\n" +\
-                "mnemonic=\"" + mnemonic + "\"\n" +\
-                "mnemonicPass=\"" + mnemonicPass + "\"\n" +\
-                "senderEIP3Secret=" + senderEIP3Secret + "\n" +\
-                "senderPubKey=\"" + senderPubKey + "\"\n" +\
-                "apiURL=\"" + apiURL + "\"\n"
-            enc = False
-            enc_env_loop(fulldirpath, fullenvpath, envFormat)
+            if accountName != "basic_framework":
+                print("Chain:", chain, "\nAccount Name chosen:", accountName)
+                print("Setting up .env file which will include typing in private data, \n" +
+                        "You may disconnect internet while doing this if concerned about any connected applications.")
+                print("Enter the URL address of the ", chain, " node you want to connect to.:")
+                testnetNode = input()
+                print('Enter your testnet Node API Key:')
+                testnetAPIKey = input()
+                print("(REMINDER: You may disconnect internet while doing this if concerned about any connected applications.)", \
+                        "\nEnter your Ergo private mnemonic seed words:")
+                mnemonic = input()
+                print("Enter your Ergo mnemonic password:")
+                mnemonicPass = input()
+                print("Enter your EIP3 Secret:")
+                senderEIP3Secret = input()
+                print("Enter your Ergo PubKey:")
+                senderPubKey = input()
+                print("Enter your explorer api URL (default: https://testnet.ergoplatform.com/)")
+                apiURL = input()
+                envFormat = \
+                    "[default]\n" +\
+                    "testnetAPIKey=\"" + testnetAPIKey +  "\"\n" +\
+                    "testnetNode=\"" + testnetNode + "\"\n" +\
+                    "mnemonic=\"" + mnemonic + "\"\n" +\
+                    "mnemonicPass=\"" + mnemonicPass + "\"\n" +\
+                    "senderEIP3Secret=" + senderEIP3Secret + "\n" +\
+                    "senderPubKey=\"" + senderPubKey + "\"\n" +\
+                    "apiURL=\"" + apiURL + "\"\n"
+                enc = False
+                enc_env_loop(fulldirpath, fullenvpath, envFormat)
+            else:
+                print("Chain :", chain)
+                print("Setting up basic_framework .env file, should only include public data")
+                print("Enter the URL address of the ", chain, " node you want to connect to. (May be testnet or mainnet):")
+                testnetNode = input()
+                print("Enter your explorer api URL (default: https://testnet.ergoplatform.com/)")
+                apiURL = input()
+                envFormat = \
+                    "[default]\n" +\
+                    "testnetNode=\"" + testnetNode + "\"\n" +\
+                    "apiURL=\"" + apiURL + "\"\n"
+                create(fulldirpath, fullenvpath, envFormat)
 
 
 
@@ -302,7 +341,8 @@ def initializeAccount(accountName, chain): #interactive command line function to
             chain_framework_path = "EVM/Atomicity/"
             fulldirpath = chain_framework_path + accountName
             fullenvpath = fulldirpath + "/.env"
-            if os.path.isfile(fullenvpath):
+            fullencenvpath = fulldirpath + "/.env.encrypted"
+            if os.path.isfile(fullenvpath) or os.path.isfile(fullencenvpath):
                 while True:
                     print("A(n)", chain, "Account named ", accountName, "was already found, overwrite?") 
                     #we added an upfront check for this, should we double check?
@@ -314,33 +354,48 @@ def initializeAccount(accountName, chain): #interactive command line function to
                     else:
                         print("unknown response: ", yn)
                         continue
-            print("Chain chosen:", chain, "\nAccount Name chosen:", accountName)
-            print("Setting up .env file which will include typing in private data, \n" +
-                    "You may disconnect internet while doing this if concerned about any connected applications.")
-            print("Enter the Public " + chain +" Address that you wish to add:")
-            SepoliaSenderAddr = input()
-            print("(REMINDER: You may disconnect internet while doing this if concerned about any connected applications.)")
-            print("Enter the Private Key of this address:")
-            SepoliaPrivKey = input()
-            print("Enter the RPC URL address you wish to submit your transactions to:")
-            Sepolia = input()
-            print("Encrypt file? y or n (experimental)")
-            yn = input()
-            SepoliaID = "11155111" #chain id
-            SepoliaScan = "https://api-sepolia.etherscan.io/api" #block explorer
-            SolidityCompilerVersion = "0.8.0" #solidity version
-            #EtherscanAPIKey = input() #contract verification stuff goes here if we need it
+            if accountName != "basic_framework":
+                print("Chain:", chain, "\nAccount Name chosen:", accountName)
+                print("Setting up .env file which will include typing in private data, \n" +
+                        "You may disconnect internet while doing this if concerned about any connected applications.")
+                print("Enter the Public " + chain +" Address that you wish to add:")
+                SepoliaSenderAddr = input()
+                print("(REMINDER: You may disconnect internet while doing this if concerned about any connected applications.)")
+                print("Enter the Private Key of this address:")
+                SepoliaPrivKey = input()
+                print("Enter the RPC URL address you wish to submit your transactions to:")
+                Sepolia = input()
+                print("Encrypt file? y or n (experimental)")
+                yn = input()
+                SepoliaID = "11155111" #chain id
+                SepoliaScan = "https://api-sepolia.etherscan.io/api" #block explorer
+                SolidityCompilerVersion = "0.8.0" #solidity version
+                #EtherscanAPIKey = input() #contract verification stuff goes here if we need it
 
-            envFormat = \
-                "[default]\n" +\
-                "SepoliaSenderAddr=\"" + SepoliaSenderAddr + "\"\n" + \
-                "SepoliaPrivKey=\"" + SepoliaPrivKey + "\"\n"  + \
-                "Sepolia=\"" + Sepolia + "\"\n" + \
-                "SepoliaID=\"" + SepoliaID + "\"\n" + \
-                "SepoliaScan=\"" + SepoliaScan + "\"\n" + \
-                "SolidityCompilerVersion=\"" + SolidityCompilerVersion + "\"\n"
+                envFormat = \
+                    "[default]\n" +\
+                    "SepoliaSenderAddr=\"" + SepoliaSenderAddr + "\"\n" + \
+                    "SepoliaPrivKey=\"" + SepoliaPrivKey + "\"\n"  + \
+                    "Sepolia=\"" + Sepolia + "\"\n" + \
+                    "SepoliaID=\"" + SepoliaID + "\"\n" + \
+                    "SepoliaScan=\"" + SepoliaScan + "\"\n" + \
+                    "SolidityCompilerVersion=\"" + SolidityCompilerVersion + "\"\n"
 
-            enc_env_loop(fulldirpath, fullenvpath, envFormat)
+                enc_env_loop(fulldirpath, fullenvpath, envFormat)
+            else:
+                print("Chain:", chain)
+                print("Setting up basic_framework .env file, should only include public data")
+                print("Enter the RPC URL address you wish to submit calls to:")
+                Sepolia = input()
+                SepoliaID = "11155111" #chain id
+                SepoliaScan = "https://api-sepolia.etherscan.io/api" #block explorer
+                envFormat = \
+                    "[default]\n" +\
+                    "Sepolia=\"" + Sepolia + "\"\n" + \
+                    "SepoliaID=\"" + SepoliaID + "\"\n" + \
+                    "SepoliaScan=\"" + SepoliaScan + "\"\n"  
+                create(fulldirpath, fullenvpath, envFormat)
+
     else:
         print(chain, " is not currently implemented into this framework")
 
