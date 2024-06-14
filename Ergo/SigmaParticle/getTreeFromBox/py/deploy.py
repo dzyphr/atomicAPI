@@ -12,10 +12,10 @@ if len(args) == 4:
     password = args[3]
 
 from connect import *
-node_url, nodeAPIKey = connect(password=password) #dotenv loaded here dont call env vars before
+node_url = connect(password=password) #dotenv loaded here dont call env vars before
 
 from main import *
-main(os.getenv('ContractName'), node_url, nodeAPIKey,  args)
+main(os.getenv('ContractName'), node_url,  args)
 
 from cleanup import *
 cleanup()

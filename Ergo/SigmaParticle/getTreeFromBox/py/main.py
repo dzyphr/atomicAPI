@@ -13,20 +13,16 @@ import waits
 import coinSelection
 import scalaPipe
 import requests, json
-def main(contractName, nodeurl, nodeAPIKey, args):
-#    org.slf4j.impl.StaticLoggerBinder 
+def main(contractName, nodeurl, args):
     def treeFromBox(boxId, filepath=None):
-        def REST_getbox(nodeurl, nodeAPIKey, boxId):
+        def REST_getbox(nodeurl, boxId):
             url = nodeurl + "utxo/byId/"
-#            print(url + boxId)
             headers = {\
                 "accept": 'application/json',\
-                "Content-type": 'application/json',\
-                "api_key": nodeAPIKey
+                "Content-type": 'application/json'
             }
             data = str(boxId)
             try:
-#                response = requests.post(url, headers=headers, data=data).text
                 response = requests.get(url + boxId).text
                 return response
             except Exception as err:
@@ -34,27 +30,16 @@ def main(contractName, nodeurl, nodeAPIKey, args):
 
 
         if filepath == None:
-#            inputBox = java.util.Arrays.asList(ergo._ctx.getBoxesById(boxId)) 
-            inputbox = REST_getbox(nodeurl, nodeAPIKey, boxId)
+            inputbox = REST_getbox(nodeurl, boxId)
             if "ergoTree" in json.loads(inputbox):
                 sys.stdout.write(json.loads(inputbox)["ergoTree"])
             else:
                 sys.stdout.write("404")
-#           sys.stdout.write(str(inputBox[0].getErgoTree().bytesHex()))
-#            print(dir(inputBox[0].getErgoTree().bytesHex()))
         else:
-#            inputBox = java.util.Arrays.asList(ergo._ctx.getBoxesById(boxId))
-#            tree = inputBox[0].getErgoTree().bytesHex()
-            inputbox = REST_getbox(nodeurl, nodeAPIKey, boxId)
+            inputbox = REST_getbox(nodeurl, boxId)
             if "ergoTree" in json.loads(inputbox):
-#                print(inputbox)
                 tree =  json.loads(inputbox)["ergoTree"]
-    #            print(tree)
-#                f = open(filepath, "w")
-#                f.write(str(tree))
- #               f.close()
                 file_tools.clean_file_open(filepath, "w", tree)
-    #            sys.stdout.write(str(inputBox[0].getErgoTree().bytesHex()))
                 sys.stdout.write(tree)
             else:
                 sys.stdout.write("NotFound")

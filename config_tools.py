@@ -271,8 +271,6 @@ def initializeAccount(accountName, chain): #interactive command line function to
                     "You may disconnect internet while doing this if concerned about any connected applications.")
             print("Enter the URL address of the ", chain, " node you want to connect to. (May be testnet or mainnet):")
             testnetNode = input()
-            print('Enter your testnet Node API Key:')
-            testnetAPIKey = input()
             print("(REMINDER: You may disconnect internet while doing this if concerned about any connected applications.)", \
                     "\nEnter your Ergo private mnemonic seed words:")
             mnemonic = input()
@@ -286,7 +284,6 @@ def initializeAccount(accountName, chain): #interactive command line function to
             apiURL = input()
             envFormat = \
                 "[default]\n" +\
-                "testnetAPIKey=\"" + testnetAPIKey +  "\"\n" +\
                 "testnetNode=\"" + testnetNode + "\"\n" +\
                 "mnemonic=\"" + mnemonic + "\"\n" +\
                 "mnemonicPass=\"" + mnemonicPass + "\"\n" +\
