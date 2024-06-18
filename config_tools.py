@@ -292,34 +292,6 @@ def initializeAccount(accountName, chain): #interactive command line function to
                     else:
                         print("unknown response: ", yn)
                         continue
-<<<<<<< HEAD
-            print("Chain chosen:", chain, "\nAccount Name chosen:", accountName)
-            print("Setting up .env file which will include typing in private data, \n" +
-                    "You may disconnect internet while doing this if concerned about any connected applications.")
-            print("Enter the URL address of the ", chain, " node you want to connect to. (May be testnet or mainnet):")
-            testnetNode = input()
-            print("(REMINDER: You may disconnect internet while doing this if concerned about any connected applications.)", \
-                    "\nEnter your Ergo private mnemonic seed words:")
-            mnemonic = input()
-            print("Enter your Ergo mnemonic password:")
-            mnemonicPass = input()
-            print("Enter your EIP3 Secret:")
-            senderEIP3Secret = input()
-            print("Enter your Ergo PubKey:")
-            senderPubKey = input()
-            print("Enter your explorer api URL (default: https://tn-ergo-explorer.anetabtc.io/)")
-            apiURL = input()
-            envFormat = \
-                "[default]\n" +\
-                "testnetNode=\"" + testnetNode + "\"\n" +\
-                "mnemonic=\"" + mnemonic + "\"\n" +\
-                "mnemonicPass=\"" + mnemonicPass + "\"\n" +\
-                "senderEIP3Secret=" + senderEIP3Secret + "\n" +\
-                "senderPubKey=\"" + senderPubKey + "\"\n" +\
-                "apiURL=\"" + apiURL + "\"\n"
-            enc = False
-            enc_env_loop(fulldirpath, fullenvpath, envFormat)
-=======
             if accountName != "basic_framework":
                 print("Chain:", chain, "\nAccount Name chosen:", accountName)
                 print("Setting up .env file which will include typing in private data, \n" +
@@ -359,7 +331,6 @@ def initializeAccount(accountName, chain): #interactive command line function to
                     "testnetNode=\"" + testnetNode + "\"\n" +\
                     "apiURL=\"" + apiURL + "\"\n"
                 create(fulldirpath, fullenvpath, envFormat)
->>>>>>> 4f94f7f6475707375c81bd3c095a8f895b912321
 
 
 
