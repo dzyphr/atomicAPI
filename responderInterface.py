@@ -61,34 +61,20 @@ def GeneralizeENC_ResponseSubroutine(\
         crossChainEncAccount = False
         localChainEncAccount = False
         ErgoPath = "Ergo/SigmaParticle/" + responderCrossChainAccountName + "/.env.encrypted"
+        SepoliaPath = "EVM/Atomicity/" + responderLocalChainAccountName + "/.env.encrypted"
         if os.path.isfile(ErgoPath):
             if InitiatorChain == "TestnetErgo":
                 if crossChainAccountPassword != "":
-                    crossChainAccountEnvData = decrypt_file_return_contents(ErgoPath, localChainAccountPassword)
+                    crossChainAccountEnvData = decrypt_file_return_contents(ErgoPath, crossChainAccountPassword)
                     crossChainEncAccount = True
-                else:
-                    print("password required for encrypted env file!")
-                    return
-            elif ResponderChain == "TestnetErgo":
-                if localChainAccountPassword != "":
-                    localChainAccountEnvData = decrypt_file_return_contents(ErgoPath, crossChainAccountPassword)
-                    localChainEncAccount = True
                 else:
                     print("password required for encrypted env file!")
                     return
             #ergo encrypted
-        if os.path.isfile("EVM/Atomicity/" + responderLocalChainAccountName + "/.env.encrypted"):
-            path = "EVM/Atomicity/" + responderLocalChainAccountName + "/.env.encrypted"
-            if InitiatorChain == "Sepolia":
-                if crossChainAccountPassword != "":
-                    crossChainAccountEnvData = decrypt_file_return_contents(path, localChainAccountPassword)
-                    crossChainEncAccount = True
-                else:
-                    print("password required for encrypted env file!")
-                    return
-            elif ResponderChain == "Sepolia":
+        if os.path.isfile(SepoliaPath):
+            if ResponderChain == "Sepolia":
                 if localChainAccountPassword != "":
-                    localChainAccountEnvData = decrypt_file_return_contents(path, crossChainAccountPassword)
+                    localChainAccountEnvData = decrypt_file_return_contents(SepoliaPath, localChainAccountPassword)
                     localChainEncAccount = True
                 else:
                     print("password required for encrypted env file!")
@@ -112,6 +98,56 @@ def GeneralizeENC_ResponseSubroutine(\
                                 config_tools.valFromConf("Ergo/SigmaParticle/" + responderCrossChainAccountName.replace('"', '') + "/.env", 'senderEIP3Secret').replace('"', ''),
                         "ResponderErgoAddr" : \
                                 config_tools.valFromConf("Ergo/SigmaParticle/" + responderCrossChainAccountName.replace('"', '') + "/.env", 'senderPubKey').replace('"', ''),
+                        "ENC_Init_PATH" : swapName + "/ENC_init.bin", #responder needs to save ENC init to this path to proceed
+                        "DEC_Init_PATH" : swapName + "/DEC_init.json",
+                        "responsePATH" : swapName + "/response_path.json",
+                        "ENC_Response_PATH" : swapName + "/ENC_response_path.bin",
+                        "ENC_finalizationPATH" : swapName + "/ENC_finalization.bin",
+                        "DEC_finalizationPATH" : swapName + "/DEC_finalization.json",
+                        "SwapAmount" : swapAmount
+                    }
+        if localChainEncAccount == True and crossChainEncAccount == False:
+            mi = {
+                        "responderErgoAccountName": responderCrossChainAccountName,
+                        "responderSepoliaAccountName": responderLocalChainAccountName,
+                        "ElGamalKey" : ElGamalKey,
+                        "ElGamalKeyPath" : ElGamalKeyPath,
+                        "swapName" : swapName,
+                        "InitiatorChain" : InitiatorChain,
+                        "ResponderChain" : ResponderChain,
+                        "responderLocalChain": ResponderChain,
+                        "responderJSONPath" : swapName + "/responder.json",
+                        "ResponderEVMAddr" : \
+                                get_val_from_envdata_key('SepoliaSenderAddr', localChainAccountEnvData).replace('"', ''),
+                        "ResponderEIP3Secret" : \
+                                config_tools.valFromConf("Ergo/SigmaParticle/" + responderCrossChainAccountName.replace('"', '') + "/.env", 'senderEIP3Secret').replace('"', ''),
+                        "ResponderErgoAddr" : \
+                                config_tools.valFromConf("Ergo/SigmaParticle/" + responderCrossChainAccountName.replace('"', '') + "/.env", 'senderPubKey').replace('"', ''),
+                        "ENC_Init_PATH" : swapName + "/ENC_init.bin", #responder needs to save ENC init to this path to proceed
+                        "DEC_Init_PATH" : swapName + "/DEC_init.json",
+                        "responsePATH" : swapName + "/response_path.json",
+                        "ENC_Response_PATH" : swapName + "/ENC_response_path.bin",
+                        "ENC_finalizationPATH" : swapName + "/ENC_finalization.bin",
+                        "DEC_finalizationPATH" : swapName + "/DEC_finalization.json",
+                        "SwapAmount" : swapAmount
+                    }
+        if localChainEncAccount == False and crossChainEncAccount == True:
+            mi = {
+                        "responderErgoAccountName": responderCrossChainAccountName,
+                        "responderSepoliaAccountName": responderLocalChainAccountName,
+                        "ElGamalKey" : ElGamalKey,
+                        "ElGamalKeyPath" : ElGamalKeyPath,
+                        "swapName" : swapName,
+                        "InitiatorChain" : InitiatorChain,
+                        "ResponderChain" : ResponderChain,
+                        "responderLocalChain": ResponderChain,
+                        "responderJSONPath" : swapName + "/responder.json",
+                        "ResponderEVMAddr" : \
+                            config_tools.valFromConf("EVM/Atomicity/" + responderLocalChainAccountName.replace('"', '') + "/.env", 'SepoliaSenderAddr').replace('"', ''),
+                        "ResponderEIP3Secret" : \
+                                get_val_from_envdata_key('senderEIP3Secret', crossChainAccountEnvData).replace('"', ''),
+                        "ResponderErgoAddr" : \
+                                get_val_from_envdata_key('senderPubKey', crossChainAccountEnvData).replace('"', ''),
                         "ENC_Init_PATH" : swapName + "/ENC_init.bin", #responder needs to save ENC init to this path to proceed
                         "DEC_Init_PATH" : swapName + "/DEC_init.json",
                         "responsePATH" : swapName + "/response_path.json",
@@ -169,8 +205,7 @@ def GeneralizeENC_ResponseSubroutine(\
         resp_J = json_tools.ojf(mi["responderJSONPath"])
         InitiatorEVMAddr = resp_J["InitiatorEVMAddr"]
         swap_tools.setSwapState(swapName, "initiated", setMap=True) #set swap state to initiated
-        return \
-                ENC_Init_PATH, DEC_Init_PATH, ElGamalKey, \
+        return ENC_Init_PATH, DEC_Init_PATH, ElGamalKey, \
                 ElGamalKeyPath, responsePATH, ENC_Response_PATH, \
                 ResponderChain, ResponderErgoAddr, responderJSONPath, \
                 resp_J, InitiatorEVMAddr
@@ -185,8 +220,11 @@ def GeneralizeENC_ResponseSubroutine(\
                 responsePATH, ElGamalKey
         ) #ElGamalKeyPath)
         #TODO: replace sr and x paths with master json update
+        respJ = json_tools.ojf(responderJSONPath)
+        responderLocalChainAccountName = resp_J["responderSepoliaAccountName"]
         xG = json.loads(file_tools.clean_file_open(responsePATH, "r"))["xG"]
         AtomicityInterface.Atomicity_buildScalarContract(ResponderChain, InitiatorEVMAddr,  xG, MIN_REFUND_LOCKTIME_SEPOLIA, swapName)
+        AtomicityInterface.Atomicity_updateKeyEnv(swapName, responderLocalChainAccountName)
         swap_tools.setSwapState(swapName, "uploadingResponseContract", setMap=True)
         addr = AtomicityInterface.Atomicity_deployEVMContract(
                 swapName, customGas=SEPOLIA_EVM_GAS_CONTROL,
@@ -309,10 +347,17 @@ def GeneralizeENC_ResponseSubroutine(\
             return
 
 
-    ENC_Init_PATH, DEC_Init_PATH, ElGamalKey, \
-        ElGamalKeyPath, responsePATH, ENC_Response_PATH, \
-        ResponderChain, ResponderErgoAddr, responderJSONPath, \
-        resp_J, InitiatorEVMAddr = \
+    ENC_Init_PATH, \
+        DEC_Init_PATH, \
+        ElGamalKey, \
+        ElGamalKeyPath, \
+        responsePATH, \
+        ENC_Response_PATH, \
+        ResponderChain, \
+        ResponderErgoAddr, \
+        responderJSONPath, \
+        resp_J, \
+        InitiatorEVMAddr = \
             setup(\
                 swapName, responderCrossChainAccountName, responderLocalChainAccountName, \
                 ElGamalKey, ElGamalKeyPath, InitiatorChain, ResponderChain, swapAmount,

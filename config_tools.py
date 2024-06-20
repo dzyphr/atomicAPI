@@ -162,12 +162,11 @@ def initSepoliaAccountNonInteractive(\
     createNonInteractive(fulldirpath, fullenvpath, envFormat, enc, password)
 
 
-def initErgoAccountNonInteractive(testnetNode, testnetAPIKey, mnemonic, mnemonicPass, senderEIP3Secret, senderPubKey, 
+def initErgoAccountNonInteractive(testnetNode, mnemonic, mnemonicPass, senderEIP3Secret, senderPubKey, 
         apiURL, fulldirpath, fullenvpath, enc=False, password=""):
     #TODO use hardcoded (fornow) chain frameworkpath instead of fullpaths to build paths on fly w less args
     envFormat = \
         "[default]\n" +\
-        "testnetAPIKey=\"" + testnetAPIKey +  "\"\n" +\
         "testnetNode=\"" + testnetNode + "\"\n" +\
         "mnemonic=\"" + mnemonic + "\"\n" +\
         "mnemonicPass=\"" + mnemonicPass + "\"\n" +\

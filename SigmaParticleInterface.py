@@ -88,18 +88,19 @@ def is_file_contents_int(file_path):
 
 
 def SigmaParticle_CheckLockTimeAtomicSchnorr(swapName, boxId, password=""):
+    #TODO remove password, public call
     lockHeightPath = SigmaParticlePath + swapName + "/lockHeight"
     if os.path.isfile(lockHeightPath) == False:
         while is_file_contents_int(lockHeightPath) == False:
             lockHeightCMD = \
                             "cd " + SigmaParticlePath + "boxConstantByIndex && ./deploy.sh " + boxId + \
-                            " 8 ../" + swapName + "/lockHeight " + password
+                            " 8 ../" + swapName + "/lockHeight"
 #            file_tools.clean_file_open("lockHeightScriptDebug", "w" , lockHeightCMD)
             print(os.popen(lockHeightCMD).read())
             time.sleep(5)
     currentHeightCMD = \
                     "cd " + SigmaParticlePath + "currentHeight && ./deploy.sh ../../../" + \
-                    swapName + "/localChain_currentHeight " + password
+                    swapName + "/localChain_currentHeight " 
 #    file_tools.clean_file_open("currentHeightCMDDeubug", "w", currentHeightCMD)
     print(os.popen(currentHeightCMD).read())
     if \
@@ -252,12 +253,13 @@ def SigmaParticle_updateKeyEnv(swapName, targetKeyEnvDirName):
     
 
 def SigmaParticle_getTreeFromBox(boxID, swapName, password=""):
+    #TODO REMOVE password var, its a public call
     tries = 60
     while tries > 0:
         boxID = boxID.replace("\n", "")
         cmd = \
                 "cd " + SigmaParticlePath + "getTreeFromBox && ./deploy.sh " + boxID + \
-                " ../" + swapName + "/expectedErgoTree" + " " + password
+                " ../" + swapName + "/expectedErgoTree" + " "
 #        file_tools.clean_file_open("getTreeFromBoxScriptDebug", "w", cmd)
         result = os.popen(cmd).read()
         if "notfound" in result.lower():
@@ -290,8 +292,8 @@ def checkBoxValue(boxID, boxValPATH, swapName, role=None, ergopassword="", other
                 "cd " + SigmaParticlePath + \
                 "/boxValue/ && ./deploy.sh " + \
                 boxID + " " + "../../../" + boxValPATH + \
-                " " + ergopassword
-#        file_tools.clean_file_open("checkBoxValueScriptDebug", "w", cmd)
+                " " #DONT USE ERGO PASSWORD ITS NOT NEEDED FOR PUBLIC API STUFF #TODO Remove ergopassword
+        file_tools.clean_file_open("checkBoxValueScriptDebug", "w", cmd)
         devnull = open(os.devnull, 'wb')
         while is_numeric_string(file_tools.clean_file_open(boxValPATH, "r")) == False:
             pipe = subprocess.Popen(cmd, shell=True, stdout=devnull, stderr=devnull, close_fds=True)

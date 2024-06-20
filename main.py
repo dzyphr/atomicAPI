@@ -157,6 +157,10 @@ elif len(args) == 4:
         responderInterface.GeneralizeENC_ResponseSubroutine(args[2], "", "", "", "", "", "", "", hotReloadSwapState=args[3])
     if args[1] == "GeneralizedENC_ResponderClaimSubroutine_hotreload":
         responderInterface.GeneralizedENC_ResponderClaimSubroutine(args[2], hotReloadSwapState=args[3])
+    if args[1] == "watchSwapLoop_localEncOnly":
+        swap_tools.watchSwapLoop(args[2], localChainAccountPassword=args[3])
+    if args[1] == "watchSwapLoop_crossEncOnly":
+        swap_tools.watchSwapLoop(args[2], crossChainAccountPassword=args[3])
 elif len(args) == 5:
     if args[1] == "SigmaParticle_box_to_addr":
         sys.stdout.write(SigmaParticleInterface.SigmaParticle_box_to_addr(args[2], args[3], password=args[4]))
@@ -216,16 +220,21 @@ elif len(args) == 7:
 elif len(args) == 9:
     if args[1] == "GeneralizedENCInitiationSubroutine":    
         initiatorInterface.GeneralizedENC_InitiationSubroutine(args[2], args[3], args[4], args[5], args[6], args[7], args[8])
+    if args[1] == "initErgoAccountNonInteractive":
+        initErgoAccountNonInteractive(args[2], args[3], args[4], args[5], args[6], args[7],  args[8])
 elif len(args) == 10:
     if args[1] == "initSepoliaAccountNonInteractive":
         initSepoliaAccountNonInteractive(args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9])
     if args[1] == "publishNewOrderType_ServerEndpoint":
         publishNewOrderType_ServerEndpoint(args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9])
-    if args[1] == "initErgoAccountNonInteractive":
-        initErgoAccountNonInteractive(args[2], args[3], args[4], args[5], args[6], args[7],  args[8], args[9])
     if args[1] == "GeneralizeENC_ResponseSubroutine":
         responderInterface.GeneralizeENC_ResponseSubroutine(args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9])
 elif len(args) == 11:
+    if args[1] == "initErgoAccountNonInteractive_ENC":
+        initErgoAccountNonInteractive(
+            args[2], args[3], args[4], args[5], args[6], args[7], \
+            args[8], args[9], password=args[10], enc=True\
+        )
     if args[1] == "GeneralizedENCInitiationSubroutine":
         initiatorInterface.GeneralizedENC_InitiationSubroutine(\
                 args[2], args[3], args[4], args[5], \
@@ -235,14 +244,19 @@ elif len(args) == 11:
             args[2], args[3], args[4], args[5], args[6], args[7],
             args[8], args[9], enc=True, password=args[10]
         )
-    if args[1] == "initErgoAccountNonInteractive_ENC":
-        initErgoAccountNonInteractive(
-            args[2], args[3], args[4], args[5], args[6], args[7], \
-            args[8], args[9], enc=True, password=args[10]
-        )
-elif len(args) == 12:
-    if args[1] == "GeneralizeENC_ResponseSubroutine":
+    if args[1] == "GeneralizeENC_ResponseSubroutine_localEncOnly":
         responderInterface.GeneralizeENC_ResponseSubroutine(
                 args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9],
-                localChainAccountPassword=args[10], crossChainAccountPassword=args[11]
+                accountPasswordList=ast.literal_eval([args[10]])
+        )
+    if args[1] == "GeneralizeENC_ResponseSubroutine_crossEncOnly":
+        responderInterface.GeneralizeENC_ResponseSubroutine(
+                args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9],
+                accountPasswordList=ast.literal_eval(["", args[10]])
+        )
+elif len(args) == 12:
+    if args[1] == "GeneralizeENC_ResponseSubroutine": #both acc enc
+        responderInterface.GeneralizeENC_ResponseSubroutine(
+                args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9],
+                accountPasswordList=ast.literal_eval([args[10], args[11]])
         )
