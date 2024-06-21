@@ -1,10 +1,13 @@
-import priceFeeds, price_tools, json_tools, uuid, file_tools, os, json, ast, time
+import priceFeeds, price_tools, json_tools, uuid, file_tools, os, json, ast, time, numbers
 from decimal import *
 
 ### should be able to set options such as
 # available coins ie: ERG, ETH, BTC
 # exchanges per coin (create functions for getting price for each from specific exchanges they are listed on)
 # market fee
+
+def is_num(val):
+    return isinstance(val, numbers.Number)
 
 def UpdateMarketOrderTypeUUIDsList(coins=[], marketConfigJSON="", marketFeePercentage=0, coinAVolumeMinMax=[], rounded=False):
     if len(coins) != 2:
@@ -55,13 +58,22 @@ def UpdateMarketOrderTypeUUIDsList(coins=[], marketConfigJSON="", marketFeePerce
                         if feed in ErgoFeeds:
                             if feed == "CoinGecko":
                                 CGPrice = priceFeeds.CoinGeckoSimplePrice("ergo", rounded=rounded)
-                                price += CGPrice
+                                if is_num(CGPrice):
+                                    price += CGPrice
+                                else:
+                                    feedslen -= 1 #if we get a bad result we must remove the relative feed 
                             if feed == "BitPanda":
                                 BPPrice = priceFeeds.BitPandaPrice("ERG", rounded=rounded)
-                                price += BPPrice
+                                if is_num(BPPrice):
+                                    price += BPPrice
+                                else:
+                                    feedslen -= 1
                             if feed == "Kucoin":
                                 KCPrice = priceFeeds.KucoinPrice("ERG", rounded=rounded)
-                                price += KCPrice
+                                if is_num(KCPrice):
+                                    price += KCPrice
+                                else:
+                                    feedslen -= 1
                             if feed == "CoinEx":
                                 pricetype = priceFeedsConfigJSON["Coins"][coin]["Feeds"][feed]
                                 if pricetype in CoinExPriceTypes:
@@ -76,7 +88,10 @@ def UpdateMarketOrderTypeUUIDsList(coins=[], marketConfigJSON="", marketFeePerce
                                         CEPrice += priceFeeds.CoinExPriceHigh("ERG", rounded=rounded)
                                     if pricetype == "Last":
                                         CEPrice += priceFeeds.CoinExPriceLast("ERG", rounded=rounded)
-                                    price += CEPrice
+                                    if is_num(CEPrice):
+                                        price += CEPrice
+                                    else:
+                                        feedslen -= 1
                         else:
                             feedslen -= 1 #important to remove a feed that wont be called from the averaging group
                     price = price / feedslen #average the price feeds
@@ -91,13 +106,22 @@ def UpdateMarketOrderTypeUUIDsList(coins=[], marketConfigJSON="", marketFeePerce
                         if feed in EthereumFeeds:
                             if feed == "CoinGecko":
                                 CGPrice = priceFeeds.CoinGeckoSimplePrice("ethereum", rounded=rounded)
-                                price += CGPrice
+                                if is_num(CGPrice):
+                                    price += CGPrice
+                                else:
+                                    feedslen -= 1
                             if feed == "BitPanda":
                                 BPPrice = priceFeeds.BitPandaPrice("ETH", rounded=rounded)
-                                price += BPPrice
+                                if is_num(BPPrice):
+                                    price += BPPrice
+                                else:
+                                    feedslen -= 1
                             if feed == "Kucoin":
                                 KCPrice = priceFeeds.KucoinPrice("ETH", rounded=rounded)
-                                price += KCPrice
+                                if is_num(KCPrice):
+                                    price += KCPrice
+                                else:
+                                    feedslen -= 1
                             if feed == "CoinEx":
                                 pricetype = priceFeedsConfigJSON["Coins"][coin]["Feeds"][feed]
                                 if pricetype in CoinExPriceTypes:
@@ -112,24 +136,36 @@ def UpdateMarketOrderTypeUUIDsList(coins=[], marketConfigJSON="", marketFeePerce
                                         CEPrice += priceFeeds.CoinExPriceHigh("ETH", rounded=rounded)
                                     if pricetype == "Last":
                                         CEPrice += priceFeeds.CoinExPriceLast("ETH", rounded=rounded)
-                                    price += CEPrice
+                                    if is_num(CEPrice):
+                                        price += CEPrice
+                                    else:
+                                        feedslen -= 1
                             if feed == "Kraken":
                                 pricetype = priceFeedsConfigJSON["Coins"][coin]["Feeds"][feed]
                                 if pricetype in KrakenPriceTypes:
                                     if pricetype in ["Default", "default"]:
                                         pricetype = ""
                                     KPrice = priceFeeds.KrakenPrice("ETH", kind=pricetype, rounded=rounded)
-                                    price += KPrice
+                                    if is_num(KPrice):
+                                        price += KPrice
+                                    else:
+                                        feedslen -= 1
                             if feed == "Coinbase":
                                 pricetype = priceFeedsConfigJSON["Coins"][coin]["Feeds"][feed]
                                 if pricetype in CoinbasePriceTypes:
                                     if pricetype in ["Default", "default"]:
                                         pricetype = "spot"
                                     CBPrice = priceFeeds.CoinbasePrice("ETH", kind=pricetype, rounded=rounded)
-                                    price += CBPrice
+                                    if is_num(CBPrice):
+                                        price += CBPrice
+                                    else:
+                                        feedslen -= 1
                             if feed == "Binance":
                                 BPrice = priceFeeds.BinancePrice("ETH", rounded=rounded)
-                                price += BPrice
+                                if is_num(BPrice):
+                                    price += BPrice
+                                else:
+                                    feedslen -= 1
                         else:
                             feedslen -= 1 #important to remove a feed that wont be called from the averaging group
                     price = price / feedslen #average the price feeds
@@ -180,6 +216,8 @@ def marketPricingLoop(frequency=15):
                         rounded=ast.literal_eval(marketConf["OrderTypes"][orderType]["Rounded"])
                 )
             time.sleep(frequency)
+    else:
+        print("No OrderTypes Found! Create OrderTypes in your marketConfig.json before running marketPricingLoop")
 
             
 

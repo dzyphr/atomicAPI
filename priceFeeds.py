@@ -34,18 +34,23 @@ def CoinGeckoAvgPrice(coinname): #optimistic average
 def CoinGeckoSimplePrice(coinname, rounded=False):
     url = f'https://api.coingecko.com/api/v3/simple/price?ids={coinname}&vs_currencies=USD'
     request =  requests.get(url)
-    if request.text == "{}":
+    rt = request.text
+    if rt == "{}":
         return f'{coinname} not found, make sure to use full name not ticker'
-    while True:
-        if coinname in request.json():
-            if rounded == False:
-                return Decimal(request.json()[coinname]["usd"])
+    try:
+        rj = request.json()
+        while True:
+            if coinname in rj:
+                if rounded == False:
+                    return Decimal(rj[coinname]["usd"])
+                else:
+                    return Decimal(rj[coinname]["usd"]).quantize(Decimal('0.01'), ROUND_DOWN)
             else:
-                return Decimal(request.json()[coinname]["usd"]).quantize(Decimal('0.01'), ROUND_DOWN)
-        else:
-            print(request.json())
-            time.sleep(1)
-            continue
+                print(rj)
+                time.sleep(1)
+                continue
+    except:
+        print("CoinGecko response was not json! Response: ", rt)
 
 
 def BitPandaTicker(ticker):
@@ -68,120 +73,143 @@ def BitPandaPrice(ticker, rounded=False):
 
 def KucoinPrice(ticker, rounded=False):
     url = "https://api.kucoin.com/api/v1/prices"
-    requestJSON = requests.get(url).json()
-    if requestJSON["code"] == "200000":
-        if ticker.upper() in requestJSON["data"]:
-            if rounded == False:
-                return Decimal(requestJSON["data"][ticker.upper()])
+    get = requests.get(url)
+    try:
+        requestJSON = get.json()
+        if requestJSON["code"] == "200000":
+            if ticker.upper() in requestJSON["data"]:
+                if rounded == False:
+                    return Decimal(requestJSON["data"][ticker.upper()])
+                else:
+                    return Decimal(requestJSON["data"][ticker.upper()]).quantize(Decimal('0.01'), ROUND_DOWN)
             else:
-                return Decimal(requestJSON["data"][ticker.upper()]).quantize(Decimal('0.01'), ROUND_DOWN)
-        else:
-            return f'{ticker} not found! Make sure to use ticker not full name.'
+                return f'{ticker} not found! Make sure to use ticker not full name.'
+    except:
+        print("KucoinPrice response was not json! Response: ", get)
 
 def CoinExPriceLast(ticker, rounded=False):
     url = f'https://api.coinex.com/v2/spot/ticker?market={ticker}USDT'
-    requestJSON = requests.get(url).json()
-    if requestJSON["code"] == 0:
-        last = requestJSON["data"][0]["last"]
-        if rounded == False:
-            return Decimal(last)
-        else:
-            return Decimal(last).quantize(Decimal('0.01'), ROUND_DOWN)
+    get = requests.get(url)
+    try:
+        requestJSON = get.json()
+        if requestJSON["code"] == 0:
+            last = requestJSON["data"][0]["last"]
+            if rounded == False:
+                return Decimal(last)
+            else:
+                return Decimal(last).quantize(Decimal('0.01'), ROUND_DOWN)
+    except:
+        print("CoinEx response was not json! Response: ", get)
 
 def CoinExPriceLowHighAvg(ticker, rounded=False):
     url = f'https://api.coinex.com/v2/spot/ticker?market={ticker}USDT'
-    requestJSON = requests.get(url).json()
-    if requestJSON["code"] == 0:
-        low = Decimal(requestJSON["data"][0]["low"])
-        high = Decimal(requestJSON["data"][0]["high"])
-        avg = Decimal( (high + low) / 2 )
-        if rounded == False:
-           return avg
-        else:
-            return avg.quantize(Decimal('0.01'), ROUND_DOWN)
+    get = requests.get(url)
+    try:
+        requestJSON = get.json()
+        if requestJSON["code"] == 0:
+            low = Decimal(requestJSON["data"][0]["low"])
+            high = Decimal(requestJSON["data"][0]["high"])
+            avg = Decimal( (high + low) / 2 )
+            if rounded == False:
+               return avg
+            else:
+                return avg.quantize(Decimal('0.01'), ROUND_DOWN)
+    except:
+        print("CoinEx response was not json! Response: ", get)
 
 def CoinExPriceLow(ticker, rounded=False):
     url = f'https://api.coinex.com/v2/spot/ticker?market={ticker}USDT'
-    requestJSON = requests.get(url).json()
-    if requestJSON["code"] == 0:
-        low = Decimal(requestJSON["data"][0]["low"])
-        if rounded == False:
-           return low
-        else:
-            return low.quantize(Decimal('0.01'), ROUND_DOWN)
+    get = requests.get(url)
+    try:
+        requestJSON = get.json()
+        if requestJSON["code"] == 0:
+            low = Decimal(requestJSON["data"][0]["low"])
+            if rounded == False:
+               return low
+            else:
+                return low.quantize(Decimal('0.01'), ROUND_DOWN)
+    except:
+        print("CoinEx response was not json! Response: ", get)
 
 def CoinExPriceHigh(ticker, rounded=False):
     url = f'https://api.coinex.com/v2/spot/ticker?market={ticker}USDT'
-    requestJSON = requests.get(url).json()
-    if requestJSON["code"] == 0:
-        high = Decimal(requestJSON["data"][0]["high"])
-        if rounded == False:
-           return high
-        else:
-            return high.quantize(Decimal('0.01'), ROUND_DOWN)
+    get = requests.get(url)
+    try:
+        requestJSON = get.json()
+        if requestJSON["code"] == 0:
+            high = Decimal(requestJSON["data"][0]["high"])
+            if rounded == False:
+               return high
+            else:
+                return high.quantize(Decimal('0.01'), ROUND_DOWN)
+    except:
+        print("CoinEx response was not json! Response: ", get)
 
 
 def KrakenPrice(ticker, kind="", rounded=False):
     url = f'https://api.kraken.com/0/public/Ticker?pair={ticker}USD'
     r = requests.get(url)
     requesttext = r.text
-    requestJSON = r.json()
-    if requesttext == "{\"error\":[\"EQuery:Unknown asset pair\"]}":
-        return f'error: Unknown asset: {ticker}. Make sure to use Ticker not full name'
-    pricekinds = ["ask", "bid", "last", "vwap", "low", "high", "lowhighavg"]
-    if kind != "":
-        if kind not in pricekinds:
-            print("unknown price kind: ", kind, " options: ", pricekinds)
-        if kind == "ask":
-            price = requestJSON["result"][next(iter(requestJSON["result"]))]["a"][0]
-            if rounded == False:
-                return Decimal(price)
-            else:
-                return Decimal(price).quantize(Decimal('0.01'), ROUND_DOWN)
-        if kind == "bid":
-            price = requestJSON["result"][next(iter(requestJSON["result"]))]["b"][0]
-            if rounded == False:
-                return Decimal(price)
-            else:
-                return Decimal(price).quantize(Decimal('0.01'), ROUND_DOWN)
-        if kind == "last":
-            price = requestJSON["result"][next(iter(requestJSON["result"]))]["c"][0]
-            if rounded == False:
-                return Decimal(price)
-            else:
-                return Decimal(price).quantize(Decimal('0.01'), ROUND_DOWN)
-        if kind == "vwap":
-            price = requestJSON["result"][next(iter(requestJSON["result"]))]["p"][0]
-            if rounded == False:
-                return Decimal(price)
-            else:
-                return Decimal(price).quantize(Decimal('0.01'), ROUND_DOWN)
-        if kind == "low":
-            price = requestJSON["result"][next(iter(requestJSON["result"]))]["l"][0]
-            if rounded == False:
-                return Decimal(price)
-            else:
-                return Decimal(price).quantize(Decimal('0.01'), ROUND_DOWN)
-        if kind == "high":
-            price = requestJSON["result"][next(iter(requestJSON["result"]))]["h"][0]
-            if rounded == False:
-                return Decimal(price)
-            else:
-                return Decimal(price).quantize(Decimal('0.01'), ROUND_DOWN)
-        if kind == "lowhighavg":
-            low = Decimal(requestJSON["result"][next(iter(requestJSON["result"]))]["l"][0])
-            high = Decimal(requestJSON["result"][next(iter(requestJSON["result"]))]["h"][0])
-            avg = Decimal( (high + low) / 2 )
-            if rounded == False:
-                return avg
-            else:
-                return avg.quantize(Decimal('0.01'), ROUND_DOWN)
-    else:
-        price = requestJSON["result"][next(iter(requestJSON["result"]))]["p"][0] #vwap as default option
-        if rounded == False:
-            return Decimal(price)
+    try:
+        requestJSON = r.json()
+        if requesttext == "{\"error\":[\"EQuery:Unknown asset pair\"]}":
+            return f'error: Unknown asset: {ticker}. Make sure to use Ticker not full name'
+        pricekinds = ["ask", "bid", "last", "vwap", "low", "high", "lowhighavg"]
+        if kind != "":
+            if kind not in pricekinds:
+                print("unknown price kind: ", kind, " options: ", pricekinds)
+            if kind == "ask":
+                price = requestJSON["result"][next(iter(requestJSON["result"]))]["a"][0]
+                if rounded == False:
+                    return Decimal(price)
+                else:
+                    return Decimal(price).quantize(Decimal('0.01'), ROUND_DOWN)
+            if kind == "bid":
+                price = requestJSON["result"][next(iter(requestJSON["result"]))]["b"][0]
+                if rounded == False:
+                    return Decimal(price)
+                else:
+                    return Decimal(price).quantize(Decimal('0.01'), ROUND_DOWN)
+            if kind == "last":
+                price = requestJSON["result"][next(iter(requestJSON["result"]))]["c"][0]
+                if rounded == False:
+                    return Decimal(price)
+                else:
+                    return Decimal(price).quantize(Decimal('0.01'), ROUND_DOWN)
+            if kind == "vwap":
+                price = requestJSON["result"][next(iter(requestJSON["result"]))]["p"][0]
+                if rounded == False:
+                    return Decimal(price)
+                else:
+                    return Decimal(price).quantize(Decimal('0.01'), ROUND_DOWN)
+            if kind == "low":
+                price = requestJSON["result"][next(iter(requestJSON["result"]))]["l"][0]
+                if rounded == False:
+                    return Decimal(price)
+                else:
+                    return Decimal(price).quantize(Decimal('0.01'), ROUND_DOWN)
+            if kind == "high":
+                price = requestJSON["result"][next(iter(requestJSON["result"]))]["h"][0]
+                if rounded == False:
+                    return Decimal(price)
+                else:
+                    return Decimal(price).quantize(Decimal('0.01'), ROUND_DOWN)
+            if kind == "lowhighavg":
+                low = Decimal(requestJSON["result"][next(iter(requestJSON["result"]))]["l"][0])
+                high = Decimal(requestJSON["result"][next(iter(requestJSON["result"]))]["h"][0])
+                avg = Decimal( (high + low) / 2 )
+                if rounded == False:
+                    return avg
+                else:
+                    return avg.quantize(Decimal('0.01'), ROUND_DOWN)
         else:
-            return Decimal(price).quantize(Decimal('0.01'), ROUND_DOWN)
+            price = requestJSON["result"][next(iter(requestJSON["result"]))]["p"][0] #vwap as default option
+            if rounded == False:
+                return Decimal(price)
+            else:
+                return Decimal(price).quantize(Decimal('0.01'), ROUND_DOWN)
+    except:
+        print("Kraken response was not json! Response: ", requesttext)
 
 def CoinbasePrice(ticker, kind="", rounded=False):
     pricekinds = ["spot", "buy", "sell"]
@@ -189,34 +217,40 @@ def CoinbasePrice(ticker, kind="", rounded=False):
         print("kind: ", kind, "not found! Choices: ", pricekinds)
     url = f'https://api.coinbase.com/v2/prices/{ticker}-USD/{kind}'
     r = requests.get(url)
-    rJSON = requests.get(url).json()
-    rText = requests.get(url).text
-    if rText == "{\"error\":\"not found\",\"code\":5,\"message\":\"not found\"}":
-        return "Ticker: " + ticker + " not found! Use ticker not full coin name."
-    price = Decimal(rJSON["data"]["amount"])
-    if rounded == False:
-        return price
-    else:
-        return price.quantize(Decimal('0.01'), ROUND_DOWN)
+    rText = r.text
+    try:
+        rJSON = r.json()
+        if rText == "{\"error\":\"not found\",\"code\":5,\"message\":\"not found\"}":
+            return "Ticker: " + ticker + " not found! Use ticker not full coin name."
+        price = Decimal(rJSON["data"]["amount"])
+        if rounded == False:
+            return price
+        else:
+            return price.quantize(Decimal('0.01'), ROUND_DOWN)
+    except:
+            print("Coinbase response was not json! Response: ", rText)
 
 def BinancePrice(ticker, rounded=False):
     url = 'https://www.binance.com/api/v3/ticker/price'
     with urllib.request.urlopen(url) as response:
         if response.status == 200:
             data = response.read().decode()
-            prices = json.loads(data)
-            found = False
-            for tickerdata in prices:
-                symbol = tickerdata["symbol"]
-                if tickerdata["symbol"] == f'{ticker.upper()}USDT':
-                    price = tickerdata["price"]
-                    found = True
-                    if rounded == False:
-                        return Decimal(price)
-                    else:
-                        return Decimal(price).quantize(Decimal('0.01'), ROUND_DOWN)
-            if found == False:
-                return "ticker: " + ticker + " not found! Use ticker not full coin name."
+            try:
+                prices = json.loads(data)
+                found = False
+                for tickerdata in prices:
+                    symbol = tickerdata["symbol"]
+                    if tickerdata["symbol"] == f'{ticker.upper()}USDT':
+                        price = tickerdata["price"]
+                        found = True
+                        if rounded == False:
+                            return Decimal(price)
+                        else:
+                            return Decimal(price).quantize(Decimal('0.01'), ROUND_DOWN)
+                if found == False:
+                    return "ticker: " + ticker + " not found! Use ticker not full coin name."
+            except: 
+                print("Binance response was not json! Response: ", data)
         else:
             print(f"Failed to retrieve data. Status code: {response.status}")
 
