@@ -306,7 +306,7 @@ def initializeAccount(accountName, chain): #interactive command line function to
                 senderEIP3Secret = input()
                 print("Enter your Ergo PubKey:")
                 senderPubKey = input()
-                print("Enter your explorer api URL (default: https://testnet.ergoplatform.com/)")
+                print("Enter your explorer api URL (default: https://api-testnet.ergoplatform.com/)")
                 apiURL = input()
                 envFormat = \
                     "[default]\n" +\
@@ -323,7 +323,7 @@ def initializeAccount(accountName, chain): #interactive command line function to
                 print("Setting up basic_framework .env file, should only include public data")
                 print("Enter the URL address of the ", chain, " node you want to connect to. (May be testnet or mainnet):")
                 testnetNode = input()
-                print("Enter your explorer api URL (default: https://testnet.ergoplatform.com/)")
+                print("Enter your explorer api URL (default: https://api-testnet.ergoplatform.com/)")
                 apiURL = input()
                 envFormat = \
                     "[default]\n" +\

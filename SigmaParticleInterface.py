@@ -352,13 +352,13 @@ def checkSchnorrTreeForClaim(boxID, swapName, initiatorMasterJSONPath, password=
             tree = SigmaParticle_getTreeFromBox(boxID, swapName, password=password)
         treeToAddrCmd = \
                 "cd " + SigmaParticlePath + "treeToAddr && ./deploy.sh " + tree + " ../" + \
-                swapName + "/scriptAddr " + password
+                swapName + "/scriptAddr " 
 #        file_tools.clean_file_open("treeToAddrScriptTestDebug", "w", treeToAddrCmd)
 
         addr = json.loads(os.popen(treeToAddrCmd).read())["address"]
         boxFilterCmd = \
                 "cd " + SigmaParticlePath + "boxFilter && " + \
-                "./deploy.sh " + addr + " " + boxID + " ../../../" + swapName + "/atomicClaim " + password
+                "./deploy.sh " + addr + " " + boxID + " ../../../" + swapName + "/atomicClaim "
 #        file_tools.clean_file_open("boxFilterCmdDebug", "w", boxFilterCmd)
         os.popen(boxFilterCmd).read()
         if os.path.isfile(swapName + "/atomicClaim_tx1") == True:
@@ -381,7 +381,7 @@ def checkSchnorrTreeForClaim(boxID, swapName, initiatorMasterJSONPath, password=
                             "echo '\natomicBox=" + boxID + "' >> " + SigmaParticlePath + swapName + "/.env"
                     os.popen(echoBoxIdCMD).read()
 
-                    cmd =  "cd " + SigmaParticlePath + swapName  + " && ./deploy.sh refund"
+                    cmd =  "cd " + SigmaParticlePath + swapName  + " && ./deploy.sh refund " + password
                     print(os.popen(cmd).read()) #TODO check for success
                     return False
                 time.sleep(5)
@@ -391,14 +391,14 @@ def checkSchnorrTreeForClaim(boxID, swapName, initiatorMasterJSONPath, password=
 #This function takes a Register from the Responder's claim transaction from the Atomic Schnorr contract.
 #It applies a subtraction against a previously known partial equation
 #which allows Initiator to learn x (responders ephemoral secret).
-def deduceX_fromAtomicSchnorrClaim(initiatorMasterJSONPath, swapName, password=""):
+def deduceX_fromAtomicSchnorrClaim(initiatorMasterJSONPath, swapName):
     masterJSON = json.loads(file_tools.clean_file_open(initiatorMasterJSONPath, "r"))
     sr_ = masterJSON["sr_"]
     responderContractAddr = masterJSON["responderContractAddr"] 
     responderLocalChain = masterJSON["responderLocalChain"]
     enc_sr = masterJSON["sr"]
     decode_sr_cmd = \
-            "cd " + SigmaParticlePath + "valFromHex && ./deploy.sh " + enc_sr + " ../../../" + swapName + "/decoded_sr.bin " + password 
+            "cd " + SigmaParticlePath + "valFromHex && ./deploy.sh " + enc_sr + " ../../../" + swapName + "/decoded_sr.bin " 
     decode = os.popen(decode_sr_cmd).read()
     sr = file_tools.clean_file_open(swapName + "/decoded_sr.bin", "r")
     deduction_cmd = \

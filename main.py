@@ -161,6 +161,14 @@ elif len(args) == 4:
         swap_tools.watchSwapLoop(args[2], localChainAccountPassword=args[3])
     if args[1] == "watchSwapLoop_crossEncOnly":
         swap_tools.watchSwapLoop(args[2], crossChainAccountPassword=args[3])
+    if args[1] == "GeneralizedENC_InitiatorClaimSubroutine_localENCOnly":
+        initiatorInterface.GeneralizedENC_InitiatorClaimSubroutine(
+                args[2], localchainpassword=args[3]
+        )
+    if args[1] == "GeneralizedENC_InitiatorClaimSubroutine_crossENCOnly":
+        initiatorInterface.GeneralizedENC_InitiatorClaimSubroutine(
+                args[2], crosschainpassword=args[3]
+        )
 elif len(args) == 5:
     if args[1] == "SigmaParticle_box_to_addr":
         sys.stdout.write(SigmaParticleInterface.SigmaParticle_box_to_addr(args[2], args[3], password=args[4]))
@@ -201,6 +209,14 @@ elif len(args) == 6:
         responderInterface.GeneralizedENC_ResponderClaimSubroutine(
                 args[2], localChainAccountPassword=args[3], crossChainAccountPassword=args[4], hotReloadSwapState=args[5]
         )
+    if args[1] == "GeneralizedENC_FinalizationSubroutine_crossENCOnly":#initiator refund checking starts here
+        initiatorInterface.GeneralizedENC_FinalizationSubroutine(
+                args[2], args[3], args[4], crosschainpassword=args[5]
+        )
+    if args[1] == "GeneralizedENC_FinalizationSubroutine_localENCOnly":#initiator refund checking starts here
+        initiatorInterface.GeneralizedENC_FinalizationSubroutine(
+                args[2], args[3], args[4], localchainpassword=args[5]
+        )
 elif len(args) == 7:
     if args[1] == "checkBoxValue":
         sys.stdout.write(SigmaParticleInterface.checkBoxValue(\
@@ -208,7 +224,9 @@ elif len(args) == 7:
                 otherchainpassword=args[6]\
         ))#boxID, boxValPATH, swapName, password
     if args[1] == "GeneralizedENC_FinalizationSubroutine":#initiator refund checking starts here
-        initiatorInterface.GeneralizedENC_FinalizationSubroutine(args[2], args[3], args[4], args[5], args[6])
+        initiatorInterface.GeneralizedENC_FinalizationSubroutine(
+                args[2], args[3], args[4], localchainpassword=args[5], crosschainpassword=args[6]
+        )
     if args[1] == "UpdateMarketOrderTypeUUIDsList":
         market_pricing.UpdateMarketOrderTypeUUIDsList(
             coins=ast.literal_eval(args[2]), 
@@ -229,6 +247,14 @@ elif len(args) == 10:
         publishNewOrderType_ServerEndpoint(args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9])
     if args[1] == "GeneralizeENC_ResponseSubroutine":
         responderInterface.GeneralizeENC_ResponseSubroutine(args[2], args[3], args[4], args[5], args[6], args[7], args[8], args[9])
+    if args[1] == "GeneralizedENCInitiationSubroutine_crossENCOnly":
+        initiatorInterface.GeneralizedENC_InitiationSubroutine(\
+                args[2], args[3], args[4], args[5], \
+                args[6], args[7], args[8], crossChainAccountPassword=args[9])
+    if args[1] == "GeneralizedENCInitiationSubroutine_localENCOnly":
+        initiatorInterface.GeneralizedENC_InitiationSubroutine(\
+                args[2], args[3], args[4], args[5], \
+                args[6], args[7], args[8], localChainAccountPassword=args[9])
 elif len(args) == 11:
     if args[1] == "initErgoAccountNonInteractive_ENC":
         initErgoAccountNonInteractive(
