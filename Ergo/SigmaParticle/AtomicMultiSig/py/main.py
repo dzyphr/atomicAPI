@@ -117,6 +117,9 @@ def main(contractName, ergo, wallet_mnemonic, mnemonic_password, senderAddress, 
             if verifyTreeOnly == True:
                 exit()
 #        print(dir(ergo))
+        #TODO Optionally get boxes from this extraIndex (not certain needs extraIndex yet) node endpoint:
+        #http://127.0.0.1:9052/blockchain/box/unspent/byAddress/ ADDRESS ?offset=0&limit=20&sortDirection=asc
+        #also TODO deal with double spends from client side to avoid double spending error from naive box choice
         inputBoxes = BoxOperations.createForSender(Address.create(sender), ergo._ctx).withAmountToSpend(ergoAmountFeeIncluded).loadTop()
 #        inputBoxes =  ergo.getInputBox(sender_address=castedSender, amount_list=[ergoAmountRaw], tokenList=None)
         AtomicBox = ergo._ctx.newTxBuilder().outBoxBuilder() \

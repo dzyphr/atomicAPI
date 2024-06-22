@@ -124,8 +124,8 @@ def GeneralizedENC_InitiationSubroutine(\
                     print("password required for encrypted env file!")
                     exit()
             #sepolia encrypted
+        #if InitiatorChain.strip("\"") == "TestnetErgo" and ResponderChain.strip("\"") == "Sepolia":
         if localChainEncAccount == False and crossChainEncAccount == False:
-            if InitiatorChain.strip("\"") == "TestnetErgo" and ResponderChain.strip("\"") == "Sepolia":
                 mi = {
                     "ElGamalKey" : ElGamalKey.strip("\"").rstrip(),
                     "ElGamalKeyPath" : ElGamalKeyPath.strip("\"").rstrip(),
@@ -176,7 +176,6 @@ def GeneralizedENC_InitiationSubroutine(\
                     "InitiatorErgoAccountName": LocalChainAccountName
                 }
         elif localChainEncAccount == False and crossChainEncAccount == True:
-            if InitiatorChain.strip("\"") == "TestnetErgo" and ResponderChain.strip("\"") == "Sepolia":
                 mi = {
                     "ElGamalKey" : ElGamalKey.strip("\"").rstrip(),
                     "ElGamalKeyPath" : ElGamalKeyPath.strip("\"").rstrip(),
@@ -203,7 +202,6 @@ def GeneralizedENC_InitiationSubroutine(\
                     "InitiatorErgoAccountName": LocalChainAccountName
                 }
         elif localChainEncAccount == True and crossChainEncAccount == True:
-            if InitiatorChain.strip("\"") == "TestnetErgo" and ResponderChain.strip("\"") == "Sepolia":
                 mi = {
                     "ElGamalKey" : ElGamalKey.strip("\"").rstrip(),
                     "ElGamalKeyPath" : ElGamalKeyPath.strip("\"").rstrip(),
@@ -256,6 +254,8 @@ def GeneralizedENC_InitiationSubroutine(\
             ENC_finalizationPATH = mi["ENC_finalizationPATH"]
             InitiatorEVMAccountName = mi["InitiatorEVMAccountName"]
             InitiatorErgoAccountName = mi["InitiatorErgoAccountName"]
+        iean = [{"InitiatorErgoAccountName": LocalChainAccountName}, {"InitiatorEVMAccountName": CrossChainAccountName}]
+        json_tools.keyVal_list_update(iean, mi["initiatorJSONPath"])
         json_tools.keyVal_list_update(enum_tools.keynum(initiatorInputEnum), mi["initiatorJSONPath"])
         privateInit = initiation(mi["initiatorEVMAddr"], InitiatorChain, ResponderChain)
         file_tools.clean_file_open(mi["privateInitPATH"], "w", privateInit)
@@ -331,6 +331,7 @@ def GeneralizedENC_FinalizationSubroutine(initiatorJSONPath, CoinA_Price, CoinB_
             InitiatorEIP3Secret = init_J["InitiatorEIP3Secret"]
             ENC_finalizationPATH = init_J["ENC_finalizationPATH"]
             InitiatorErgoAddr = init_J["InitiatorErgoAddr"]
+            initiatorEVMAccountName = init_J["InitiatorEVMAccountName"]
             decrypted_response = ElGamalInterface.ElGamal_Decrypt(ENC_Response_PATH, ElGamalKey, ElGamalKeyPath)
             file_tools.clean_file_open(DEC_Response_PATH, "w", decrypted_response)
             response_list = json_tools.json_to_keyValList(DEC_Response_PATH)
@@ -342,6 +343,7 @@ def GeneralizedENC_FinalizationSubroutine(initiatorJSONPath, CoinA_Price, CoinB_
                     #TODO check for existing swapfile
             #if yes check for finalization / funded contract
             AtomicityInterface.Atomicity_newFrame(swapName, responderLocalChain)
+            AtomicityInterface.Atomicity_updateKeyEnv(swapName, initiatorEVMAccountName)
             print("wait for contract upload and funding")
             time.sleep(30) #TODO make this better to avoid non uploaded or non funded related errors
             return swapName, ENC_Response_PATH, ElGamalKey, ElGamalKeyPath, DEC_Response_PATH, finalizationPATH, InitiatorEIP3Secret, ENC_finalizationPATH, InitiatorErgoAddr, addr, responderLocalChain, xG
@@ -416,7 +418,7 @@ def GeneralizedENC_InitiatorClaimSubroutine(initiatorJSONPath, localchainpasswor
             print("refund attempted due to timelock expiry")
             exit()
         SigmaParticleInterface.deduceX_fromAtomicSchnorrClaim(initiatorJSONPath, swapName)
-        AtomicityInterface.Atomicity_updateKeyEnv(swapName, initiatorEVMAccountName)
+#        AtomicityInterface.Atomicity_updateKeyEnv(swapName, initiatorEVMAccountName)
         AtomicityInterface.Atomicity_claimScalarContract(initiatorJSONPath, swapName, gasMod=3, password=crosschainpassword)
         setSwapState(swapName, "claimed", setMap=True)
     ################################################################################
