@@ -23,7 +23,7 @@ AtomicSwapPath = "Ergo/SigmaParticle/AtomicMultiSig/"
 
 def SigmaParticle_newFrame(swapName):
     cmd = "cd " + str(SigmaParticlePath)  + " && ./new_frame " + str(swapName)
-    file_tools.clean_file_open("newframesigmaparticlescriptdebug", "w" , cmd)
+#    file_tools.clean_file_open("newframesigmaparticlescriptdebug", "w" , cmd)
     os.popen(cmd).read()
 
 def is_json(myjson):
@@ -43,12 +43,10 @@ def SigmaParticle_box_to_addr(boxId, swapName, password=""):
             tree = SigmaParticle_getTreeFromBox(boxId, swapName, password=password).replace("\n", "")
             if tree != None and tree != "":
                 hashedtree = str(hashlib.sha256(tree.encode()).hexdigest())#for deterministic proper size filename
-                file_tools.clean_mkdir(SigmaParticlePath + "/treeAddrs")
                 treeToAddrCmd = \
                             "cd " + SigmaParticlePath + "treeToAddr && ./deploy.sh " + \
                             tree + " " + \
-                            "../treeAddrs/" + hashedtree + " " + \
-                            password
+                            "../../../" + swapName + "/boxAddr" 
 #                file_tools.clean_file_open("treeToAddrScriptTestDebug", "w", treeToAddrCmd)
                 res = os.popen(treeToAddrCmd).read()
                 if is_json(res) == True:
@@ -260,7 +258,7 @@ def SigmaParticle_getTreeFromBox(boxID, swapName, password=""):
         cmd = \
                 "cd " + SigmaParticlePath + "getTreeFromBox && ./deploy.sh " + boxID + \
                 " ../" + swapName + "/expectedErgoTree" + " "
-#        file_tools.clean_file_open("getTreeFromBoxScriptDebug", "w", cmd)
+        file_tools.clean_file_open("getTreeFromBoxScriptDebug", "w", cmd)
         result = os.popen(cmd).read()
         if "notfound" in result.lower():
             tries = tries - 1
@@ -293,7 +291,7 @@ def checkBoxValue(boxID, boxValPATH, swapName, role=None, ergopassword="", other
                 "/boxValue/ && ./deploy.sh " + \
                 boxID + " " + "../../../" + boxValPATH + \
                 " " #DONT USE ERGO PASSWORD ITS NOT NEEDED FOR PUBLIC API STUFF #TODO Remove ergopassword
-        file_tools.clean_file_open("checkBoxValueScriptDebug", "w", cmd)
+#        file_tools.clean_file_open("checkBoxValueScriptDebug", "w", cmd)
         devnull = open(os.devnull, 'wb')
         while is_numeric_string(file_tools.clean_file_open(boxValPATH, "r")) == False:
             pipe = subprocess.Popen(cmd, shell=True, stdout=devnull, stderr=devnull, close_fds=True)
@@ -351,9 +349,9 @@ def checkSchnorrTreeForClaim(boxID, swapName, initiatorMasterJSONPath, password=
         else:
             tree = SigmaParticle_getTreeFromBox(boxID, swapName, password=password)
         treeToAddrCmd = \
-                "cd " + SigmaParticlePath + "treeToAddr && ./deploy.sh " + tree + " ../" + \
+                "cd " + SigmaParticlePath + "treeToAddr && ./deploy.sh " + tree + " ../../" + \
                 swapName + "/scriptAddr " 
-#        file_tools.clean_file_open("treeToAddrScriptTestDebug", "w", treeToAddrCmd)
+ #       file_tools.clean_file_open("treeToAddrScriptTestDebug", "w", treeToAddrCmd)
 
         addr = json.loads(os.popen(treeToAddrCmd).read())["address"]
         boxFilterCmd = \

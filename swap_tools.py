@@ -1,10 +1,44 @@
 import file_tools, os, uuid, responderInterface, json_tools, subprocess, sys, json, ClientEndpoints, initiatorInterface
 
-PossibleSwapStates = ["initiated", "uploadingResponseContract", "uploadedResponseContract", "fundingResponseContract", "fundedResponseContract", "responding", "responded_unsubmitted", "responded_submitted", "finalized", "verifyingFinalizedContractValues", "verifiedFinalizedContractValues", "claiming", "refunding", "claimed", "refunded", "terminated", "tbd"]
+PossibleSwapStates = [
+        "initiated", #0 
+        "uploadingResponseContract", #1
+        "uploadedResponseContract", #2
+        "fundingResponseContract", #3
+        "fundedResponseContract",  #4
+        "responding", #5
+        "responded_unsubmitted", #6
+        "responded_submitted", #7
+        "finalized", #8
+        "verifyingFinalizedContractValues", #9
+        "verifiedFinalizedContractValues", #10
+        "claiming", #11
+        "refunding", #12
+        "claimed", #13
+        "refunded", #14
+        "terminated", #15
+        "tbd"#16
+]
 #TODO possibleSwapStates Responder and possibleSwapStates Initiatior should be seperated
 #probably also seperate based on specific swap scenarios down the line
 
-PossibleSwapStatesInitiator = ["initiating", "initiated_unsubmitted", "initiated_submitted", "responded", "verifying_response", "verified_response", "finalizing", "finalized_unsubmitted", "finalized_submitted", "claiming", "refunding", "claimed", "refunded", "terminated", "tbd"]
+PossibleSwapStatesInitiator = [
+        "initiating", #0 
+        "initiated_unsubmitted", #1
+        "initiated_submitted", #2
+        "responded", #3
+        "verifying_response", #4
+        "verified_response", #5
+        "finalizing", #6
+        "finalized_unsubmitted", #7
+        "finalized_submitted", #8
+        "claiming", #9
+        "refunding", #10
+        "claimed", #11
+        "refunded", #12
+        "terminated", #13
+        "tbd" #14
+]
 
 def setSwapState(swapName, state, setMap=False):
     if state not in PossibleSwapStates and state not in PossibleSwapStatesInitiator:
@@ -47,7 +81,6 @@ def watchSwapLoop(swapName, localChainAccountPassword="", crossChainAccountPassw
     SwapStateMap = json_tools.ojf("SwapStateMap")
     print("watchSwapLoop: swapStateMap: ", SwapStateMap)
     if swapName in SwapStateMap:
-        swapState = SwapStateMap[swapName]["SwapState"]
         role = SwapStateMap[swapName]["SwapRole"]
         LocalChain = SwapStateMap[swapName]["LocalChain"]
         CrossChain = SwapStateMap[swapName]["CrossChain"]
@@ -55,6 +88,10 @@ def watchSwapLoop(swapName, localChainAccountPassword="", crossChainAccountPassw
         CrossChainAccountName = SwapStateMap[swapName]["CrossChainAccount"]
         ElGamalKeyPath = SwapStateMap[swapName]["ElGamalKeyPath"]
         if role == "Responder":
+            if "SwapState" in SwapStateMap[swapName]:
+                swapState = SwapStateMap[swapName]["SwapState"]
+            else:
+                swapState = PossibleSwapStates[0]
             SwapAmount = SwapStateMap[swapName]["SwapAmount"]
             ClientElGamalKey = SwapStateMap[swapName]["ElGamalKey"]
             MarketAPIKey = SwapStateMap[swapName]["MarketAPIKey"]
@@ -80,11 +117,12 @@ def watchSwapLoop(swapName, localChainAccountPassword="", crossChainAccountPassw
                         ).replace("\\n", "\n").replace("\"", "")
                         file_tools.clean_file_open(swapName + "/ENC_finalization.bin", "w", ENC_finalization)
                         setSwapState(swapName, PossibleSwapStates[7], setMap=True) #responded submitted
-                        responderInterface.GeneralizedENC_ResponderClaimSubroutine(
+                        status = responderInterface.GeneralizedENC_ResponderClaimSubroutine(
                             swapName + "/responder.json", 
                             localChainAccountPassword=localChainAccountPassword, 
                             crossChainAccountPassword=crossChainAccountPassword
                         )
+                        responderInterface.Responder_CheckLockTimeRefund(swapName, password=crossChainAccountPassword)
                     elif swapState in [
                             PossibleSwapStates[1], PossibleSwapStates[2], PossibleSwapStates[3], PossibleSwapStates[4],
                             PossibleSwapStates[5]
@@ -109,6 +147,8 @@ def watchSwapLoop(swapName, localChainAccountPassword="", crossChainAccountPassw
                             localChainAccountPassword=localChainAccountPassword,
                             crossChainAccountPassword=crossChainAccountPassword
                         )
+                        responderInterface.Responder_CheckLockTimeRefund(swapName, password=crossChainAccountPassword)
+                        return
                     elif swapState == PossibleSwapStates[6]:
                         ENC_response = file_tools.clean_file_open(swapName + "/ENC_response_path.bin", "r")
                         ENC_finalization = ClientEndpoints.submitEncryptedResponse_ClientEndpoint(
@@ -121,6 +161,8 @@ def watchSwapLoop(swapName, localChainAccountPassword="", crossChainAccountPassw
                             localChainAccountPassword=localChainAccountPassword,
                             crossChainAccountPassword=crossChainAccountPassword
                         )
+                        responderInterface.Responder_CheckLockTimeRefund(swapName, password=crossChainAccountPassword)
+                        return
                     elif swapState in [
                             PossibleSwapStates[7], PossibleSwapStates[8], PossibleSwapStates[9], PossibleSwapStates[10],
                             PossibleSwapStates[11]
@@ -131,7 +173,13 @@ def watchSwapLoop(swapName, localChainAccountPassword="", crossChainAccountPassw
                             crossChainAccountPassword=crossChainAccountPassword,
                             reloadSwapState=swapState
                         )
+                        responderInterface.Responder_CheckLockTimeRefund(swapName, password=crossChainAccountPassword)
+                        return
         elif role == "Initiator":
+            if "SwapState" in SwapStateMap[swapName]:
+                swapState = SwapStateMap[swapName]["SwapState"]
+            else:
+                swapState = PossibleSwapStatesInitiator[0]
             if LocalChain == "TestnetErgo" and CrossChain == "Sepolia":
                 OrderTypeUUID = file_tools.clean_file_open(swapName + "/OrderTypeUUID", "r")
                 OrderTypesJSON =  json_tools.ojf("OrderTypes.json")
@@ -175,6 +223,7 @@ def watchSwapLoop(swapName, localChainAccountPassword="", crossChainAccountPassw
                             initiatorJSONPath, 
                             localchainpassword=localChainAccountPassword, crosschainpasswordcross=ChainAccountPassword
                         )
+                        return
                     if swapState in [
                             PossibleSwapStatesInitiator[7], PossibleSwapStatesInitiator[8], 
                             PossibleSwapStatesInitiator[9], PossibleSwapStatesInitiator[10]
@@ -183,6 +232,7 @@ def watchSwapLoop(swapName, localChainAccountPassword="", crossChainAccountPassw
                             initiatorJSONPath, 
                             localchainpassword=localChainAccountPassword, crosschainpassword=crossChainAccountPassword
                         )
+                        return
                     #if the state is something like initiating or responded in which case we had a shutdown when prompted to
                     #generate swap data and return it to the client, we should generate the data, expecting that the client 
                     #will reconnect because we cant force a reconnection to the client

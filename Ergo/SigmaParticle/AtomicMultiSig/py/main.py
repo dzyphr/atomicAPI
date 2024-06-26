@@ -73,6 +73,7 @@ def main(contractName, ergo, wallet_mnemonic, mnemonic_password, senderAddress, 
         lockHeight = ""
         if verifyTreeOnly != None:
             if verifyTreeOnly == True:
+                print("verifying tree")
                 lockHeight = int(os.getenv('staticLockHeight'))
         else:
             lockHeight = ergo._ctx.getHeight() + int(os.getenv('refundDuration')) #irl set relatively large height on BOTH sides of swap for max cooperation

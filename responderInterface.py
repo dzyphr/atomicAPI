@@ -406,9 +406,10 @@ def GeneralizedENC_ResponderClaimSubroutine(
             finalization_list = json_tools.json_to_keyValList(DEC_finalizationPATH)
             json_tools.keyVal_list_update(finalization_list, responderJSONPath)
             boxID = json.loads(DEC_finalization)["boxId"]
+            SigmaParticleInterface.SigmaParticle_box_to_addr(boxID, swapName)
             boxValue = SigmaParticleInterface.checkBoxValue(
                     boxID,
-                    swapName + "/testBoxValPath.bin",
+                    swapName + "/boxVal",
                     swapName,
                     role="responder",
                     ergopassword=crossChainAccountPassword,
@@ -469,7 +470,7 @@ def GeneralizedENC_ResponderClaimSubroutine(
             expectedErgoTree = SigmaParticleInterface.SigmaParticle_getTreeFromBox(boxID, swapName, password=crossChainAccountPassword)
             if SigmaParticleInterface.responderVerifyErgoScript(swapName, expectedErgoTree, password=crossChainAccountPassword) == False:
                 print("ergoScript verification returned false, wont fulfil swap")
-                return
+                return False
             swap_tools.setSwapState(swapName, "verifiedFinalizedContractValues", setMap=True)
 
         def claim():
@@ -508,14 +509,18 @@ def GeneralizedENC_ResponderClaimSubroutine(
                 claim()
                 return
         else:            
-            swapName, ENC_finalizationPATH, ElGamalKey, ElGamalKeyPath, DEC_finalizationPATH, responderErgoAccountName, DEC_finalization = \
-                            setup(resp_J)
+            swapName, ENC_finalizationPATH, ElGamalKey, \
+            ElGamalKeyPath, DEC_finalizationPATH, \
+            responderErgoAccountName, DEC_finalization = \
+                setup(resp_J)
             #    print("ergo contract verification status:", responderVerifyErgoScript(swapName, expectedErgoTree))
-            verify(\
+            status = verify(\
                     DEC_finalizationPATH, responderJSONPath, \
                     DEC_finalization, swapName, responderErgoAccountName, \
                     localChainAccountPassword=localChainAccountPassword, crossChainAccountPassword=crossChainAccountPassword\
                 )
+            if status == False:
+                return False
             claim()
 
 def Responder_CheckLockTimeRefund(swapName, password=""):
