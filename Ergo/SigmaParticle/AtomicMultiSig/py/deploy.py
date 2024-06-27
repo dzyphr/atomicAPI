@@ -31,8 +31,8 @@ elif args[1] == "refund":
 from connect import *
 ergo, wallet_mnemonic, mnemonic_password, senderAddress, senderEIP3Secret = connect(password=password) #dotenv loaded here dont call env vars before
 
-from main import *
-main(os.getenv('ContractName'), ergo, wallet_mnemonic, mnemonic_password, senderAddress, senderEIP3Secret, args)
+getattr(__import__("main"), "main")\
+        (os.getenv('ContractName'), ergo, wallet_mnemonic, mnemonic_password, senderAddress, senderEIP3Secret, args)
 
 from cleanup import *
 cleanup()

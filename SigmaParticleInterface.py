@@ -349,7 +349,7 @@ def checkSchnorrTreeForClaim(boxID, swapName, initiatorMasterJSONPath, password=
         else:
             tree = SigmaParticle_getTreeFromBox(boxID, swapName, password=password)
         treeToAddrCmd = \
-                "cd " + SigmaParticlePath + "treeToAddr && ./deploy.sh " + tree + " ../../" + \
+                "cd " + SigmaParticlePath + "treeToAddr && ./deploy.sh " + tree + " ../../../" + \
                 swapName + "/scriptAddr " 
  #       file_tools.clean_file_open("treeToAddrScriptTestDebug", "w", treeToAddrCmd)
 

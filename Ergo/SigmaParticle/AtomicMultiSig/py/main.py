@@ -1,24 +1,15 @@
-import os
-import json
-import sys
-import time
-import random
-import jpype
+import os, json, sys, time, random, jpype, java.lang, waits, coinSelection, scalaPipe, scala.math.BigInt as BigInt, file_tools
 from jpype import *
-import java.lang
 from org.ergoplatform.appkit import *
 from org.ergoplatform.appkit.impl import *
 from ergpy import helper_functions, appkit
-import waits
-import coinSelection
-import scalaPipe
 from sigmastate.interpreter.CryptoConstants import *
-import scala.math.BigInt as BigInt
 from java.math import BigInteger
+from sigmastate.eval.package import ecPointToGroupElement
 interpreterClasspath = \
     "/home/" + os.getlogin() + "/Downloads/sigmastate-interpreter/target/scala-2.13/sigma-state-assembly-5.0.14.jar"
 jpype.addClassPath(interpreterClasspath)
-from sigmastate.eval.package import ecPointToGroupElement
+
 def main(contractName, ergo, wallet_mnemonic, mnemonic_password, senderAddress, senderEIP3Secret, args):
     print("Running", contractName)
     def atomicDeposit(verifyTreeOnly=None, password=""):
@@ -75,11 +66,10 @@ def main(contractName, ergo, wallet_mnemonic, mnemonic_password, senderAddress, 
             if verifyTreeOnly == True:
                 print("verifying tree")
                 lockHeight = int(os.getenv('staticLockHeight'))
+                strlockHeight = str(lockHeight)
         else:
             lockHeight = ergo._ctx.getHeight() + int(os.getenv('refundDuration')) #irl set relatively large height on BOTH sides of swap for max cooperation
-            f = open("lockHeight", "w")
-            f.write(str(lockHeight))
-            f.close()
+            strlockHeight = str(lockHeight)
         atomicLockScript = \
             "{ \
                 val srBYTES = OUTPUTS(0).R4[Coll[Byte]].get; \
@@ -107,13 +97,16 @@ def main(contractName, ergo, wallet_mnemonic, mnemonic_password, senderAddress, 
                 .item("krG", krG)\
                 .item("ksG", ksG)\
                 .item("generator", ECC_Generator)\
-                .item("lockHeight", lockHeight)\
+                .item("lockHeight", int(strlockHeight))\
                 .build(),
                 atomicLockScript)
         ergoTree = AtomicContract.getErgoTree().bytesHex()
+        file_tools.clean_file_open("ergoTree", "w", str(ergoTree))
+        '''
         f = open("ergoTree", "w")
         f.write(str(ergoTree))
         f.close()
+        '''
         if verifyTreeOnly != None:
             if verifyTreeOnly == True:
                 exit()
@@ -137,9 +130,17 @@ def main(contractName, ergo, wallet_mnemonic, mnemonic_password, senderAddress, 
 #        sys.stdout.write(str(signedTxJSON))
         j = json.loads(str(signedTxJSON))
         print(j["outputs"][0]["boxId"])
+        '''
         f = open("boxId", "w")
         f.write(j["outputs"][0]["boxId"]) 
         f.close()
+        f = open("lockHeight", "w")
+        f.write(strlockHeight)
+        f.close()
+        '''
+        file_tools.clean_file_open("boxId", "w", j["outputs"][0]["boxId"])
+        file_tools.clean_file_open("lockHeight", "w", strlockHeight)
+
 
     def atomicReceiverClaim():
         receiver = senderAddress[0]
