@@ -77,17 +77,17 @@ def UpdateMarketOrderTypeUUIDsList(coins=[], marketConfigJSON="", marketFeePerce
                             if feed == "CoinEx":
                                 pricetype = priceFeedsConfigJSON["Coins"][coin]["Feeds"][feed]
                                 if pricetype in CoinExPriceTypes:
-                                    CEPrice = 0
+#                                    CEPrice = 0
                                     if pricetype in ["default", "Default"]:
                                         pricetype = "Last"
                                     if pricetype == "LowHighAvg":
-                                        CEPrice += priceFeeds.CoinExPriceLowHighAvg("ERG", rounded=rounded)
+                                        CEPrice = priceFeeds.CoinExPriceLowHighAvg("ERG", rounded=rounded)
                                     if pricetype == "Low":
-                                        CEPrice += priceFeeds.CoinExPriceLow("ERG", rounded=rounded)
+                                        CEPrice = priceFeeds.CoinExPriceLow("ERG", rounded=rounded)
                                     if pricetype == "High":
-                                        CEPrice += priceFeeds.CoinExPriceHigh("ERG", rounded=rounded)
+                                        CEPrice = priceFeeds.CoinExPriceHigh("ERG", rounded=rounded)
                                     if pricetype == "Last":
-                                        CEPrice += priceFeeds.CoinExPriceLast("ERG", rounded=rounded)
+                                        CEPrice = priceFeeds.CoinExPriceLast("ERG", rounded=rounded)
                                     if is_num(CEPrice):
                                         price += CEPrice
                                     else:
@@ -125,17 +125,17 @@ def UpdateMarketOrderTypeUUIDsList(coins=[], marketConfigJSON="", marketFeePerce
                             if feed == "CoinEx":
                                 pricetype = priceFeedsConfigJSON["Coins"][coin]["Feeds"][feed]
                                 if pricetype in CoinExPriceTypes:
-                                    CEPrice = 0
+#                                    CEPrice = 0
                                     if pricetype in ["default", "Default"]:
                                         pricetype = "Last"
                                     if pricetype == "LowHighAvg":
-                                        CEPrice += priceFeeds.CoinExPriceLowHighAvg("ETH", rounded=rounded)
+                                        CEPrice = priceFeeds.CoinExPriceLowHighAvg("ETH", rounded=rounded)
                                     if pricetype == "Low":
-                                        CEPrice += priceFeeds.CoinExPriceLow("ETH", rounded=rounded)
+                                        CEPrice = priceFeeds.CoinExPriceLow("ETH", rounded=rounded)
                                     if pricetype == "High":
-                                        CEPrice += priceFeeds.CoinExPriceHigh("ETH", rounded=rounded)
+                                        CEPrice = priceFeeds.CoinExPriceHigh("ETH", rounded=rounded)
                                     if pricetype == "Last":
-                                        CEPrice += priceFeeds.CoinExPriceLast("ETH", rounded=rounded)
+                                        CEPrice = priceFeeds.CoinExPriceLast("ETH", rounded=rounded)
                                     if is_num(CEPrice):
                                         price += CEPrice
                                     else:
