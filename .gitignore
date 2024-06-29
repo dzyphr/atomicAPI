@@ -1,4 +1,5 @@
 *.env
+atomicAPI.log
 ENC_EVMClient
 marketConfig.json
 hs_err_pid*.log

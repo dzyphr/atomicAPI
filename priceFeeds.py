@@ -234,8 +234,8 @@ def BinancePrice(ticker, rounded=False):
     url = 'https://www.binance.com/api/v3/ticker/price'
     with urllib.request.urlopen(url) as response:
         if response.status == 200:
-            data = response.read().decode()
             try:
+                data = response.read().decode()
                 prices = json.loads(data)
                 found = False
                 for tickerdata in prices:
@@ -249,6 +249,8 @@ def BinancePrice(ticker, rounded=False):
                             return Decimal(price).quantize(Decimal('0.01'), ROUND_DOWN)
                 if found == False:
                     return "ticker: " + ticker + " not found! Use ticker not full coin name."
+            except http.client.IncompleteRead:
+                print("http incomplete read error")
             except: 
                 print("Binance response was not json! Response: ", data)
         else:
