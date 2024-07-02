@@ -1,4 +1,4 @@
-import requests, os, json, time
+import requests, os, json, time, http
 import urllib.request
 from decimal import *
 from dotenv import load_dotenv

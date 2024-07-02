@@ -1,8 +1,5 @@
-import json, ast, os, time, subprocess, json_tools
-import file_tools
-import config_tools
-import AtomicityInterface
-import hashlib
+import json, ast, os, time, subprocess, json_tools, file_tools, config_tools, AtomicityInterface, hashlib
+from LOG import LOG
 py = "python3 -u "
 SigmaParticlePath = "Ergo/SigmaParticle/"
 AtomicSwapECCPath = "Ergo/SigmaParticle/AtomicMultiSigECC/py/deploy.py " #TODO Ergo Specific
@@ -22,11 +19,13 @@ AtomicSwapPath = "Ergo/SigmaParticle/AtomicMultiSig/"
 #        else:
 
 def SigmaParticle_newFrame(swapName):
+    LOG('SigmaParticle_newFrame')
     cmd = "cd " + str(SigmaParticlePath)  + " && ./new_frame " + str(swapName)
 #    file_tools.clean_file_open("newframesigmaparticlescriptdebug", "w" , cmd)
-    os.popen(cmd).read()
+    output = os.popen(cmd).read()
+    LOG(f'SigmaParticle new_frame output:{output}')
 
-def is_json(myjson):
+def is_json(myjson): #TODO use the one from json_tools
     try:
         json.loads(myjson)
     except ValueError as e:
@@ -36,6 +35,7 @@ def is_json(myjson):
 
 
 def SigmaParticle_box_to_addr(boxId, swapName, password=""):
+    LOG('SigmaParticle_box_to_addr')
     tries = 20
     file_tools.clean_mkdir(SigmaParticlePath + swapName) #this might need to be created here sooner
     while tries > 0:
@@ -49,18 +49,24 @@ def SigmaParticle_box_to_addr(boxId, swapName, password=""):
                             "../../../" + swapName + "/boxAddr" 
 #                file_tools.clean_file_open("treeToAddrScriptTestDebug", "w", treeToAddrCmd)
                 res = os.popen(treeToAddrCmd).read()
+                LOG(f'SigmaParticle treeToAddr output: {res}')
                 if is_json(res) == True:
                     addr = json.loads(res)["address"]
                     return addr
                 else:
+                    waittime = 15
+                    LOG(f'response not json, retrying in {waittime}')
                     tries = tries - 1
-                    time.sleep(15)
+                    time.sleep(waittime)
                     continue
         except ValueError as e:
             print(e)
-            time.sleep(15)
+            waittime = 15
+            LOG(f'response not json, retrying in {waittime}')
+            time.sleep(waittime)
             tries = tries - 1
             continue
+    LOG(f'attempts exhausted looking for this box: {boxId}')
     return "attempts exhausted looking for this box: " + boxId
 
 def is_file_contents_int(file_path):
@@ -86,6 +92,7 @@ def is_file_contents_int(file_path):
 
 
 def SigmaParticle_CheckLockTimeAtomicSchnorr(swapName, boxId, password=""):
+    LOG('SigmaParticle_CheckLockTimeAtomicSchnorr')
     #TODO remove password, public call
     lockHeightPath = SigmaParticlePath + swapName + "/lockHeight"
     if os.path.isfile(lockHeightPath) == False:
@@ -94,13 +101,15 @@ def SigmaParticle_CheckLockTimeAtomicSchnorr(swapName, boxId, password=""):
                             "cd " + SigmaParticlePath + "boxConstantByIndex && ./deploy.sh " + boxId + \
                             " 8 ../" + swapName + "/lockHeight"
 #            file_tools.clean_file_open("lockHeightScriptDebug", "w" , lockHeightCMD)
-            print(os.popen(lockHeightCMD).read())
+            output = os.popen(lockHeightCMD).read()
+            LOG(f'SigmaParticle boxConstantByIndex output: {output}')
             time.sleep(5)
     currentHeightCMD = \
                     "cd " + SigmaParticlePath + "currentHeight && ./deploy.sh ../../../" + \
                     swapName + "/localChain_currentHeight " 
 #    file_tools.clean_file_open("currentHeightCMDDeubug", "w", currentHeightCMD)
-    print(os.popen(currentHeightCMD).read())
+    output = os.popen(currentHeightCMD).read()
+    LOG(f'SigmaParticle currentHeight output: {output}')
     if \
     os.path.isfile(SigmaParticlePath + swapName + "/lockHeight") == True and \
     os.path.isfile(swapName + "/localChain_currentHeight") == True:
@@ -108,14 +117,21 @@ def SigmaParticle_CheckLockTimeAtomicSchnorr(swapName, boxId, password=""):
         currentHeight = file_tools.clean_file_open(swapName + "/localChain_currentHeight", "r")
         if currentHeight.isnumeric() == True and lockHeight.isnumeric() == True:
             if int(currentHeight) <= int(lockHeight):
-                return int(lockHeight) - int(currentHeight) + 1 #plus 1 because currently contract checks for GREATER THAN lock height
+                lockTime = int(lockHeight) - int(currentHeight) + 1#plus 1 because currently contract checks for GREATER THAN lock height
                                                                 #TODO: verify this
+                LOG(f'SigmaParticle_CheckLockTimeAtomicSchnorr output: {lockTime}')
+                return lockTime #plus 1 because currently contract checks for GREATER THAN lock height
+                                                                #TODO: verify this
+
             else:
+                LOG('SigmaParticle_CheckLockTimeAtomicSchnorr output: {0}')
                 return 0
         else:
+            LOG(f'error: currentHeight or lockHeight is not numeric.\n currentHeight: {currentHeight} lockHeight: {lockHeight}')
             print("error: currentHeight or lockHeight is not numeric.\n currentHeight:", currentHeight, "lockHeight:", lockHeight)
             return "error: currentHeight or lockHeight is not numeric.\n currentHeight:" +  currentHeight +  "lockHeight:" +  lockHeight
     else:
+        LOG('/localChain_lockHeight or /localChain_currentHeight files not found')
         print("/localChain_lockHeight or /localChain_currentHeight files not found")
         return "/localChain_lockHeight or /localChain_currentHeight files not found"
 
@@ -123,6 +139,7 @@ def SigmaParticle_CheckLockTimeAtomicSchnorr(swapName, boxId, password=""):
 
 #This function should be used for building an INITIATOR's atomic schnorr contract.
 def BuildAtomicSchnorrContract(initiatorMasterJSONPath, refundDuration_BLOCKS, swapName, valueERGO):
+    LOG('BuildAtomicSchnorrContract')
     j = json.loads(file_tools.clean_file_open(initiatorMasterJSONPath, "r"))
     krG = ast.literal_eval(j["krG"])
     srG = ast.literal_eval(j["srG"])
@@ -148,18 +165,23 @@ def BuildAtomicSchnorrContract(initiatorMasterJSONPath, refundDuration_BLOCKS, s
         "'" + \
         " >> .env"
     createContract = os.popen(cmd).read()
+    LOG(f'createContract output: {createContract}')
     employScriptsCMD = "cp " + AtomicSwapPath + "py/main.py " + SigmaParticlePath + swapName + "/py/main.py"
-    os.popen(employScriptsCMD).read()
+    employ = os.popen(employScriptsCMD).read()
+    LOG(f'employScripts output: {employ}')
 
 #This function should be used for RE-CONSTRUCTING the ErgoTree Address by the RESPONDER ONLY.
 def responderGenerateAtomicSchnorr(swapName, DEC_finalizationPATH, responderMasterJSONPATH, boxValue):
+    LOG('responderGenerateAtomicSchnorr')
     if os.path.isfile(DEC_finalizationPATH) == False:
         print("finalization path is not a file! check filepath")
     else:
         claimContractGeneration = "cd " + SigmaParticlePath + " && ./new_frame " + swapName
         gen = os.popen(claimContractGeneration).read()
+        LOG(f'SigmaParticle new_frame output: {gen}')
         importBoilerplate = "cp " + SigmaParticlePath + "/AtomicMultiSig/py/main.py " + SigmaParticlePath + swapName + "/py/main.py"
         imp = os.popen(importBoilerplate).read()
+        (f'importBoilerPlate output: {imp}')
         finalization = json.loads(file_tools.clean_file_open(DEC_finalizationPATH, "r"))
         master = json.loads(file_tools.clean_file_open(responderMasterJSONPATH, "r"))
         responderChainPubKey = master["ResponderErgoAddr"]
@@ -191,28 +213,35 @@ def responderGenerateAtomicSchnorr(swapName, DEC_finalizationPATH, responderMast
             "ergoAmount=" + str(nanoErgs) + "\n" + \
             "staticLockHeight=" + str(lockHeight) + "\n" + \
             "\" >> " + SigmaParticlePath + swapName + "/.env"
-        os.popen(echoVariablesCMD).read()
+        out = os.popen(echoVariablesCMD).read()
+        LOG(f'echoVariables output: {out}')
 
 
 
 def responderVerifyErgoScript(swapName, expectedErgoTree, password=""):
+    LOG('responderVerifyErgoScript')
     verifyCMD = \
         "cd " + SigmaParticlePath + swapName + " && ./deploy.sh deposit verifyTreeOnly " + password
 #    file_tools.clean_file_open("responderVerifyErgoScriptdebug", "w", verifyCMD)
-    os.popen(verifyCMD).read() 
+    verify = os.popen(verifyCMD).read() 
+    LOG('SigmaParticle verifyTreeOnly output: {verify}')
     ergoTreePath = SigmaParticlePath + swapName + "/ergoTree"
     ergoTree = file_tools.clean_file_open(ergoTreePath, "r")
     fmt = "onchain:", expectedErgoTree, "offchain:", ergoTree
     print(fmt)
+    LOG(f'onchain: {expectedErgoTree} offchain: {ergoTree}')
 #    file_tools.clean_file_open(swapName + "/ergoTreeCompareTest", "w", fmt)
     if expectedErgoTree.strip() == ergoTree.strip():
+        LOG('SigmaParticle Verification True')
         return True
     else:
+        LOG('SigmaParticle Verification False')
         SigmaParticle_CheckLockTimeAtomicSchnorr(swapName, json_tools.ojf(swapName + "/responder.json")["boxId"], password=password)
         return False
        
 
 def responderClaimAtomicSchnorr(swapName, tries=None, password=""):
+    LOG('responderClaimAtomicSchnorr')
     rounds = 0
     if tries == None:
         rounds = 60
@@ -226,9 +255,12 @@ def responderClaimAtomicSchnorr(swapName, tries=None, password=""):
 #    file_tools.clean_file_open("sigmaresponderclaimscriptdebug", "w", claimCMD)
     while rounds > 0:
         response = os.popen(claimCMD).read()
+        LOG(f'SigmaParticle claim response: {response}')
         if response == None:
+            waittime = 5
+            LOG(f'response was None, retrying in {waittime}')
             rounds = rounds - 1
-            time.sleep(5)
+            time.sleep(waittime)
             continue
         else:
             return response
@@ -236,21 +268,26 @@ def responderClaimAtomicSchnorr(swapName, tries=None, password=""):
 
 
 def SigmaParticle_updateKeyEnv(swapName, targetKeyEnvDirName):
+    LOG('SigmaParticle_updateKeyEnv')
     if os.path.isfile(SigmaParticlePath + targetKeyEnvDirName + "/.env"):
         update = file_tools.clean_file_open(SigmaParticlePath + targetKeyEnvDirName + "/.env", "r")
         update.replace("[default]", "")
         cmd = \
                 "echo \"" + update + "\"" + " >> " + SigmaParticlePath + swapName + "/.env"
-        os.popen(cmd).read()
+        echo = os.popen(cmd).read()
+        LOG(f'updateKeyEnv output: {echo}')
     else:
         encpath = SigmaParticlePath + targetKeyEnvDirName + "/.env.encrypted"
         if os.path.isfile(encpath):
             newpath = SigmaParticlePath + swapName + "/.env.encrypted"
             cpcmd = "cp " + encpath + " " + newpath
-            os.popen(cpcmd).read()
+            cp = os.popen(cpcmd).read()
+            LOG(f'updateKeyEnv output: {cp}')
+
     
 
 def SigmaParticle_getTreeFromBox(boxID, swapName, password=""):
+    LOG('SigmaParticle_getTreeFromBox')
     #TODO REMOVE password var, its a public call
     tries = 60
     while tries > 0:
@@ -258,25 +295,34 @@ def SigmaParticle_getTreeFromBox(boxID, swapName, password=""):
         cmd = \
                 "cd " + SigmaParticlePath + "getTreeFromBox && ./deploy.sh " + boxID + \
                 " ../" + swapName + "/expectedErgoTree" + " "
-        file_tools.clean_file_open("getTreeFromBoxScriptDebug", "w", cmd)
+#        file_tools.clean_file_open("getTreeFromBoxScriptDebug", "w", cmd)
         result = os.popen(cmd).read()
+        LOG(f'SigmaParticle getTreeFromBox output: {result}')
         if "notfound" in result.lower():
+            waittime = 5
+            LOG(f'box not found retrying in {waittime}\ntries left: {tries}')
             tries = tries - 1
-            time.sleep(5)
+            time.sleep(waittime)
             continue
         else:
             return result
 
 def deployErgoContract(swapName, password=""):
+    LOG('deployErgoContract')
     command = "cd " + SigmaParticlePath + swapName + " && ./deploy.sh deposit " + password
  #   file_tools.clean_file_open("initiatorDeployErgoContractDebug", "w", command)
-    os.popen(command).read()
+    deploy = os.popen(command).read()
+    LOG(f'SigmaParticle deploy output: {deploy}')
 
 def getBoxID(swapName):
+    LOG('getBoxID')
     path = SigmaParticlePath + swapName + "/boxId"
     if os.path.isfile(path):
-        return file_tools.clean_file_open(path, "r")
+        boxID = file_tools.clean_file_open(path, "r")
+        LOG(f'boxID: {boxID}')
+        return boxID
     else:
+        LOG(f'Path: {path} not found!')
         print("Path:", path, "not found!")
         return False
 
@@ -284,6 +330,7 @@ def is_numeric_string(value):
     return isinstance(value, str) and value.isdigit()
 
 def checkBoxValue(boxID, boxValPATH, swapName, role=None, ergopassword="", otherchainpassword=""):
+    LOG('checkBoxValue')
     tries = 200
     while tries > 0:
         cmd = \
@@ -298,8 +345,9 @@ def checkBoxValue(boxID, boxValPATH, swapName, role=None, ergopassword="", other
             pipe.wait()
             time.sleep(5)
         response = file_tools.clean_file_open(boxValPATH, "r")
+        LOG(f'SigmaParticle boxValue output: {response}')
         tries = tries - 1
-        if str(response) in ["error"] or type(response) == type(None): 
+        if str(response) in ["error"] or type(response) == type(None): #TODO needs logical cleanup
             if role == "responder":
                 masterjsonpath = swapName + "/responder.json"
                 responderChain = json_tools.ojf(masterjsonpath)["ResponderChain"]
@@ -342,6 +390,7 @@ def key_path_exists(data, key_path):
         return False
 
 def checkSchnorrTreeForClaim(boxID, swapName, initiatorMasterJSONPath, password=""):
+    LOG('checkSchnorrTreeForClaim')
     while True:
         tree = ""
         if os.path.isfile(SigmaParticlePath + swapName + "/ergoTree") == True:
@@ -354,11 +403,13 @@ def checkSchnorrTreeForClaim(boxID, swapName, initiatorMasterJSONPath, password=
  #       file_tools.clean_file_open("treeToAddrScriptTestDebug", "w", treeToAddrCmd)
 
         addr = json.loads(os.popen(treeToAddrCmd).read())["address"]
+        LOG(f'SigmaParticle treeToAddr output: {addr}')
         boxFilterCmd = \
                 "cd " + SigmaParticlePath + "boxFilter && " + \
                 "./deploy.sh " + addr + " " + boxID + " ../../../" + swapName + "/atomicClaim "
 #        file_tools.clean_file_open("boxFilterCmdDebug", "w", boxFilterCmd)
-        os.popen(boxFilterCmd).read()
+        boxFilter = os.popen(boxFilterCmd).read()
+        LOG(f'SigmaParticle boxFilter output: {boxFilter}')
         if os.path.isfile(swapName + "/atomicClaim_tx1") == True:
             j = json.loads(file_tools.clean_file_open(swapName + "/atomicClaim_tx1", "r"))
             keypath = ["outputs", 0, "additionalRegisters", "R4"]
@@ -367,6 +418,7 @@ def checkSchnorrTreeForClaim(boxID, swapName, initiatorMasterJSONPath, password=
                 sr_list = [{"sr":R4}]
                 json_tools.keyVal_list_update(sr_list, initiatorMasterJSONPath)
     #            print("atomic swap was claimed by responder!")
+                LOG("Atomic swap was claimed by responder!")
                 return True
         else:
 #            print("no atomic swap claim found...")
@@ -374,13 +426,16 @@ def checkSchnorrTreeForClaim(boxID, swapName, initiatorMasterJSONPath, password=
             remainingLocalLockTime = SigmaParticle_CheckLockTimeAtomicSchnorr(swapName, boxID, password=password)
             if type(remainingLocalLockTime) == int:
                 if remainingLocalLockTime <= 0:
+                    LOG('No claim found and locktime 0, refunding.')
                     #claim refund here
                     echoBoxIdCMD = \
                             "echo '\natomicBox=" + boxID + "' >> " + SigmaParticlePath + swapName + "/.env"
-                    os.popen(echoBoxIdCMD).read()
+                    echo = os.popen(echoBoxIdCMD).read()
+                    LOG(f'echo boxID output: {echo}')
 
                     cmd =  "cd " + SigmaParticlePath + swapName  + " && ./deploy.sh refund " + password
-                    print(os.popen(cmd).read()) #TODO check for success
+                    refund = os.popen(cmd).read() #TODO check for success
+                    LOG(f'SigmaParticle refund output: {refund}')
                     return False
                 time.sleep(5)
                 continue
@@ -398,10 +453,12 @@ def deduceX_fromAtomicSchnorrClaim(initiatorMasterJSONPath, swapName):
     decode_sr_cmd = \
             "cd " + SigmaParticlePath + "valFromHex && ./deploy.sh " + enc_sr + " ../../../" + swapName + "/decoded_sr.bin " 
     decode = os.popen(decode_sr_cmd).read()
+    LOG(f'SigmaParticle valFromHex output: {decode}')
     sr = file_tools.clean_file_open(swapName + "/decoded_sr.bin", "r")
     deduction_cmd = \
             "cd " + SigmaParticlePath + "AtomicMultiSigECC && python3 -u py/deploy.py p1Deduce " + sr_ + " " + sr
     deduction_response = os.popen(deduction_cmd).read()
+    LOG('SigmaParticle deduction command output: {deduction_response}')
     deduction_j = json.loads(deduction_response)
     x = deduction_j["x"]
     deduction_list = [{"x":x}]

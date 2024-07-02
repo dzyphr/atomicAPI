@@ -38,3 +38,10 @@ def createOrUpdateIndexedJSONPath(path, value):
         keyVal_list_update(updatelist, path)
     return value
 
+def is_json(myjson):
+    try:
+        json.loads(myjson)
+    except ValueError as e:
+        return False
+    return True
+

@@ -21,6 +21,7 @@ def main(contractName, ergo, wallet_mnemonic, mnemonic_password, senderAddress, 
         f = open(filepath, "w")
         f.write(height)
         f.close()
+        sys.stdout.write(height)
 
 
 
