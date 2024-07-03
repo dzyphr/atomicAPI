@@ -391,19 +391,20 @@ def key_path_exists(data, key_path):
 
 def checkSchnorrTreeForClaim(boxID, swapName, initiatorMasterJSONPath, password=""):
     LOG('checkSchnorrTreeForClaim')
+    tree = None
+    addr = None 
     while True:
-        tree = ""
-        if os.path.isfile(SigmaParticlePath + swapName + "/ergoTree") == True:
-            tree = file_tools.clean_file_open(SigmaParticlePath + swapName + "/ergoTree", "r").replace("\n", "")
-        else:
+#        if os.path.isfile(SigmaParticlePath + swapName + "/ergoTree") == True:
+#            tree = file_tools.clean_file_open(SigmaParticlePath + swapName + "/ergoTree", "r").replace("\n", "")
+#        else:
+        while tree == None:
             tree = SigmaParticle_getTreeFromBox(boxID, swapName, password=password)
         treeToAddrCmd = \
-                "cd " + SigmaParticlePath + "treeToAddr && ./deploy.sh " + tree + " ../../../" + \
-                swapName + "/scriptAddr " 
+                f'cd   {SigmaParticlePath}treeToAddr && ./deploy.sh  {tree}  ../../../{swapName}/scriptAddr'
  #       file_tools.clean_file_open("treeToAddrScriptTestDebug", "w", treeToAddrCmd)
-
-        addr = json.loads(os.popen(treeToAddrCmd).read())["address"]
-        LOG(f'SigmaParticle treeToAddr output: {addr}')
+        while addr == None:
+            addr = json.loads(os.popen(treeToAddrCmd).read())["address"]
+            LOG(f'SigmaParticle treeToAddr output: {addr}')
         boxFilterCmd = \
                 "cd " + SigmaParticlePath + "boxFilter && " + \
                 "./deploy.sh " + addr + " " + boxID + " ../../../" + swapName + "/atomicClaim "

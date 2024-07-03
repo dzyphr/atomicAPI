@@ -27,7 +27,6 @@ def main(contractName, ergo, wallet_mnemonic, mnemonic_password, senderAddress, 
             "Content-type": 'application/json',\
         }
         data = str(address)
-        print(url)
         response = requests.post(url, params=params, headers=headers, data=data).text
         j = json.loads(response)
         newBoxes = []
@@ -47,7 +46,7 @@ def main(contractName, ergo, wallet_mnemonic, mnemonic_password, senderAddress, 
                 #f.close()
                 file_tools.clean_file_open(filepath + ext + str(i), "w", str(json.dumps(tx, indent=2)))
                 i = i + 1
-                print(json.dumps(tx, indent=2))
+        #        print(json.dumps(tx, indent=2)) 
 
     if len(args) >= 3:
         if len(args) >= 4:

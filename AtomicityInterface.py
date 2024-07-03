@@ -184,7 +184,9 @@ def Atomicity_claimScalarContract(initiatorMasterJSONPath, swapName, gas=None, g
             "cd " + Atomicity + swapName + " && ./deploy.sh claim " + contractAddr + " " + str(x) + \
             " " + str(gas) + " " + str(gasMod) + " " + password
     #TODO Optional log scripts for future debugging
-    output = os.popen(claimScript).read()
+    output = None
+    while output == None or output == "":
+        output = os.popen(claimScript).read()
     LOG(f'Atomicity Scalar Contract Claim Output: {output}')
     return output
 
