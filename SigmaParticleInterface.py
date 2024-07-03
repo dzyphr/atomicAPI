@@ -107,7 +107,7 @@ def SigmaParticle_CheckLockTimeAtomicSchnorr(swapName, boxId, password=""):
     currentHeightCMD = \
                     "cd " + SigmaParticlePath + "currentHeight && ./deploy.sh ../../../" + \
                     swapName + "/localChain_currentHeight " 
-#    file_tools.clean_file_open("currentHeightCMDDeubug", "w", currentHeightCMD)
+    file_tools.clean_file_open("currentHeightCMDDeubug", "w", currentHeightCMD)
     output = os.popen(currentHeightCMD).read()
     LOG(f'SigmaParticle currentHeight output: {output}')
     if \
@@ -407,7 +407,7 @@ def checkSchnorrTreeForClaim(boxID, swapName, initiatorMasterJSONPath, password=
         boxFilterCmd = \
                 "cd " + SigmaParticlePath + "boxFilter && " + \
                 "./deploy.sh " + addr + " " + boxID + " ../../../" + swapName + "/atomicClaim "
-#        file_tools.clean_file_open("boxFilterCmdDebug", "w", boxFilterCmd)
+        file_tools.clean_file_open("boxFilterCmdDebug", "w", boxFilterCmd)
         boxFilter = os.popen(boxFilterCmd).read()
         LOG(f'SigmaParticle boxFilter output: {boxFilter}')
         if os.path.isfile(swapName + "/atomicClaim_tx1") == True:
@@ -421,7 +421,7 @@ def checkSchnorrTreeForClaim(boxID, swapName, initiatorMasterJSONPath, password=
                 LOG("Atomic swap was claimed by responder!")
                 return True
         else:
-#            print("no atomic swap claim found...")
+            LOG("no atomic swap claim found...")
             #check contract lock time here for refund
             remainingLocalLockTime = SigmaParticle_CheckLockTimeAtomicSchnorr(swapName, boxID, password=password)
             if type(remainingLocalLockTime) == int:
@@ -458,7 +458,7 @@ def deduceX_fromAtomicSchnorrClaim(initiatorMasterJSONPath, swapName):
     deduction_cmd = \
             "cd " + SigmaParticlePath + "AtomicMultiSigECC && python3 -u py/deploy.py p1Deduce " + sr_ + " " + sr
     deduction_response = os.popen(deduction_cmd).read()
-    LOG('SigmaParticle deduction command output: {deduction_response}')
+    LOG(f'SigmaParticle deduction command output: {deduction_response}')
     deduction_j = json.loads(deduction_response)
     x = deduction_j["x"]
     deduction_list = [{"x":x}]

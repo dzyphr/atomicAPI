@@ -7,8 +7,8 @@ from loggingFmt import *
 loggingFmt()
 
 # Create connection to the blockchain #exported to connect.py
-print("args:", args)
-print(len(args))
+#print("args:", args)
+#print(len(args))
 password = ""
 if len(args) >= 3:
     if len(args) >= 4:

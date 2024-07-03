@@ -14,3 +14,6 @@ def LOG(logstr):
         logging.basicConfig(filename="atomicAPI.log", level=logging.INFO)
         logger = logging.getLogger(__name__)
         logger.info(f'{logstr}\nsession:{sessionID_hash}')
+
+#TODO use avaialable logging levels to seperate logging detail configurations
+# https://docs.python.org/3/library/logging.html#logging-levels

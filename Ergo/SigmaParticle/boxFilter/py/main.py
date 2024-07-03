@@ -13,6 +13,7 @@ from ergpy import helper_functions, appkit
 import waits
 import coinSelection
 import scalaPipe
+import file_tools
 def main(contractName, ergo, wallet_mnemonic, mnemonic_password, senderAddress, args):
     def txBoxFilter(address, boxId, filepath=None):
         node = ergo._node_url  
@@ -24,9 +25,9 @@ def main(contractName, ergo, wallet_mnemonic, mnemonic_password, senderAddress, 
         headers = {\
             "accept": 'application/json',\
             "Content-type": 'application/json',\
-            "api_key": os.getenv('testnetAPIKEY')
         }
         data = str(address)
+        print(url)
         response = requests.post(url, params=params, headers=headers, data=data).text
         j = json.loads(response)
         newBoxes = []
@@ -41,10 +42,12 @@ def main(contractName, ergo, wallet_mnemonic, mnemonic_password, senderAddress, 
             if filepath == None:
                 print(json.dumps(tx, indent=2))
             else:
-                f = open(filepath + ext + str(i), "w")
-                f.write(str(json.dumps(tx, indent=2)))
-                f.close()
+                #f = open(filepath + ext + str(i), "w")
+                #f.write(str(json.dumps(tx, indent=2)))
+                #f.close()
+                file_tools.clean_file_open(filepath + ext + str(i), "w", str(json.dumps(tx, indent=2)))
                 i = i + 1
+                print(json.dumps(tx, indent=2))
 
     if len(args) >= 3:
         if len(args) >= 4:
