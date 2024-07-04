@@ -1,21 +1,9 @@
-import sys
-import configparser
-import json
-import shutil
-import json_tools
-import time
-import os
-import ast
+import sys, configparser, json, shutil, json_tools, time, os, ast, ElGamalInterface, SigmaParticleInterface
+import AtomicityInterface, enum_tools, price_tools, file_tools, config_tools
 from enum import Enum
-import ElGamalInterface
-import SigmaParticleInterface
-import AtomicityInterface
-import enum_tools
-import price_tools
-import file_tools
-import config_tools
 from swap_tools import setSwapState
 from passwordFileEncryption import get_val_from_envdata_key, decrypt_file_return_contents
+from LOG import LOG
 py = "python3 -u "
 AtomicSwapECCPath = "Ergo/SigmaParticle/AtomicMultiSigECC/py/deploy.py " #TODO Ergo Specific
 s_ = " "
@@ -25,9 +13,13 @@ MINIMUM_CLAIM_LOCKTIME_SEPOLIA = config_tools.valFromConf(".env", "MINIMUM_CLAIM
 MINIMUM_REFUND_LOCKTIME_ERGO = config_tools.valFromConf(".env", "MINIMUM_REFUND_LOCKTIME_ERGO")
 
 def initiation(crossChainPubKey, initiatorChain, crossChain): #returns an initiation JSON object #TODO link between selected chain and atomic ECC
-    return os.popen(py + AtomicSwapECCPath + "p1Initiate " + crossChainPubKey + s_ + initiatorChain + s_ + crossChain).read()
+    LOG('initiation')
+    initiation = os.popen(py + AtomicSwapECCPath + "p1Initiate " + crossChainPubKey + s_ + initiatorChain + s_ + crossChain).read()
+    LOG(f'initiation output: {initiation}') #TODO classify as sensitive data
+    return initiation
 
 def sanitizeInitiation(initiationJSON): #this can be done at the SigmaParticle framework level easily instead of here
+    LOG('sanitizeInitiation')
     #TODO redo this with cleaner json framework
     j = json.loads(initiationJSON)
     ksG = j["ksG"]
@@ -43,14 +35,17 @@ def sanitizeInitiation(initiationJSON): #this can be done at the SigmaParticle f
             .rstrip()\
             .replace("\"ksG\": \"" + str(ksG) + "\"", "\"ksG\": \"" + str(ksG) + "\"\n}")\
             .rstrip()
+    LOG(f'sanitizeInitiation ouput: {strip1}')
     return strip1
 
 def inspectResponse(DEC_response_filepath, swapName, password=""):
+    LOG('inspectResponse')
     j_response = json.loads(file_tools.clean_file_open(DEC_response_filepath, "r"))
     if "responderLocalChain" not in j_response or "responderContractAddr" not in j_response:
         print("Error: response does not have expected keys")
         return "Error: response does not have expected keys"
     else: 
+        '''
         if password == "": #password doesnt have an effect when empty might not need logic to pass it into functions
             fundedAmount = AtomicityInterface.Atomicity_CheckContractFunds(swapName, j_response)
             remainingLockTime = AtomicityInterface.Atomicity_RemainingLockTimeAtomicMultisig_v_002(j_response, swapName)
@@ -63,19 +58,23 @@ def inspectResponse(DEC_response_filepath, swapName, password=""):
             }
             return json.dumps(inspectScalarContractObject)
         else:
-            fundedAmount = AtomicityInterface.Atomicity_CheckContractFunds(swapName, j_response, password=password)
-            remainingLockTime = \
-                    AtomicityInterface.Atomicity_RemainingLockTimeAtomicMultisig_v_002(j_response, swapName, password=password)
-            if fundedAmount == "" or fundedAmount == None:
-                fundedAmount = 0
-    #        print("contractAmount: ", fundedAmount, " wei")
-            inspectScalarContractObject = {
-                    "counterpartyContractFundedAmount": fundedAmount,
-                    "remainingLockTime": remainingLockTime
-            }
-            return json.dumps(inspectScalarContractObject)
+        '''
+        fundedAmount = AtomicityInterface.Atomicity_CheckContractFunds(swapName, j_response, password=password)
+        remainingLockTime = \
+                AtomicityInterface.Atomicity_RemainingLockTimeAtomicMultisig_v_002(j_response, swapName, password=password)
+        if fundedAmount == "" or fundedAmount == None:
+            fundedAmount = 0
+#        print("contractAmount: ", fundedAmount, " wei")
+        inspectScalarContractObject = {
+                "counterpartyContractFundedAmount": fundedAmount,
+                "remainingLockTime": remainingLockTime
+        }
+        output =  json.dumps(inspectScalarContractObject)
+        LOG(f'inspectResponse output: {output}')
+        return output
 
 def finalizeSwap(initiatorMasterJSONPath):
+    LOG('finalizeSwap')
     j = json.loads(file_tools.clean_file_open(initiatorMasterJSONPath, "r"))
     sr_ = j["sr_"]
     xG = j["xG"]
@@ -87,6 +86,7 @@ def finalizeSwap(initiatorMasterJSONPath):
             "\"" + str(sr_) + "\"" + " \"" + xG.replace(" ", "") + "\" \"" + srG.replace(" ", "") + "\" \"" + str(e) + "\" " + \
             "\"" + str(ks) + "\"" + " \"" + str(rs) + "\""
     finalizeJSON = os.popen(cmd).read()
+    LOG(f'finalizeSwap output: {finalizeJSON}')
     return finalizeJSON
 
 #Generalized function to create initiation commitments
@@ -95,9 +95,11 @@ def GeneralizedENC_InitiationSubroutine(\
         ElGamalKey, ElGamalKeyPath, InitiatorChain, ResponderChain,\
         localChainAccountPassword="", crossChainAccountPassword=""
 ):
+    LOG('GeneralizedENC_InitiationSubroutine')
     def setup(swapName, LocalChainAccountName, CrossChainAccountName, \
         ElGamalKey, ElGamalKeyPath, InitiatorChain, ResponderChain,\
         localChainAccountPassword="", crossChainAccountPassword=""):
+        LOG('setup')
         mi = {} #master input json
         localChainAccountEnvData = ""
         crossChainAccountEnvData = ""
@@ -233,6 +235,7 @@ def GeneralizedENC_InitiationSubroutine(\
         ElGamalKey, ElGamalKeyPath, InitiatorChain, ResponderChain,\
         localChainAccountPassword=localChainAccountPassword, crossChainAccountPassword=crossChainAccountPassword)
     def init(mi):
+        LOG('init')
 #        setSwapState(swapName, "initiating", setMap=True) #should be set by REST API 
         file_tools.clean_file_open(mi["initiatorJSONPath"], "w", "{}")
         class initiatorInputEnum(Enum):
@@ -270,7 +273,10 @@ def GeneralizedENC_InitiationSubroutine(\
 
 
 
-def GeneralizedENC_FinalizationSubroutine(initiatorJSONPath, CoinA_Price, CoinB_Price, localchainpassword="", crosschainpassword="", swapStateReload=""):
+def GeneralizedENC_FinalizationSubroutine( \
+        initiatorJSONPath, CoinA_Price, CoinB_Price, localchainpassword="", crosschainpassword="", swapStateReload="" \
+):
+    LOG('GeneralizedENC_FinalizationSubroutine')
     init_J = json_tools.ojf(initiatorJSONPath)
     if init_J["InitiatorChain"] == "TestnetErgo" and init_J["ResponderChain"] == "Sepolia":
         if swapStateReload == [4]:#verifying_response
@@ -321,6 +327,7 @@ def GeneralizedENC_FinalizationSubroutine(initiatorJSONPath, CoinA_Price, CoinB_
             return
 
         def init(init_J, initiatorJSONPath, CoinA_Price, CoinB_Price, localchainpassword="", crosschainpassword=""):
+            LOG('init')
             swapName = init_J["swapName"]
             setSwapState(swapName, "responded", setMap=True)
             ENC_Response_PATH = init_J["ENC_Response_PATH"]
@@ -344,17 +351,21 @@ def GeneralizedENC_FinalizationSubroutine(initiatorJSONPath, CoinA_Price, CoinB_
             #if yes check for finalization / funded contract
             AtomicityInterface.Atomicity_newFrame(swapName, responderLocalChain)
             AtomicityInterface.Atomicity_updateKeyEnv(swapName, initiatorEVMAccountName)
+            waittime = 30
+            LOG(f'waiting {waittime} seconds for contract upload and funding')
             print("wait for contract upload and funding")
-            time.sleep(30) #TODO make this better to avoid non uploaded or non funded related errors
+            time.sleep(waittime) #TODO make this better to avoid non uploaded or non funded related errors
             return swapName, ENC_Response_PATH, ElGamalKey, ElGamalKeyPath, DEC_Response_PATH, finalizationPATH, InitiatorEIP3Secret, ENC_finalizationPATH, InitiatorErgoAddr, addr, responderLocalChain, xG
 
         swapName, ENC_Response_PATH, ElGamalKey, ElGamalKeyPath, DEC_Response_PATH, finalizationPATH, InitiatorEIP3Secret, ENC_finalizationPATH, InitiatorErgoAddr, addr, responderLocalChain, xG = init(init_J, initiatorJSONPath, CoinA_Price, CoinB_Price, localchainpassword, crosschainpassword)
 
         def verifyResponse(swapName, DEC_Response_PATH, crosschainpassword, initiatorJSONPath, addr, xG):
+            LOG('verifyResponse')
             setSwapState(swapName, "verifying_response", setMap=True)
             inspect_json = inspectResponse(DEC_Response_PATH, swapName, password=crosschainpassword)
             if inspect_json == "Error: response does not have expected keys":
                 print("fail")
+                LOG("Error: response does not have expected keys")
                 exit()
             file_tools.clean_file_open(swapName + "/inspectContractTest.json", "w", inspect_json)
             inspect_list = json_tools.json_to_keyValList(swapName + "/inspectContractTest.json")
@@ -364,19 +375,28 @@ def GeneralizedENC_FinalizationSubroutine(initiatorJSONPath, CoinA_Price, CoinB_
             remainingLockTime = json.loads(file_tools.clean_file_open(initiatorJSONPath, "r"))["remainingLockTime"]
             if int(remainingLockTime) < int(MINIMUM_CLAIM_LOCKTIME_SEPOLIA):
                 print("remaining locktime is lower than", MINIMUM_CLAIM_LOCKTIME_SEPOLIA, "swap is at risk of double spending")
+                LOG(f'remaining locktime is lower than {MINIMUM_CLAIM_LOCKTIME_SEPOLIA}, swap is at risk of double spending')
                 exit()
             if int(contractFunds) < int(minimum_wei):
                 print("not enough wei in contract, fail")
+                LOG('Failure! Contract funds are lower than minimum wei!')
                 exit()
-            if AtomicityInterface.Atomicity_compareScalarContractCoords(swapName, addr, xG[0], xG[1], password=crosschainpassword) == False:
-                print("on chain contract does not meet offchain contract spec, do not fulfil this swap!")
+            if AtomicityInterface.Atomicity_compareScalarContractCoords( \
+                    swapName, addr, xG[0], xG[1], password=crosschainpassword \
+            ) == False:
+                LOG("on chain contract does not meet offchain contract spec, will not fulfil this swap!")
+                print("on chain contract does not meet offchain contract spec, will not fulfil this swap!")
                 exit()
             setSwapState(swapName, "verified_response", setMap=True)
             return contractFunds
 
         contractFunds = verifyResponse(swapName, DEC_Response_PATH, crosschainpassword, initiatorJSONPath, addr, xG)
         
-        def finalize(swapName, contractFunds, CoinA_Price, CoinB_Price, initiatorJSONPath, finalizationPATH, InitiatorErgoAddr, ElGamalKey, ElGamalKeyPath, ENC_finalizationPATH):
+        def finalize( \
+                swapName, contractFunds, CoinA_Price, CoinB_Price, initiatorJSONPath, finalizationPATH, \
+                InitiatorErgoAddr, ElGamalKey, ElGamalKeyPath, ENC_finalizationPATH \
+        ):
+            LOG('finalize')
             convList = price_tools.getPriceConversions(price_tools.weiToEth(contractFunds), CoinA_Price, CoinB_Price)
             setSwapState(swapName, "finalizing", setMap=True)
             #TODO if we re enter this section due to a state reload, we should check if we already sent something to the mempool
@@ -408,6 +428,7 @@ def GeneralizedENC_FinalizationSubroutine(initiatorJSONPath, CoinA_Price, CoinB_
 
 def GeneralizedENC_InitiatorClaimSubroutine(initiatorJSONPath, localchainpassword="", crosschainpassword=""):
     ############## INITIATOR #######################################################
+    LOG('GeneralizedENC_InitiatorClaimSubroutine')
     init_J = json.loads(file_tools.clean_file_open(initiatorJSONPath, "r"))
     if init_J["InitiatorChain"] == "TestnetErgo" and init_J["ResponderChain"] == "Sepolia":
         swapName = init_J["swapName"]
@@ -415,11 +436,13 @@ def GeneralizedENC_InitiatorClaimSubroutine(initiatorJSONPath, localchainpasswor
         boxID = init_J["boxId"]
         initiatorEVMAccountName = init_J["InitiatorEVMAccountName"] 
         if SigmaParticleInterface.checkSchnorrTreeForClaim(boxID, swapName, initiatorJSONPath, password=localchainpassword) == False:
+            LOG('refund attempted due to timelock expiry')
             print("refund attempted due to timelock expiry")
             exit()
         SigmaParticleInterface.deduceX_fromAtomicSchnorrClaim(initiatorJSONPath, swapName)
 #        AtomicityInterface.Atomicity_updateKeyEnv(swapName, initiatorEVMAccountName)
         AtomicityInterface.Atomicity_claimScalarContract(initiatorJSONPath, swapName, gasMod=3, password=crosschainpassword)
+        LOG('Swap Claimed')
         setSwapState(swapName, "claimed", setMap=True)
     ################################################################################
 
