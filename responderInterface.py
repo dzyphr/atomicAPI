@@ -8,6 +8,7 @@ import file_tools
 import price_tools
 import config_tools
 import swap_tools
+from LOG import LOG
 from passwordFileEncryption import get_val_from_envdata_key, decrypt_file_return_contents
 py = "python3 -u "
 AtomicSwapECCPath = "Ergo/SigmaParticle/AtomicMultiSigECC/py/deploy.py " #TODO Ergo Specific

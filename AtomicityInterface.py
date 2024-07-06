@@ -104,7 +104,7 @@ def Atomicity_buildScalarContract(chain, counterpartyChainPub, xG, locktimeDurat
             "&& cp ../../AtomicMultiSigSecp256k1/contracts/ReentrancyGuard.sol . " + \
             "&& cp ../../AtomicMultiSigSecp256k1/contracts/EllipticCurve.sol . "
     cpy = os.popen(contract_copy).read()
-    LOG('cp output: {cpy}')
+    LOG(f'cp output: {cpy}')
     rename = str(file_tools.clean_file_open(Atomicity + swapName + "/contracts/" + swapName + ".sol", "r"))
     file_tools.clean_file_open(Atomicity + swapName + "/contracts/" + swapName + ".sol", "w", rename.replace('AtomicMultiSigSecp256k1', swapName))
     specifyChain = os.popen("echo 'CurrentChain=\"" + chain  + "\"' >> " + Atomicity + \

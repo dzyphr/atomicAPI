@@ -351,10 +351,10 @@ def GeneralizedENC_FinalizationSubroutine( \
             #if yes check for finalization / funded contract
             AtomicityInterface.Atomicity_newFrame(swapName, responderLocalChain)
             AtomicityInterface.Atomicity_updateKeyEnv(swapName, initiatorEVMAccountName)
-            waittime = 30
-            LOG(f'waiting {waittime} seconds for contract upload and funding')
-            print("wait for contract upload and funding")
-            time.sleep(waittime) #TODO make this better to avoid non uploaded or non funded related errors
+#            waittime = 30 #As long as responder waits before responding we dont need this
+#            LOG(f'waiting {waittime} seconds for contract upload and funding')
+#            print("wait for contract upload and funding")
+#            time.sleep(waittime) #TODO make this better to avoid non uploaded or non funded related errors
             return swapName, ENC_Response_PATH, ElGamalKey, ElGamalKeyPath, DEC_Response_PATH, finalizationPATH, InitiatorEIP3Secret, ENC_finalizationPATH, InitiatorErgoAddr, addr, responderLocalChain, xG
 
         swapName, ENC_Response_PATH, ElGamalKey, ElGamalKeyPath, DEC_Response_PATH, finalizationPATH, InitiatorEIP3Secret, ENC_finalizationPATH, InitiatorErgoAddr, addr, responderLocalChain, xG = init(init_J, initiatorJSONPath, CoinA_Price, CoinB_Price, localchainpassword, crosschainpassword)

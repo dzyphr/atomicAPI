@@ -1,5 +1,5 @@
 import sys, priceFeeds, secrets, ast, market_pricing, json, shutil, configparser, config_tools, initiatorInterface, responderInterface
-import ElGamalInterface, AtomicityInterface, SigmaParticleInterface, functional_tests, json_tools, json_tools, json_tools, swap_tools
+import ElGamalInterface, AtomicityInterface, SigmaParticleInterface, functional_tests, json_tools, json_tools, json_tools, swap_tools, auto_test
 from ServerEndpoints import logInToPasswordEncryptedAccount_ServerEndpoint, publishNewOrderType_ServerEndpoint
 from ClientEndpoints import submitEncryptedResponse_ClientEndpoint, requestEncryptedInitiation_ClientEndpoint, logInToPasswordEncryptedAccount_ClientEndpoint
 from config_tools import firstRunCheck, updateMainEnv, initErgoAccountNonInteractive, initSepoliaAccountNonInteractive 
@@ -18,6 +18,9 @@ LOG('Atomic API Logger Started')
 if config_tools.valFromConf(".env", "LOGMAINARGS").strip("\"") == "True": LOG(f'CLI Args: {argstr}')
 
 if len(args) == 2:
+    if args[1] == "automated_test_local_client_side":
+        LOG('running automated_test_local_client_side()')
+        auto_test.automated_test_local_client_side()
     if args[1] == "firstRunCheck":
         LOG('running firstRunCheck()')
         firstRunCheck()
