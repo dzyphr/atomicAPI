@@ -1,4 +1,4 @@
-import sys
+import sys, os, signal
 
 args = sys.argv
 
@@ -12,7 +12,16 @@ from connect import *
 connect()
 from main import *
 #main(os.getenv('ContractName'), ergo, wallet_mnemonic, mnemonic_password, senderAddress, args)
-main(args)
+
+try:
+    main(args)
+except(BrokenPipeError, IOError):
+    print ('BrokenPipeError caught', file = sys.stderr)
+    pid = os.getpid()
+    os.kill(pid, signal.SIGTERM)
+    pass
+
+
 
 from cleanup import *
 cleanup()

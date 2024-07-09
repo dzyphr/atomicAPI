@@ -1,4 +1,5 @@
 *.env
+autotest-*
 atomicAPI.log
 *-*-*-*-*
 ENC_EVMClient

@@ -102,8 +102,8 @@ def GeneralizeENC_ResponseSubroutine(\
                         "responderJSONPath" : swapName + "/responder.json",
                         "ResponderEVMAddr" : \
                                 config_tools.valFromConf("EVM/Atomicity/" + responderLocalChainAccountName.replace('"', '') + "/.env", 'SepoliaSenderAddr').replace('"', ''),
-                        "ResponderEIP3Secret" : \
-                                config_tools.valFromConf("Ergo/SigmaParticle/" + responderCrossChainAccountName.replace('"', '') + "/.env", 'senderEIP3Secret').replace('"', ''),
+#                        "ResponderEIP3Secret" : \
+#                                config_tools.valFromConf("Ergo/SigmaParticle/" + responderCrossChainAccountName.replace('"', '') + "/.env", 'senderEIP3Secret').replace('"', ''),
                         "ResponderErgoAddr" : \
                                 config_tools.valFromConf("Ergo/SigmaParticle/" + responderCrossChainAccountName.replace('"', '') + "/.env", 'senderPubKey').replace('"', ''),
                         "ENC_Init_PATH" : swapName + "/ENC_init.bin", #responder needs to save ENC init to this path to proceed
@@ -127,8 +127,8 @@ def GeneralizeENC_ResponseSubroutine(\
                         "responderJSONPath" : swapName + "/responder.json",
                         "ResponderEVMAddr" : \
                                 get_val_from_envdata_key('SepoliaSenderAddr', localChainAccountEnvData).replace('"', ''),
-                        "ResponderEIP3Secret" : \
-                                config_tools.valFromConf("Ergo/SigmaParticle/" + responderCrossChainAccountName.replace('"', '') + "/.env", 'senderEIP3Secret').replace('"', ''),
+#                        "ResponderEIP3Secret" : \
+#                                config_tools.valFromConf("Ergo/SigmaParticle/" + responderCrossChainAccountName.replace('"', '') + "/.env", 'senderEIP3Secret').replace('"', ''),
                         "ResponderErgoAddr" : \
                                 config_tools.valFromConf("Ergo/SigmaParticle/" + responderCrossChainAccountName.replace('"', '') + "/.env", 'senderPubKey').replace('"', ''),
                         "ENC_Init_PATH" : swapName + "/ENC_init.bin", #responder needs to save ENC init to this path to proceed
@@ -152,8 +152,8 @@ def GeneralizeENC_ResponseSubroutine(\
                         "responderJSONPath" : swapName + "/responder.json",
                         "ResponderEVMAddr" : \
                             config_tools.valFromConf("EVM/Atomicity/" + responderLocalChainAccountName.replace('"', '') + "/.env", 'SepoliaSenderAddr').replace('"', ''),
-                        "ResponderEIP3Secret" : \
-                                get_val_from_envdata_key('senderEIP3Secret', crossChainAccountEnvData).replace('"', ''),
+#                        "ResponderEIP3Secret" : \
+#                                get_val_from_envdata_key('senderEIP3Secret', crossChainAccountEnvData).replace('"', ''),
                         "ResponderErgoAddr" : \
                                 get_val_from_envdata_key('senderPubKey', crossChainAccountEnvData).replace('"', ''),
                         "ENC_Init_PATH" : swapName + "/ENC_init.bin", #responder needs to save ENC init to this path to proceed
@@ -178,8 +178,8 @@ def GeneralizeENC_ResponseSubroutine(\
                         "responderJSONPath" : swapName + "/responder.json",
                         "ResponderEVMAddr" : \
                                 get_val_from_envdata_key('SepoliaSenderAddr', localChainAccountEnvData).replace('"', ''),
-                        "ResponderEIP3Secret" : \
-                                get_val_from_envdata_key('senderEIP3Secret', crossChainAccountEnvData).replace('"', ''),
+#                        "ResponderEIP3Secret" : \
+#                                get_val_from_envdata_key('senderEIP3Secret', crossChainAccountEnvData).replace('"', ''),
                         "ResponderErgoAddr" : \
                                 get_val_from_envdata_key('senderPubKey', crossChainAccountEnvData).replace('"', ''),
                         "ENC_Init_PATH" : swapName + "/ENC_init.bin", #responder needs to save ENC init to this path to proceed

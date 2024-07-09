@@ -11,7 +11,7 @@ def Atomicity_CheckContractFunds(swapName, j_response, password=""):
     if chain == "Sepolia":
         script = "cd " + Atomicity  + "/" + swapName + \
                     " && python3 -u py/deploy.py getBalance " + \
-                    contractAddr + " " + password
+                    contractAddr 
         value = os.popen(script).read()
         LOG(f'Atomicity getBalance script output: {value}')
         return value

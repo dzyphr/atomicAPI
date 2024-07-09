@@ -1,7 +1,54 @@
 #automated tests
-import requests, json, uuid, json_tools
+import requests, json, uuid, json_tools, file_tools, AtomicityInterface, SigmaParticleInterface, time, os, psutil, signal
+from threading import Thread, Event
 from LOG import AUTOTESTLOG
-def automated_test_local_client_side():
+
+def pid_by_name(procName):
+    for proc in psutil.process_iter(['pid', 'name']):
+        if procName == proc.info['name']:
+            return proc.info['pid']
+    return False
+
+def state_reload_test_checkpoint(swapID, role="", stateReloadTest="", platform=""):
+    if stateReloadTest == "":
+        return None
+    #TODO make logic for stateReloadTest=All
+    if checkSwapState(swapID, stateReloadTest) == False:
+        return None
+    if role == "Client":
+        procName = "AASwapClientRESTAPI"
+    elif role == "Server":
+        procName = "AASwapServerRESTAPI"
+    if platform == "Ubuntu":
+        cmd = f'gnome-terminal -- bash -c "./{procName}"'
+    else:
+        print(f'Unhandled Platform: {platform}')
+        AUTOTESTLOG(f'Unhandled Platform: {platform}', "err")
+        return False
+    while pid_by_name(procName) != False:
+        pid = pid_by_name(procName)
+        AUTOTESTLOG(f'StateReloadTest: Killing {procName} Proccess ID: {pid}', "info")
+        os.kill(pid, signal.SIGTERM)
+    AUTOTESTLOG(f'StateReloadTest: Restarting {procName}', "info")
+    os.popen(cmd).read()
+    return True
+
+def state_reload_test_worker(stop_event, swapID, role="", stateReloadTest="", platform=""):
+    while not stop_event.isSet():
+        if state_reload_test_checkpoint(swapID, role=role, stateReloadTest=stateReloadTest, platform=platform) == True:
+            break
+        else:
+            continue
+
+
+def checkSwapState(swapID, state):
+    SwapState = file_tools.clean_file_open(f'{swapID}/SwapState', "r")
+    if SwapState == state:
+        return True
+    elif SwapState != state:
+        return False
+
+def automated_test_local_client_side(watch=False, platform="Ubuntu", stateReloadTest=""):
     localMarketServerOrderTypesURL = "http://127.0.0.1:3030/v0.0.1/ordertypes"
     OrderTypes = json.loads(requests.get(localMarketServerOrderTypesURL).json())
     if len(OrderTypes) == 0:
@@ -16,7 +63,7 @@ def automated_test_local_client_side():
     
     #TODO for now client is only ETH in future need to modularize this to make sense of amounts likely
 
-    amount = 0.14
+    amount = 0.12
 
     localClientAccountsMapURL = "http://localhost:3031/v0.0.1/AllChainAccountsMap"
     clientAccounts = json.loads(requests.get(localClientAccountsMapURL).json())
@@ -36,11 +83,11 @@ def automated_test_local_client_side():
             break
 
     if localChainAccount == "":
-        AUTOTESTLOG(f'{localChain} account not found!', "err")
+        AUTOTESTLOG(f'{localChain} account not found!', "err", watch=watch)
         print(f'{localChain} account not found!')
         exit()
     elif crossChainAccount == "":
-        AUTOTESTLOG(f'{crossChain} account not found!', "err")
+        AUTOTESTLOG(f'{crossChain} account not found!', "err", watch=watch)
         print(f'{crossChain} account not found!')
         exit()
 
@@ -64,7 +111,7 @@ def automated_test_local_client_side():
             "QGChannel": QG
         })
         headers = {
-            "Authorization": f"Bearer {privateAPIKey}",
+            "Authorization": f'Bearer {privateAPIKey}',
             "Content-Type": "application/json"
         }
         response = requests.post(url, data=data, headers=headers).text
@@ -94,13 +141,13 @@ def automated_test_local_client_side():
             else:
                 #TODO untested
                 generateElGKeySpecificQGdata = {
-                        "id": uuidv4(),
+                        "id": uuid.uuid4(),
                         "request_type": "generateElGKeySpecificQG",
                         "QGChannel": QG
                 }
                 url = "http://localhost:3031/v0.0.1/requests"
                 headers = {
-                    "Authorization": f"Bearer {privateAPIKey}",
+                    "Authorization": f'Bearer {privateAPIKey}',
                     "Content-Type": "application/json"
                 }
                 response = requests.post(url, data=data, headers=headers).text
@@ -113,43 +160,86 @@ def automated_test_local_client_side():
 
     ElGKeyPath = f'Key{ElGKeyIndex}.ElGamalKey'
 
-
     starterAPIKeysURL = localMarketServerOrderTypesURL.replace("ordertypes", "publicrequests/starterAPIKeys")
     starterAPIKeys = json.loads(requests.get(starterAPIKeysURL).json())
     marketAPIKey = starterAPIKeys["0"]
 
     startSwapFromUIData = json.dumps({
-            "id": str(uuid.uuid4()),
-            "request_type": "startSwapFromUI",
-            "OrderTypeUUID": OrderTypeUUID,
-            "QGChannel": compatchannel,
-            "ElGamalKey": compatkey,
-            "ServerElGamalKey": marketElGKey,
-            "ElGamalKeyPath": ElGKeyPath,
-            "MarketURL": localMarketServerOrderTypesURL,
-            "MarketAPIKey": marketAPIKey,
-            "LocalChain": localChain,
-            "CrossChain": crossChain,
-            "LocalChainAccount": localChainAccount,
-            "CrossChainAccount": crossChainAccount,
-            "SwapRole": "Responder",
-            "swapAmount": str(amount)
+        "id": str(uuid.uuid4()),
+        "request_type": "startSwapFromUI",
+        "OrderTypeUUID": OrderTypeUUID,
+        "QGChannel": compatchannel,
+        "ElGamalKey": compatkey,
+        "ServerElGamalKey": marketElGKey,
+        "ElGamalKeyPath": ElGKeyPath,
+        "MarketURL": localMarketServerOrderTypesURL,
+        "MarketAPIKey": marketAPIKey,
+        "LocalChain": localChain,
+        "CrossChain": crossChain,
+        "LocalChainAccount": localChainAccount,
+        "CrossChainAccount": crossChainAccount,
+        "SwapRole": "Responder",
+        "swapAmount": str(amount)
     })
     headers = {
-            "Authorization": f"Bearer {privateAPIKey}",
+            "Authorization": f'Bearer {privateAPIKey}',
             "Content-Type": "application/json"
     }
     url = "http://localhost:3031/v0.0.1/requests"
-    AUTOTESTLOG(f'Client Data Collected Successfully, Starting Swap', "info")
+    AUTOTESTLOG(f'Client Data Collected Successfully, Starting Swap', "info", watch=watch)
+
+    #TODO watch the swap state, kill and restart the process if stateReloadTest == currentState , log events
+    #TODO create stateReloadAll test, either constantly kill and restart the state during the same swap, or run a 
+    #new swap for each state reload test possible
+
+
     response = requests.post( \
-            url, data=startSwapFromUIData, headers=headers \
-            )\
-            .text.replace("\n", "").replace("\r","").replace("\t","")[1:-1].replace("\\", '')[1:-1]
-    j = json.loads(response)
+        url, data=startSwapFromUIData, headers=headers \
+    ).text.replace("\n", "").replace("\r","").replace("\t","")[1:-1].replace("\\", '')[1:-1]
     SwapTicketID = json.loads(response)["SwapTicketID"]
-
+    if stateReloadTest != "":
+        stop_event = Event()
+        thread = Thread(target=state_reload_test_worker, args=( \
+                stop_event, SwapTicketID, "Client", stateReloadTest, platform \
+        ))
+        thread.start()
     AUTOTESTLOG(f'Returned SwapTicketID: {SwapTicketID}', "info")
-    AUTOTESTLOG('AutoTest finished!', "info")
 
+    #Check for contract upload
+    responderJSONPath = f'{SwapTicketID}/responder.json'
+    file_tools.wait_for_file(responderJSONPath)
+    responderJSON = json_tools.ojf(f'{SwapTicketID}/responder.json')
 
+    while "responderContractAddr" not in json_tools.ojf(f'{SwapTicketID}/responder.json').keys():
+        time.sleep(5)
+    responderJSON = json_tools.ojf(f'{SwapTicketID}/responder.json')
+    AUTOTESTLOG(f'Contract Deployed: {responderJSON["responderContractAddr"]}', "info")
 
+    #Check for contract funding
+    while AtomicityInterface.Atomicity_CheckContractFunds(SwapTicketID, responderJSON) == 0:
+        time.sleep(5)
+
+    ContactFundedAmount = AtomicityInterface.Atomicity_CheckContractFunds(SwapTicketID, responderJSON)
+    AUTOTESTLOG(f'Contract Funded: {ContactFundedAmount}', "info", watch=watch)
+
+    #Check for finalization contract
+    while "boxId" not in json_tools.ojf(f'{SwapTicketID}/responder.json').keys():
+        time.sleep(5)
+
+    responderJSON = json_tools.ojf(f'{SwapTicketID}/responder.json')
+    AUTOTESTLOG(f'Finalization Contract BoxID: {responderJSON["boxId"]}', "info")
+    BoxID = responderJSON["boxId"]
+    addr = SigmaParticleInterface.SigmaParticle_box_to_addr(BoxID, SwapTicketID)
+
+    #Check claim from finalization contract was successful
+    while os.path.isfile(SwapTicketID + "/atomicClaim_tx1") == False:
+        boxFilterCmd = \
+            "cd " + SigmaParticleInterface.SigmaParticlePath + "boxFilter && " + \
+            "./deploy.sh " + addr + " " + BoxID + " ../../../" + SwapTicketID + "/atomicClaim "
+        boxFilter = os.popen(boxFilterCmd).read()
+        time.sleep(5)
+    txjson = json_tools.ojf(SwapTicketID + "/atomicClaim_tx1")
+    txid = txjson["id"]
+    AUTOTESTLOG(f'Succesful Claim! Claim Transaction ID: {txid}\nAutoTest finished!', "info")
+    if stateReloadTest != "":
+       stop_event.set() 
