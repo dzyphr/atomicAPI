@@ -1,4 +1,12 @@
-import file_tools, os, uuid, responderInterface, json_tools, subprocess, sys, json, ClientEndpoints, initiatorInterface
+import file_tools, os, uuid, responderInterface, json_tools, subprocess, sys, json, ClientEndpoints, initiatorInterface, signal
+
+
+def sigHandle(sig, frame):
+    os._exit(0)
+
+signal.signal(signal.SIGTERM, sigHandle)
+signal.signal(signal.SIGINT, sigHandle)
+
 
 PossibleSwapStates = [
         "initiated", #0 
@@ -71,6 +79,7 @@ def getSwapState(swapName):
         return file_tools.clean_file_open(swapName + "/SwapState", "r")
 
 def watchSwapLoop(swapName, localChainAccountPassword="", crossChainAccountPassword=""):
+
     #watches a specific swap, called after scanning swapstatemap or initiation
     #handles swap communication round responses, can be used for reload after shutdown
     #to make sure all swaps left in any limbo state are completely cleaned up

@@ -1,5 +1,6 @@
 *.env
 autotest-*
+Swap_*
 atomicAPI.log
 *-*-*-*-*
 ENC_EVMClient

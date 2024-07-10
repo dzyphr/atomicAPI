@@ -1,5 +1,6 @@
 import sys, priceFeeds, secrets, ast, market_pricing, json, shutil, configparser, config_tools, initiatorInterface, responderInterface
 import ElGamalInterface, AtomicityInterface, SigmaParticleInterface, functional_tests, json_tools, json_tools, json_tools, swap_tools, auto_test
+import signal, os
 from ServerEndpoints import logInToPasswordEncryptedAccount_ServerEndpoint, publishNewOrderType_ServerEndpoint
 from ClientEndpoints import submitEncryptedResponse_ClientEndpoint, requestEncryptedInitiation_ClientEndpoint, logInToPasswordEncryptedAccount_ClientEndpoint
 from config_tools import firstRunCheck, updateMainEnv, initErgoAccountNonInteractive, initSepoliaAccountNonInteractive 
@@ -15,8 +16,15 @@ def test2pAtomicSwap(p1Chain1, p1Chain2, p2Chain1, p2Chain2):
 
 LOG('Atomic API Logger Started')
 
+
+def sigHandle(sig, frame):
+#    sys.exit(0)
+    os._exit(0)
+
 if config_tools.valFromConf(".env", "LOGMAINARGS").strip("\"") == "True": LOG(f'CLI Args: {argstr}')
 def main():
+    signal.signal(signal.SIGINT, sigHandle)
+    signal.signal(signal.SIGTERM, sigHandle)
     if len(args) == 2:
         if args[1] == "automated_test_local_client_side":
             LOG('running automated_test_local_client_side()')
@@ -434,7 +442,7 @@ LOG('Atomic API Logger Finished')
 
 
 if __name__ == "__main__":
-    try:
+#    try:
         main()
-    except (BrokenPipeError, IOError):
-        print ('BrokenPipeError caught', file = sys.stderr)
+#    except (BrokenPipeError, IOError):
+#        print ('BrokenPipeError caught', file = sys.stderr)

@@ -12,7 +12,7 @@ def connect(password=""):
     if password == "":
         load_dotenv()
         node_url = os.getenv('testnetNode') # MainNet or TestNet
-        testnetAPIKey = os.getenv('testnetAPIKey')
+#       testnetAPIKey = os.getenv('testnetAPIKey')
  #       api_url = os.getenv('apiURL')
 #        ergo = appkit.ErgoAppKit(node_url=node_url, api_url=api_url)
 #        wallet_mnemonic = os.getenv('mnemonic')
@@ -28,11 +28,11 @@ def connect(password=""):
         #else:
             #WITHOUT MNEMONIC PASSWORD
  #           senderAddress = helper_functions.get_wallet_address(ergo=ergo, amount=1, wallet_mnemonic=wallet_mnemonic)
-        return node_url, testnetAPIKey
+        return node_url
     else:
         envdata = decrypt_file_return_contents(".env.encrypted", password)
         node_url = get_val_from_envdata_key('testnetNode', envdata).strip('\"')
-        testnetAPIKey = get_val_from_envdata_key('testnetAPIKey', envdata).strip('\"')
+#       testnetAPIKey = get_val_from_envdata_key('testnetAPIKey', envdata).strip('\"')
 #        api_url = get_val_from_envdata_key("apiURL", envdata).strip('\"')
 #        wallet_mnemonic = get_val_from_envdata_key('mnemonic', envdata).strip('\"')
  #       mnemonic_password = get_val_from_envdata_key('mnemonicPass', envdata).strip('\"')
@@ -47,4 +47,4 @@ def connect(password=""):
             #WITH MNEMONIC PASSWORD
 #            senderAddress = helper_functions.get_wallet_address(ergo=ergo, amount=1, wallet_mnemonic=wallet_mnemonic, mnemonic_password=mnemonic_password)
 
-        return node_url, testnetAPIKey
+        return node_url

@@ -12,10 +12,10 @@ if len(args) == 3:
     password = args[2]
 
 from connect import *
-ergo, wallet_mnemonic, mnemonic_password, senderAddress= connect(password=password) #dotenv loaded here dont call env vars before
+ergo = connect(password=password) #dotenv loaded here dont call env vars before
 
 from main import *
-main(os.getenv('ContractName'), ergo, wallet_mnemonic, mnemonic_password, senderAddress, args)
+main(os.getenv('ContractName'), ergo, args)
 
 from cleanup import *
 cleanup()

@@ -1,4 +1,6 @@
-import os, json, sys, time, random, jpype, java.lang, waits, coinSelection, scalaPipe, scala.math.BigInt as BigInt, file_tools
+import sys
+sys.path.append('Ergo/SigmaParticle/treeToAddr/py/')
+import os, json,  time, random, jpype, java.lang, waits, coinSelection, scalaPipe, scala.math.BigInt as BigInt, file_tools
 from jpype import *
 from org.ergoplatform.appkit import *
 from org.ergoplatform.appkit.impl import *

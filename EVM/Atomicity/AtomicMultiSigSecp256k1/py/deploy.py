@@ -8,6 +8,7 @@ load_dotenv()
 from web3 import Web3
 from solcx import compile_standard, install_solc, compile_files
 import json
+import signal
 solcV = os.getenv('SolidityCompilerVersion') #solidity compiler version
 contractName = os.getenv('ContractName') #this variable is set when creating a new_frame
 xsol = ".sol"
@@ -21,6 +22,13 @@ contractFile = contractName + xsol
 constructorArgs = bool(os.getenv('ConstructorArgs'))
 gasMod = 1
 chain = os.getenv('CurrentChain') #set the current chain in .env
+
+def sigHandle(sig, frame):
+    sys.exit(0)
+
+signal.signal(signal.SIGTERM, sigHandle)
+signal.signal(signal.SIGINT, sigHandle)
+
 
 with open(contractDir + contractFile, "r") as file:
     contract = file.read()

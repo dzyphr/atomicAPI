@@ -29,6 +29,8 @@ def state_reload_test_checkpoint(swapID, role="", stateReloadTest="", platform="
         pid = pid_by_name(procName)
         AUTOTESTLOG(f'StateReloadTest: Killing {procName} Proccess ID: {pid}', "info")
         os.kill(pid, signal.SIGTERM)
+        os.kill(pid, signal.SIGKILL)
+        os.kill(pid, signal.SIGINT)
     AUTOTESTLOG(f'StateReloadTest: Restarting {procName}', "info")
     os.popen(cmd).read()
     return True

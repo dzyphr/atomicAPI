@@ -150,8 +150,8 @@ def initSepoliaAccountNonInteractive(\
         SolidityCompilerVersion, fulldirpath, fullenvpath, enc=False, password=""):
     #TODO get rid of ID scan and compiler version args
     #TODO use hardcoded (fornow) chain frameworkpath instead of fullpaths to build paths on fly w less args
+    #        "[default]\n" +\
     envFormat = \
-        "[default]\n" +\
         "SepoliaSenderAddr=\"" + SepoliaSenderAddr + "\"\n" + \
         "SepoliaPrivKey=\"" + SepoliaPrivKey + "\"\n"  + \
         "Sepolia=\"" + Sepolia + "\"\n" + \
@@ -166,7 +166,6 @@ def initErgoAccountNonInteractive(testnetNode, mnemonic, mnemonicPass, senderEIP
         apiURL, fulldirpath, fullenvpath, enc=False, password=""):
     #TODO use hardcoded (fornow) chain frameworkpath instead of fullpaths to build paths on fly w less args
     envFormat = \
-        "[default]\n" +\
         "testnetNode=\"" + testnetNode + "\"\n" +\
         "mnemonic=\"" + mnemonic + "\"\n" +\
         "mnemonicPass=\"" + mnemonicPass + "\"\n" +\
@@ -309,7 +308,6 @@ def initializeAccount(accountName, chain): #interactive command line function to
                 print("Enter your explorer api URL (default: https://api-testnet.ergoplatform.com/)")
                 apiURL = input()
                 envFormat = \
-                    "[default]\n" +\
                     "testnetNode=\"" + testnetNode + "\"\n" +\
                     "mnemonic=\"" + mnemonic + "\"\n" +\
                     "mnemonicPass=\"" + mnemonicPass + "\"\n" +\
@@ -326,7 +324,6 @@ def initializeAccount(accountName, chain): #interactive command line function to
                 print("Enter your explorer api URL (default: https://api-testnet.ergoplatform.com/)")
                 apiURL = input()
                 envFormat = \
-                    "[default]\n" +\
                     "testnetNode=\"" + testnetNode + "\"\n" +\
                     "apiURL=\"" + apiURL + "\"\n"
                 create(fulldirpath, fullenvpath, envFormat)
@@ -369,7 +366,6 @@ def initializeAccount(accountName, chain): #interactive command line function to
                 #EtherscanAPIKey = input() #contract verification stuff goes here if we need it
 
                 envFormat = \
-                    "[default]\n" +\
                     "SepoliaSenderAddr=\"" + SepoliaSenderAddr + "\"\n" + \
                     "SepoliaPrivKey=\"" + SepoliaPrivKey + "\"\n"  + \
                     "Sepolia=\"" + Sepolia + "\"\n" + \
@@ -386,7 +382,6 @@ def initializeAccount(accountName, chain): #interactive command line function to
                 SepoliaID = "11155111" #chain id
                 SepoliaScan = "https://api-sepolia.etherscan.io/api" #block explorer
                 envFormat = \
-                    "[default]\n" +\
                     "Sepolia=\"" + Sepolia + "\"\n" + \
                     "SepoliaID=\"" + SepoliaID + "\"\n" + \
                     "SepoliaScan=\"" + SepoliaScan + "\"\n"  

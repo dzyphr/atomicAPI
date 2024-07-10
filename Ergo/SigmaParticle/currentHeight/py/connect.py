@@ -44,4 +44,4 @@ def connect(password=""):
             #WITH MNEMONIC PASSWORD
             senderAddress = helper_functions.get_wallet_address(ergo=ergo, amount=1, wallet_mnemonic=wallet_mnemonic, mnemonic_password=mnemonic_password)
 
-    return ergo, wallet_mnemonic, mnemonic_password, senderAddress
+    return ergos

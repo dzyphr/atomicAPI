@@ -1,4 +1,5 @@
 import json, ast, os, time, subprocess, json_tools, file_tools, config_tools, AtomicityInterface, hashlib
+import importlib.util
 from LOG import LOG
 py = "python3 -u "
 SigmaParticlePath = "Ergo/SigmaParticle/"
@@ -43,12 +44,26 @@ def SigmaParticle_box_to_addr(boxId, swapName, password=""):
             tree = SigmaParticle_getTreeFromBox(boxId, swapName, password=password).replace("\n", "")
             if tree != None and tree != "":
                 hashedtree = str(hashlib.sha256(tree.encode()).hexdigest())#for deterministic proper size filename
+                scriptPath = f'{SigmaParticlePath}treeToAddr/py/connect.py'
+                spec = importlib.util.spec_from_file_location("connect", scriptPath)
+                connect = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(connect)
+                node_url = connect.connect(password=password) #dotenv loaded here dont call env vars before
+
+                scriptPath = f'{SigmaParticlePath}treeToAddr/py/main.py'
+                spec = importlib.util.spec_from_file_location("main", scriptPath)
+                main = importlib.util.module_from_spec(spec)
+                spec.loader.exec_module(main)
+                res = main.treeToAddr(node_url, tree, filepath=f'{swapName}/boxAddr', password=password)
+                '''
                 treeToAddrCmd = \
                             "cd " + SigmaParticlePath + "treeToAddr && ./deploy.sh " + \
                             tree + " " + \
                             "../../../" + swapName + "/boxAddr" 
+                
 #                file_tools.clean_file_open("treeToAddrScriptTestDebug", "w", treeToAddrCmd)
                 res = os.popen(treeToAddrCmd).read()
+                '''
                 LOG(f'SigmaParticle treeToAddr output: {res}')
                 if is_json(res) == True:
                     addr = json.loads(res)["address"]
@@ -97,19 +112,49 @@ def SigmaParticle_CheckLockTimeAtomicSchnorr(swapName, boxId, password=""):
     lockHeightPath = SigmaParticlePath + swapName + "/lockHeight"
     if os.path.isfile(lockHeightPath) == False:
         while is_file_contents_int(lockHeightPath) == False:
+            scriptPath = f'{SigmaParticlePath}boxConstantByIndex/py/connect.py'
+            spec = importlib.util.spec_from_file_location("connect", scriptPath)
+            connect = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(connect)
+            ergo = connect.connect(password=password) 
+            #dotenv loaded here dont call env vars before
+
+            scriptPath = f'{SigmaParticlePath}boxConstantByIndex/py/main.py'
+            spec = importlib.util.spec_from_file_location("main", scriptPath)
+            main = importlib.util.module_from_spec(spec)
+            spec.loader.exec_module(main)
+            output = main.getConstantAt(ergo, boxId, 8, filepath=f'{swapName}/lockHeight')
+            '''
             lockHeightCMD = \
                             "cd " + SigmaParticlePath + "boxConstantByIndex && ./deploy.sh " + boxId + \
                             " 8 ../" + swapName + "/lockHeight"
 #            file_tools.clean_file_open("lockHeightScriptDebug", "w" , lockHeightCMD)
             output = os.popen(lockHeightCMD).read()
+            '''
             LOG(f'SigmaParticle boxConstantByIndex output: {output}')
             time.sleep(5)
+    '''
     currentHeightCMD = \
                     "cd " + SigmaParticlePath + "currentHeight && ./deploy.sh ../../../" + \
                     swapName + "/localChain_currentHeight " 
     file_tools.clean_file_open("currentHeightCMDDeubug", "w", currentHeightCMD)
     output = os.popen(currentHeightCMD).read()
+    '''
+    scriptPath = f'{SigmaParticlePath}currentHeight/py/connect.py'
+    spec = importlib.util.spec_from_file_location("connect", scriptPath)
+    connect = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(connect)
+    ergo = connect.connect(password=password)
+    #dotenv loaded here dont call env vars before
+
+    scriptPath = f'{SigmaParticlePath}currentHeight/py/main.py'
+    spec = importlib.util.spec_from_file_location("main", scriptPath)
+    main = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(main)
+    output = main.height_filepath(ergo, f'{swapName}/localChain_currentHeight')
+
     LOG(f'SigmaParticle currentHeight output: {output}')
+
     if \
     os.path.isfile(SigmaParticlePath + swapName + "/lockHeight") == True and \
     os.path.isfile(swapName + "/localChain_currentHeight") == True:
@@ -220,10 +265,25 @@ def responderGenerateAtomicSchnorr(swapName, DEC_finalizationPATH, responderMast
 
 def responderVerifyErgoScript(swapName, expectedErgoTree, password=""):
     LOG('responderVerifyErgoScript')
+
+    scriptPath = f'{SigmaParticlePath}swapName/py/connect.py'
+    spec = importlib.util.spec_from_file_location("connect", scriptPath)
+    connect = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(connect)
+    ergo, wallet_mnemonic, mnemonic_password, senderAddress, senderEIP3Secret = connect.connect(password=password)
+    #dotenv loaded here dont call env vars before
+
+    scriptPath = f'{SigmaParticlePath}swapName/py/main.py'
+    spec = importlib.util.spec_from_file_location("main", scriptPath)
+    main = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(main)
+    verify = main.atomicDeposit(ergo, wallet_mnemonic, mnemonic_password, senderAddress, senderEIP3Secret, verifyTreeOnly=True, password=password)
+    '''
     verifyCMD = \
         "cd " + SigmaParticlePath + swapName + " && ./deploy.sh deposit verifyTreeOnly " + password
 #    file_tools.clean_file_open("responderVerifyErgoScriptdebug", "w", verifyCMD)
     verify = os.popen(verifyCMD).read() 
+    '''
     LOG('SigmaParticle verifyTreeOnly output: {verify}')
     ergoTreePath = SigmaParticlePath + swapName + "/ergoTree"
     ergoTree = file_tools.clean_file_open(ergoTreePath, "r")

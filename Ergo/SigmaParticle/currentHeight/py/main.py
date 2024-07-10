@@ -11,7 +11,20 @@ from ergpy import helper_functions, appkit
 import waits
 import coinSelection
 import scalaPipe
-def main(contractName, ergo, wallet_mnemonic, mnemonic_password, senderAddress, args):
+def height(ergo):
+    height = str(ergo._ctx.getHeight())
+    sys.stdout.write(str(height))
+    return height
+
+def height_filepath(ergo, filepath):
+    height = str(ergo._ctx.getHeight())
+    f = open(filepath, "w")
+    f.write(height)
+    f.close()
+    print(height)
+    return height
+
+def main(contractName, ergo, args):
     
     def height():
         sys.stdout.write(str(ergo._ctx.getHeight()))

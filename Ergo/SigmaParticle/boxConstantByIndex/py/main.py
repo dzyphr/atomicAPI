@@ -11,7 +11,15 @@ from ergpy import helper_functions, appkit
 import waits
 import coinSelection
 import scalaPipe
-def main(contractName, ergo, wallet_mnemonic, mnemonic_password, senderAddress, args):
+def getConstantAt(ergo, boxId, index, filepath=None):
+    if filepath == None:
+        sys.stdout.write(str(java.util.Arrays.asList(ergo._ctx.getBoxesById(boxId))[0].getErgoTree().constants().array()[int(index)].value()))
+    else:
+        f = open(filepath, "w")
+        f.write(str(java.util.Arrays.asList(ergo._ctx.getBoxesById(boxId))[0].getErgoTree().constants().array()[int(index)].value()))
+        f.close()
+
+def main(contractName, ergo, args):
     def getConstantAt(boxId, index, filepath=None):
         if filepath == None: 
             sys.stdout.write(str(java.util.Arrays.asList(ergo._ctx.getBoxesById(boxId))[0].getErgoTree().constants().array()[int(index)].value()))

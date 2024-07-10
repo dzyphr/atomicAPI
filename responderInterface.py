@@ -240,8 +240,6 @@ def GeneralizeENC_ResponseSubroutine(\
                 customGasMod=SEPOLIA_EVM_GASMOD_CONTROL, password=localChainAccountPassword
         )
         if addr != "fail":
-            #ASSUMING ITS ENDING WITH \n
-            addr  =  addr[:-1]
             LOG(f'addr: {addr}')
         else:
             LOG(f'fail: deployContract() didnt return a contract addr')

@@ -1,4 +1,5 @@
 import sys
+sys.path.append('Ergo/SigmaParticle/treeToAddr/py/')
 import json
 import requests
 import os
@@ -10,11 +11,47 @@ import java.lang
 from org.ergoplatform.appkit import *
 from org.ergoplatform.appkit.impl import *
 from ergpy import helper_functions, appkit
-import waits
+#import waits
 import coinSelection
 import scalaPipe
 from passwordFileEncryption import get_val_from_envdata_key, decrypt_file_return_contents
-def main(contractName, node_url, testnetAPIKey, args):
+
+def treeToAddr(node_url, tree, filepath=None, password=""):
+    '''
+    node = ""
+    if password == "":
+        node = os.getenv('testnetNode')          
+    else:
+        envdata = decrypt_file_return_contents(".env.encrypted", password)
+        node = get_val_from_envdata_key('testnetNode', envdata).strip('\"')
+    '''
+    url = node_url  + "utils/ergoTreeToAddress"
+    headers = {\
+        "accept": 'application/json',\
+        "Content-type": 'application/json'
+#        "api_key": testnetAPIKey
+    }
+    if tree.startswith("\"") == False:
+        tree = "\"" + tree
+    if tree.endswith("\"") == False:
+        tree = tree + "\""
+    data = str(tree)
+    try:
+        response = requests.post(url, headers=headers, data=data).text
+        if filepath != None:
+            f = open(filepath, "w")
+            addr = json.loads(response)["address"]
+            f.write(addr)
+            f.close()
+            print(response)
+            return response
+        else:
+            print(response)
+            return response
+    except Exception as err:
+        print("error getting address for: ", tree, "\nerror: ", err)
+
+def main(contractName, node_url, args):
     
     def treeToAddr(tree, filepath=None, password=""):
         '''
@@ -28,8 +65,8 @@ def main(contractName, node_url, testnetAPIKey, args):
         url = node_url  + "utils/ergoTreeToAddress"
         headers = {\
             "accept": 'application/json',\
-            "Content-type": 'application/json',\
-            "api_key": testnetAPIKey
+            "Content-type": 'application/json'
+#            "api_key": testnetAPIKey
         }
         if tree.startswith("\"") == False:
             tree = "\"" + tree

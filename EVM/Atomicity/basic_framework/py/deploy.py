@@ -4,25 +4,37 @@ import requests
 import os
 import time
 from dotenv import load_dotenv
+from dotenv import dotenv_values
 load_dotenv()
 from web3 import Web3
 from solcx import compile_standard, install_solc, compile_files
 import json
 import sys
 from passwordFileEncryption import get_val_from_envdata_key, decrypt_file_return_contents
+import signal
+
+Atomicity = "EVM/Atomicity/"
+
+def sigHandle(sig, frame):
+    sys.exit(0)
+
+signal.signal(signal.SIGTERM, sigHandle)
+signal.signal(signal.SIGINT, sigHandle)
 
 
 solcV = os.getenv('SolidityCompilerVersion') #solidity compiler version
 contractName = os.getenv('ContractName') #this variable is set when creating a new_frame
 if contractName == None:
     contractName = "NOCONTRACTNAMECHOSEN" #for testing purposes to get rid of debug warning
+
+targetdir = f'{Atomicity}{contractName}/'
 xsol = ".sol"
 xjson = ".json"
 xtxt = ".txt"
 xabi = "-abi"
 xcomp = "-comp"
 xbyte = "-bytecode"
-contractDir = "./contracts/"
+contractDir = "/contracts/"
 contractFile = contractName + xsol
 constructorArgs = bool(os.getenv('ConstructorArgs'))
 gasMod = 1
@@ -157,8 +169,9 @@ def getAccount(password=""):
 
 def getBalance(address, password=""):
     rpc, chain_id, senderAddr, senderPrivKey, url = pickChain(password)
-    bal = str(rpc.eth.get_balance(address))
-    sys.stdout.write(bal)
+    balance = str(rpc.eth.get_balance(address))
+#   sys.stdout.write(balance)
+    return balance
 
 def sendAmount(amount, receiver, password=""):
     rpc, chain_id, senderAddr, senderPrivKey, url = pickChain(password)
@@ -169,7 +182,7 @@ def sendAmount(amount, receiver, password=""):
     value = int(amount)
     data = ''
     txdata  = {
-        'to': receiver,
+        'to': receiver.strip(),
         'from': senderAddr,
         'value': int(amount),
         'gasPrice': int(Decimal( rpc.eth.gas_price) * Decimal(gasMod)),
@@ -177,13 +190,16 @@ def sendAmount(amount, receiver, password=""):
         'nonce': rpc.eth.get_transaction_count(senderAddr)
     }
     signed = rpc.eth.account.sign_transaction(txdata, senderPrivKey)
-    rpc.eth.send_raw_transaction(signed.rawTransaction)
+    return rpc.eth.send_raw_transaction(signed.rawTransaction)
 
 def pickChain(password=""):
     #PICK THE CHAIN HERE #fills all chain specific args with env variables
     #TODO idea: use this to remove chain logic flow from beggining of all other functions???
+    targetdir = f'{Atomicity}{contractName}/' #migration away from sub python child processes
     if chain == "Goerli":
         if password == "":
+            loadedenv = dotenv_values(targetdir + '.env')
+            os.environ.update(loadedenv)
             rpc = Web3(Web3.HTTPProvider(os.getenv('Goerli')))
             chain_id = int(os.getenv('GoerliID')) #use int so it doesnt interpret env variable as string values
             senderAddr = os.getenv('GoerliSenderAddr')
@@ -191,7 +207,7 @@ def pickChain(password=""):
             url = os.getenv('GoerliScan')
             return rpc, chain_id, senderAddr, senderPrivKey, url
         else:
-            envdata = decrypt_file_return_contents(".env.encrypted", password)
+            envdata = decrypt_file_return_contents(f'{targetdir}.env.encrypted', password)
             rpc = Web3(Web3.HTTPProvider(get_val_from_envdata_key('Goerli', envdata).strip('"\"')))
             chain_id = int(get_val_from_envdata_key('GoerliID', envdata).strip('"\"')) #use int so it doesnt interpret env variable as string values
             senderAddr = get_val_from_envdata_key('GoerliSenderAddr', envdata).strip('"\"')
@@ -200,6 +216,9 @@ def pickChain(password=""):
             return rpc, chain_id, senderAddr, senderPrivKey, url
     elif chain == "Sepolia":
         if password == "":
+            envpath = f'{targetdir}.env'
+            loadedenv = dotenv_values(envpath)
+            os.environ.update(loadedenv)
             rpc = Web3(Web3.HTTPProvider(os.getenv('Sepolia')))
             chain_id = int(os.getenv('SepoliaID'))
             senderAddr = os.getenv('SepoliaSenderAddr')
@@ -207,7 +226,8 @@ def pickChain(password=""):
             url = os.getenv('SepoliaScan')
             return rpc, chain_id, senderAddr, senderPrivKey, url
         else:
-            envdata = decrypt_file_return_contents(".env.encrypted", password)
+            envdata = decrypt_file_return_contents(f'{targetdir}.env.encrypted', password)
+#            envdata = decrypt_file_return_contents(".env.encrypted", password)
             rpc = Web3(Web3.HTTPProvider(get_val_from_envdata_key('Sepolia', envdata).strip('"\"')))
             chain_id = int(get_val_from_envdata_key('SepoliaID', envdata).strip('"\"'))
             senderAddr = get_val_from_envdata_key('SepoliaSenderAddr', envdata).strip('"\"')
@@ -217,23 +237,23 @@ def pickChain(password=""):
 
 
 def getContract():
-    with open(contractDir + contractFile, "r") as file:
+    with open(targetdir + contractDir + contractFile, "r") as file:
         contract = file.read()
 
 def checkMultiFile():
     if os.getenv('MultiFile') == "True": #flatten based on multifile arg
     #changes the flattener config based on current contract expects flattener in base directory / prev directory / `../solidity-flattener`
-        change_conf = "echo \'{\"inputFilePath\": \"../" + \
+        change_conf = "echo \'{\"inputFilePath\": \"" + "../" + \
                     contractName  + "/contracts/" + \
                     contractName  + ".sol\",\"outputDir\": \"../" + \
-                    contractName  + "/contracts/\"}\' > ../solidity-flattener/config.json"
+                    contractName  + "/contracts/\"}\' > " + targetdir + "../solidity-flattener/config.json"
         c = os.popen(change_conf).read()
     #    print(c)
-        flatOutput = os.popen("cd ../solidity-flattener/ && npm start").read()
+        flatOutput = os.popen("cd " + targetdir  + "../solidity-flattener/ && npm start").read()
     #    print(flatOutput)
         if "Success!" in flatOutput:
     #        print("flattened contract!")
-            f = open("contracts/" + contractName + "_flat.sol", "r")
+            f = open(targetdir + "contracts/" + contractName + "_flat.sol", "r")
             flat = f.read()
             f.close()
             return flat
@@ -262,13 +282,13 @@ def compileContract():
         )
         return compilation
     else:
-        contractsList = os.listdir('contracts')
+        contractsList = os.listdir(f'{targetdir}contracts')
         i = 0
         absPaths = []
         remapDict = {}
         for contract in contractsList:
-            absPaths.append("./contracts/" + contract)
-            remapDict[contract] = "./contracts/" + contract
+            absPaths.append(f"./{targetdir}contracts/" + contract)
+            remapDict[contract] = f"./{targetdir}contracts/" + contract
         compilation = compile_files(
             absPaths,
             import_remappings=remapDict,
@@ -300,19 +320,21 @@ def exportBytecode(compilation):                            #turn off when using
         #with open(contractName + xcomp + xjson, "w") as file:
         #    json.dump(compilation, file) ##this tends to produce relatively large ~1mb files which are not used so we will keep this optional
         #get contract bytecode
-        bytecode = compilation[contractDir + contractName + xsol + ":" + contractName]['bin']
+#        with open("comptest", "w") as file:
+#            file.write(str(compilation))
+        bytecode = compilation["./" + targetdir[:-1] + contractDir + contractName + xsol + ":" + contractName]['bin']
         #write bytecode to txt file
-        with open(contractName + xbyte + xtxt, "w") as file:
+        with open(targetdir + contractName + xbyte + xtxt, "w") as file:
             file.write(bytecode)
         #get abi
-        abi = compilation[contractDir + contractName + xsol + ":" + contractName]['abi']
+        abi = compilation["./" + targetdir[:-1] + contractDir + contractName + xsol + ":" + contractName]['abi']
         #write abi to file
-        with open(contractName + xabi + xjson, "w") as file:
+        with open(targetdir + contractName + xabi + xjson, "w") as file:
             json.dump(abi, file)
         return abi, bytecode
 
 
-def uploadContract(rpc, abi, bytecode, gas=None, gasModExtra=None):
+def uploadContract(senderAddr, senderPrivKey, rpc, abi, bytecode, chain_id, gas=None, gasModExtra=None):
     InitContract = rpc.eth.contract(abi=abi, bytecode=bytecode)
     #print("current gas price :", rpc.eth.gas_price );
     if gas == None:
@@ -457,6 +479,17 @@ def grabExistingContractAddr():
     else:
         print("contract addr not found (not deployed yet?)")
         exit()
+
+def deploy(gas="", gasMod="", password=""):
+    rpc, chain_id, senderAddr, senderPrivKey, url = pickChain(password=password)
+    getContract()
+    flat = checkMultiFile()
+    compilation = compileContract()
+    abi, bytecode = exportBytecode(compilation)
+    contractAddr = uploadContract(senderAddr, senderPrivKey, rpc, abi, bytecode, chain_id, gas=gas, gasModExtra=gasMod)
+    APISolcV = getSOLCVersion()
+    return contractAddr
+
 #print(sys.argv)
 #print(len(sys.argv))
 args_n = len(sys.argv)
@@ -563,6 +596,7 @@ if args_n > 1:
         else:
             print("enter address, optional: filepath as follup arguments")
     elif sys.argv[1] == "verify":
+        #TODO update w password usage in pickchain
         time.sleep(30)
         rpc, chain_id, senderAddr, senderPrivKey, url = pickChain()
         flat = checkMultiFile()
@@ -575,7 +609,8 @@ if args_n > 1:
     elif sys.argv[1] == "deployCustomGas":
         if args_n == 4:
             gas = sys.argv[2]
-            gasModExtra = sys.argv[3]
+            gasMod = sys.argv[3]
+            '''
             rpc, chain_id, senderAddr, senderPrivKey, url = pickChain()
             getContract()
             flat = checkMultiFile()
@@ -584,10 +619,15 @@ if args_n > 1:
             contractAddr = uploadContract(rpc, abi, bytecode, gas=gas, gasModExtra=gasModExtra)
             APISolcV = getSOLCVersion()
 #            verify(flat, contractAddr, APISolcV, url, True)
+            '''
+            deploy(gas=gas, gasMod=gasMod)
             exit()
         if args_n == 5:
             gas = sys.argv[2]
             gasModExtra = sys.argv[3]
+            password = sys.argv[4]
+            deploy(gas=gas, gasMod=gasMod, password=password)
+            '''
             rpc, chain_id, senderAddr, senderPrivKey, url = pickChain(password=sys.argv[4])
             getContract()
             flat = checkMultiFile()
@@ -595,8 +635,12 @@ if args_n > 1:
             abi, bytecode = exportBytecode(compilation)
             contractAddr = uploadContract(rpc, abi, bytecode, gas=gas, gasModExtra=gasModExtra)
             APISolcV = getSOLCVersion()
+            '''
+    '''
     else:
         #arg given is not expected so we assume its a deploy w a password
+        password = sys.argv[1]
+        deploy(password=password)
         rpc, chain_id, senderAddr, senderPrivKey, url = pickChain(password=sys.argv[1])
         getContract()
         flat = checkMultiFile()
@@ -604,9 +648,13 @@ if args_n > 1:
         abi, bytecode = exportBytecode(compilation)
         contractAddr = uploadContract(rpc, abi, bytecode)
         APISolcV = getSOLCVersion()
+    '''
+
+'''
 else:
     #normal deploy / hardcoded gas rate
     #no args aka no password
+    deploy()
     rpc, chain_id, senderAddr, senderPrivKey, url = pickChain()
     getContract()
     flat = checkMultiFile()
@@ -616,3 +664,4 @@ else:
     APISolcV = getSOLCVersion()
 #    verify(flat, contractAddr, APISolcV, url, True)
     exit()
+'''
