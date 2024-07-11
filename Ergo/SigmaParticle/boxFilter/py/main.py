@@ -10,11 +10,47 @@ import java.lang
 from org.ergoplatform.appkit import *
 from org.ergoplatform.appkit.impl import *
 from ergpy import helper_functions, appkit
-import waits
-import coinSelection
-import scalaPipe
+#import waits
+#import coinSelection
+#import scalaPipe
 import file_tools
-def main(contractName, ergo, wallet_mnemonic, mnemonic_password, senderAddress, args):
+
+def txBoxFilter(ergo, address, boxId, filepath=None):
+    node = ergo._node_url
+    url = node  + "blockchain/transaction/byAddress"
+    params = {\
+            "limit": 5,\
+            "offset": 0\
+    }
+    headers = {\
+        "accept": 'application/json',\
+        "Content-type": 'application/json',\
+    }
+    data = str(address)
+    response = requests.post(url, params=params, headers=headers, data=data).text
+    j = json.loads(response)
+    newBoxes = []
+    newTxs = []
+    for tx in j["items"]:
+        if tx["outputs"][0]["boxId"] != boxId:
+            newBoxes.append(tx["outputs"][0]["boxId"])
+            newTxs.append(tx)
+    ext = "_tx"
+    i = 1
+    for tx in newTxs:
+        if filepath == None:
+            print(json.dumps(tx, indent=2))
+            return json.dumps(tx, indent=2)
+        else:
+            #f = open(filepath + ext + str(i), "w")
+            #f.write(str(json.dumps(tx, indent=2)))
+            #f.close()
+            file_tools.clean_file_open(filepath + ext + str(i), "w", str(json.dumps(tx, indent=2)))
+            return json.dumps(tx, indent=2) #TODO this could find more but for now just one for claim txs does the job
+#            i = i + 1
+    #        print(json.dumps(tx, indent=2))
+
+def main(contractName, ergo, args):
     def txBoxFilter(address, boxId, filepath=None):
         node = ergo._node_url  
         url = node  + "blockchain/transaction/byAddress"

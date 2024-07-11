@@ -57,6 +57,7 @@ def Atomicity_newFrame(swapName, chain, multiFile=None, constructorArgs=None):
 def Atomicity_Refund(swapName, role, gas=None, gasMod=None, password=""):
     LOG('Atomicity_Refund')
     formattedSwapName = "Swap_" + swapName.replace("-", "")
+    EVMSwapName = "Swap_" + swapName.replace("-", "")
     if role == "responder":
         '''
         if gas == None or gasMod == None:
@@ -79,7 +80,7 @@ def Atomicity_Refund(swapName, role, gas=None, gasMod=None, password=""):
             output = os.popen(refundCMD).read()
         '''
         addr = json_tools.ojf(swapName + "/response_path.json")["responderContractAddr"]
-        scriptPath = f'{Atomicity}{swapName}/py/deploy.py'
+        scriptPath = f'{Atomicity}{EVMSwapName}/py/deploy.py'
         spec = importlib.util.spec_from_file_location("deploy", scriptPath)
         deploy = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(deploy)

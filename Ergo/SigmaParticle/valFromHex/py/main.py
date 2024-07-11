@@ -13,6 +13,19 @@ from ergpy import helper_functions, appkit
 import waits
 import coinSelection
 import scalaPipe
+#TODO modular val type
+def intVal(hx, filepath=None):
+    coll = ErgoValue.fromHex(hx).getValue()
+    array = coll.toArray()
+    decoded = BigInteger(array)
+    if filepath is None:
+        print(decoded)
+    else:
+        f = open(filepath, "w")
+        f.write(str(decoded))
+        f.close()
+
+
 def main(contractName, ergo, wallet_mnemonic, mnemonic_password, senderAddress, args):
 
     def intVal(hx, filepath=None):
