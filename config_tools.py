@@ -16,10 +16,23 @@ args = sys.argv
 def updateMainEnv(Key, Val):
     return set_key('.env', Key, Val, quote_mode='never')
 
-def valFromConf(confPath, val):
+def valFromConf(confPath, key):
+    '''
     confParser = configparser.ConfigParser()
     confParser.read(confPath)
     return confParser['default'][val]
+    '''
+    with open(confPath, 'r') as f:
+        for line in f:
+            line = line.strip()
+            if line.startswith('#') or '=' not in line:
+                continue  # Skip comments and lines without '='
+
+            k, v = line.split('=', 1)
+            if k.strip() == key:
+                return v.strip()
+
+    return None  # Key not found
 
 def compareListsFindOutliers(actual, expected):
     actualSet = set(actual)

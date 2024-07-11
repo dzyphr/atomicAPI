@@ -13,6 +13,14 @@ import sys
 from passwordFileEncryption import get_val_from_envdata_key, decrypt_file_return_contents
 import signal
 
+contractdir = str(os.path.dirname(os.path.realpath(__file__)))
+contractdir = contractdir.replace("py", "") #full path!!! from /home
+contractdir = contractdir[contractdir.find("EVM"):]
+targetdir = f'{contractdir}'
+#print(targetdir)
+loadedenv = dotenv_values(targetdir + '.env')
+os.environ.update(loadedenv)
+
 Atomicity = "EVM/Atomicity/"
 
 def sigHandle(sig, frame):
@@ -27,7 +35,9 @@ contractName = os.getenv('ContractName') #this variable is set when creating a n
 if contractName == None:
     contractName = "NOCONTRACTNAMECHOSEN" #for testing purposes to get rid of debug warning
 
-targetdir = f'{Atomicity}{contractName}/'
+
+
+#targetdir = f'{Atomicity}{contractName}/'
 xsol = ".sol"
 xjson = ".json"
 xtxt = ".txt"
@@ -53,7 +63,7 @@ def senderReclaim(addr, gas=None, gasMod=None, password=""):
     if gasMod == None:
         gasMod = 2
     rpc, chain_id, senderAddr, senderPrivKey, url = pickChain(password)
-    f = open("../AtomicMultisig_ABI_0.0.1.json")
+    f = open(f"{targetdir}../AtomicMultisig_ABI_0.0.2.json")
     abi = f.read()
     f.close()
     contract = rpc.eth.contract(address=addr, abi=abi)
@@ -61,7 +71,10 @@ def senderReclaim(addr, gas=None, gasMod=None, password=""):
         {
             'chainId': chain_id,
             'from': senderAddr,
-            'gasPrice':int(Decimal( rpc.eth.gas_price) * Decimal(gasMod)),
+#            'gasPrice':int(Decimal( rpc.eth.gas_price) * Decimal(gasMod)),
+            "maxFeePerGas": rpc.eth.getBlock("pending").baseFeePerGas \
+                    + rpc.toWei('.2', 'gwei') + rpc.toWei(str(gasMod), 'gwei'),
+            "maxPriorityFeePerGas": rpc.toWei(str(gasMod), 'gwei'),
             'gas': int(gas),
             'nonce': rpc.eth.get_transaction_count(senderAddr)
         }
@@ -77,26 +90,39 @@ def claim(addr, x, gas=None, gasMod=None, password=""):
     if gasMod == None:
         gasMod = 1
     rpc, chain_id, senderAddr, senderPrivKey, url = pickChain(password=password)
-    f = open("../AtomicMultisig_ABI_0.0.1.json")
+    f = open(f"{targetdir}../AtomicMultisig_ABI_0.0.2.json")
     abi = f.read()
     f.close()
     contract = rpc.eth.contract(address=addr, abi=abi)
     gasPrice = int(Decimal(rpc.eth.gas_price) * Decimal(gasMod))
-    tx = contract.functions.receiverWithdraw(int(x)).buildTransaction(
-        {
+    nonce = rpc.eth.get_transaction_count(senderAddr)
+    def gettx(nonce):
+        tx = contract.functions.receiverWithdraw(int(x)).buildTransaction({
             'chainId': chain_id,
             'from': senderAddr,
-            'gasPrice': gasPrice,
+#            'gasPrice': gasPrice,
+            "maxFeePerGas": rpc.eth.getBlock("pending").baseFeePerGas \
+                    + rpc.toWei('.2', 'gwei') + rpc.toWei(str(gasMod), 'gwei'),
+            "maxPriorityFeePerGas": rpc.toWei(str(gasMod), 'gwei'),
             'gas': int(gas),
             'nonce': rpc.eth.get_transaction_count(senderAddr)
-        }
-    )
-    signed_tx = rpc.eth.account.sign_transaction(tx, private_key=senderPrivKey)
-    send_tx = rpc.eth.send_raw_transaction(signed_tx.rawTransaction)
-    tx_receipt = rpc.eth.wait_for_transaction_receipt(send_tx)
+        })
+        newgas = rpc.eth.estimate_gas(tx)
+        tx.update({"gas": newgas})
+        return tx
+    signedTx = rpc.eth.account.sign_transaction(gettx(nonce), senderPrivKey)
+    while True:
+        try:
+            tx_hash = rpc.eth.send_raw_transaction(signedTx.rawTransaction)
+            break
+        except ValueError as e:
+            serr = str(e)
+            if "replacement transaction underpriced" in serr or 'nonce too low' in serr:
+                nonce += 1
+                tx = gettx(nonce)
+                signedTx = rpc.eth.account.sign_transaction(tx, private_key=senderPrivKey)
+    tx_receipt = rpc.eth.wait_for_transaction_receipt(tx_hash)
     print(tx_receipt)
-#    processed_logs = contract.events.myEvent().process_receipt(tx_receipt)
-#    print(dir(tx_receipt))
 
 def checkRemainingLockTime(addr, filepath=None, password=""):
     lockheight = checkLockHeight(addr, password=password)
@@ -106,14 +132,14 @@ def checkRemainingLockTime(addr, filepath=None, password=""):
             f = open(filepath, "w")
             f.write(str(int(lockheight) - int(currentheight)))
             f.close()
-        sys.stdout.write(str(int(lockheight) - int(currentheight)))
+        #sys.stdout.write(str(int(lockheight) - int(currentheight)))
         return int(lockheight) - int(currentheight)
     else:
         if filepath != None:
             f = open(filepath, "w")
             f.write("0")
             f.close()
-        sys.stdout.write("0")
+        #sys.stdout.write("0")
         return 0
 
 def getHeight(password=""):
@@ -121,7 +147,7 @@ def getHeight(password=""):
     return int(rpc.eth.get_block_number())
 
 def checkLockHeight(addr, password=""):
-    f = open("../AtomicMultisig_ABI_0.0.1.json")
+    f = open(f"{targetdir}../AtomicMultisig_ABI_0.0.2.json")
     abi = f.read()
     f.close()
     rpc, chain_id, senderAddr, senderPrivKey, url = pickChain(password)
@@ -129,7 +155,7 @@ def checkLockHeight(addr, password=""):
     return int(contract.functions.lockHeight().call())
 
 def checkCoords(addr, password=""):  #TODO: check curve constants against expected as well as receiver pubkey against specified pubkey
-    f = open("../AtomicMultisig_ABI_0.0.1.json")
+    f = open(f"{targetdir}../AtomicMultisig_ABI_0.0.2.json")
     abi = f.read()
     f.close()
     rpc, chain_id, senderAddr, senderPrivKey, url = pickChain(password)
@@ -146,20 +172,22 @@ def checkCoords(addr, password=""):  #TODO: check curve constants against expect
         #contract abi hash, however ultimately its good practice for the counterparty to check curve validity
 
 def getXCoord(addr, password=""):
-    f = open("../AtomicMultisig_ABI_0.0.1.json")
+    f = open(f"{targetdir}../AtomicMultisig_ABI_0.0.2.json")
     abi = f.read()
     f.close()
     rpc, chain_id, senderAddr, senderPrivKey, url = pickChain(password)
     contract = rpc.eth.contract(address=addr, abi=abi)
-    sys.stdout.write(str(contract.functions.gxX().call()))
+#    sys.stdout.write(str(contract.functions.gxX().call()))
+    return contract.functions.gxX().call()
 
 def getYCoord(addr, password=""):
-    f = open("../AtomicMultisig_ABI_0.0.1.json")
+    f = open(f"{targetdir}../AtomicMultisig_ABI_0.0.2.json")
     abi = f.read()
     f.close()
     rpc, chain_id, senderAddr, senderPrivKey, url = pickChain(password)
     contract = rpc.eth.contract(address=addr, abi=abi)
-    sys.stdout.write(str(contract.functions.gxY().call()))
+#   sys.stdout.write(str(contract.functions.gxY().call()))
+    return contract.functions.gxY().call()
 
 
 def getAccount(password=""):
@@ -173,7 +201,7 @@ def getBalance(address, password=""):
 #   sys.stdout.write(balance)
     return balance
 
-def sendAmount(amount, receiver, password=""):
+def sendAmount(amount, receiver, password="", gas=None, gasMod=None):
     rpc, chain_id, senderAddr, senderPrivKey, url = pickChain(password)
     nonce = rpc.eth.get_transaction_count(senderAddr)
     gasprice = rpc.eth.gas_price * gasMod
@@ -181,16 +209,43 @@ def sendAmount(amount, receiver, password=""):
     to = receiver
     value = int(amount)
     data = ''
-    txdata  = {
-        'to': receiver.strip(),
-        'from': senderAddr,
-        'value': int(amount),
-        'gasPrice': int(Decimal( rpc.eth.gas_price) * Decimal(gasMod)),
-        'gas': 7000000,
-        'nonce': rpc.eth.get_transaction_count(senderAddr)
-    }
-    signed = rpc.eth.account.sign_transaction(txdata, senderPrivKey)
-    return rpc.eth.send_raw_transaction(signed.rawTransaction)
+    nonce = rpc.eth.get_transaction_count(senderAddr)
+    if gas == None:
+        gas = 7000000
+    if gasMod == None:
+        gasMod = 1
+    def gettx(nonce):
+        txdata  = {
+            'to': receiver.strip(),
+            'from': senderAddr,
+            'value': int(amount),
+#            'gasPrice': int(Decimal( rpc.eth.gas_price) * Decimal(gasMod)),
+            'gas': gas,
+            "maxFeePerGas": rpc.eth.getBlock("pending").baseFeePerGas \
+                + rpc.toWei('.2', 'gwei') + rpc.toWei(str(gasMod), 'gwei'),
+            "maxPriorityFeePerGas": rpc.toWei(str(gasMod), 'gwei'),
+            'nonce': nonce,
+            "chainId": chain_id
+        }
+        newgas = rpc.eth.estimate_gas(txdata)
+        txdata.update({"gas": newgas})
+        return txdata
+    signedTx = rpc.eth.account.sign_transaction(gettx(nonce), senderPrivKey)
+    while True:
+        try:
+            tx_hash = rpc.eth.send_raw_transaction(signedTx.rawTransaction)
+            return tx_hash
+            break
+        except ValueError as e:
+            serr = str(e)
+            print(serr)
+            if "replacement transaction underpriced" in serr or 'nonce too low' in serr:
+                nonce += 1
+                tx = gettx(nonce)
+                signedTx = rpc.eth.account.sign_transaction(tx, private_key=senderPrivKey)
+
+        time.sleep(1)
+#    return rpc.eth.send_raw_transaction(signedTx.rawTransaction)
 
 def pickChain(password=""):
     #PICK THE CHAIN HERE #fills all chain specific args with env variables
@@ -337,34 +392,69 @@ def exportBytecode(compilation):                            #turn off when using
 def uploadContract(senderAddr, senderPrivKey, rpc, abi, bytecode, chain_id, gas=None, gasModExtra=None):
     InitContract = rpc.eth.contract(abi=abi, bytecode=bytecode)
     #print("current gas price :", rpc.eth.gas_price );
+    '''
+    def getNonce(senderAddr):
+        nonce = rpc.eth.getTransactionCount(senderAddr)
+        pending = rpc.eth.get_block('pending').transactions
+        while True:
+            # Filter pending transactions by sender address and fetch nonces
+            for tx in pending:
+                tx_info = rpc.eth.get_transaction(tx)
+                if tx_info['from'].lower() == senderAddr.lower():
+                    print("match found")
+                    nonce += 1
+            return nonce
+    nonce = getNonce(senderAddr)
+    '''
+    nonce = rpc.eth.getTransactionCount(senderAddr)
     if gas == None:
         gas = 8000000
     if gasModExtra == None:
         gasModExtra = 1
-    if constructorArgs == True:
-        tx = InitContract.constructor(*constructorParamVals).buildTransaction( #if we have constructor parameters we unwrap the array of their arguments into the constructor()
-            {
-                "chainId": chain_id, 
-                "from": senderAddr, 
-                "nonce": rpc.eth.getTransactionCount(senderAddr), 
-                "gas": int(gas),
-                "gasPrice": int(Decimal(rpc.eth.gas_price) * Decimal(int(gasModExtra)))
-            }
-        )
-    else:
-        tx = InitContract.constructor().buildTransaction( 
-            {
-                "chainId": chain_id,
-                "from": senderAddr,
-                "nonce": rpc.eth.getTransactionCount(senderAddr),
-                "gas": int(gas),
-                "gasPrice": int(Decimal(rpc.eth.gas_price) * Decimal(int(gasModExtra)))
-            }
-        )
+    def gettx(nonce):
+        if constructorArgs == True:
+            basefee = rpc.eth.getBlock("pending").baseFeePerGas
+            tx = InitContract.constructor(*constructorParamVals).buildTransaction( #if we have constructor parameters we unwrap the array of their arguments into the constructor()
+                {
+                    "chainId": chain_id, 
+                    "from": senderAddr, 
+                    "nonce": nonce, 
+                    "gas": int(gas),
+                    "maxFeePerGas": rpc.eth.getBlock("pending").baseFeePerGas \
+                            + rpc.toWei('.2', 'gwei') + rpc.toWei(str(gasModExtra), 'gwei'),
+                    "maxPriorityFeePerGas": rpc.toWei(str(gasModExtra), 'gwei')
+                }
+            )
+        else:
+            tx = InitContract.constructor().buildTransaction( 
+                {
+                    "chainId": chain_id,
+                    "from": senderAddr,
+                    "nonce": nonce,
+                    "gas": int(gas),
+                    "maxFeePerGas": rpc.eth.getBlock("pending").baseFeePerGas \
+                            + rpc.toWei('.2', 'gwei') + rpc.toWei(str(gasModExtra), 'gwei'),
+                    "maxPriorityFeePerGas": rpc.toWei(str(gasModExtra), 'gwei')
+                }
+            )
+        return tx
+    tx = gettx(nonce)
+    newgas = rpc.eth.estimate_gas(tx)
+    tx.update({"gas": newgas})
     signedTx = rpc.eth.account.sign_transaction(tx, private_key=senderPrivKey)
+    while True:
+        try:
+            tx_hash = rpc.eth.send_raw_transaction(signedTx.rawTransaction)
+            break
+        except ValueError as e:
+            serr = str(e)
+            if "replacement transaction underpriced" in serr or 'nonce too low' in serr:
+                nonce += 1
+                tx = gettx(nonce)
+                signedTx = rpc.eth.account.sign_transaction(tx, private_key=senderPrivKey)
 
-    tx_hash = rpc.eth.send_raw_transaction(signedTx.rawTransaction)
-    tx_receipt = rpc.eth.wait_for_transaction_receipt(tx_hash)
+        time.sleep(1)
+    tx_receipt = rpc.eth.wait_for_transaction_receipt(tx_hash, timeout=1000)
     #print(contractName, "Deployed!\n")
     print(tx_receipt.contractAddress)
     uploadedContract = rpc.eth.contract(address=tx_receipt.contractAddress, abi=abi)

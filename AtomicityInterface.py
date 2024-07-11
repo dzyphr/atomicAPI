@@ -31,7 +31,7 @@ def Atomicity_SendFunds(addr, amount_wei, swapName, gas=None, gasMod=None, passw
     spec = importlib.util.spec_from_file_location("deploy", scriptPath)
     deploy = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(deploy)
-    output = deploy.sendAmount(amount_wei, addr, password=password)
+    output = deploy.sendAmount(amount_wei, addr, password=password, gas=gas, gasMod=gasMod)
     '''
     cmd = "cd " + Atomicity + \
             swapName + " && ./deploy.sh sendAmount " + \
@@ -94,11 +94,12 @@ def Atomicity_RemainingLockTimeAtomicMultisig_v_002(j_response, swapName, passwo
     LOG('Atomicity_RemainingLockTimeAtomicMultisig_v_002')
     resp_j = j_response
     responderChain = resp_j["responderLocalChain"]
+    EVMSwapName = "Swap_" + swapName.replace("-", "")
     if responderChain == "Sepolia":
         addr = resp_j["responderContractAddr"]
 #        file_tools.clean_file_open("addrtest", "w", addr)
         addr = json_tools.ojf(swapName + "/response_path.json")["responderContractAddr"]
-        scriptPath = f'{Atomicity}{swapName}/py/deploy.py'
+        scriptPath = f'{Atomicity}{EVMSwapName}/py/deploy.py'
         spec = importlib.util.spec_from_file_location("deploy", scriptPath)
         deploy = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(deploy)

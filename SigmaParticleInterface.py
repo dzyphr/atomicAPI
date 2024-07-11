@@ -123,7 +123,7 @@ def SigmaParticle_CheckLockTimeAtomicSchnorr(swapName, boxId, password=""):
             spec = importlib.util.spec_from_file_location("main", scriptPath)
             main = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(main)
-            output = main.getConstantAt(ergo, boxId, 8, filepath=f'{swapName}/lockHeight')
+            output = main.getConstantAt(ergo, boxId, 8, filepath=f'{SigmaParticlePath}{swapName}/lockHeight')
             '''
             lockHeightCMD = \
                             "cd " + SigmaParticlePath + "boxConstantByIndex && ./deploy.sh " + boxId + \
@@ -266,14 +266,14 @@ def responderGenerateAtomicSchnorr(swapName, DEC_finalizationPATH, responderMast
 def responderVerifyErgoScript(swapName, expectedErgoTree, password=""):
     LOG('responderVerifyErgoScript')
 
-    scriptPath = f'{SigmaParticlePath}swapName/py/connect.py'
+    scriptPath = f'{SigmaParticlePath}{swapName}/py/connect.py'
     spec = importlib.util.spec_from_file_location("connect", scriptPath)
     connect = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(connect)
     ergo, wallet_mnemonic, mnemonic_password, senderAddress, senderEIP3Secret = connect.connect(password=password)
     #dotenv loaded here dont call env vars before
 
-    scriptPath = f'{SigmaParticlePath}swapName/py/main.py'
+    scriptPath = f'{SigmaParticlePath}{swapName}/py/main.py'
     spec = importlib.util.spec_from_file_location("main", scriptPath)
     main = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(main)
@@ -310,20 +310,36 @@ def responderClaimAtomicSchnorr(swapName, tries=None, password=""):
         rounds = 60
     else:
         rounds = tries
+
+    scriptPath = f'{SigmaParticlePath}{swapName}/py/connect.py'
+    spec = importlib.util.spec_from_file_location("connect", scriptPath)
+    connect = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(connect)
+    ergo, wallet_mnemonic, mnemonic_password, senderAddress, senderEIP3Secret = connect.connect(password=password)
+    #dotenv loaded here dont call env vars before
+
+    scriptPath = f'{SigmaParticlePath}{swapName}/py/main.py'
+    spec = importlib.util.spec_from_file_location("main", scriptPath)
+    main = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(main)
+    '''
     claimCMD = \
             "cd " + SigmaParticlePath + swapName + " && ./deploy.sh claim " + password
 #    file_tools.clean_file_open("sigmaresponderclaimscriptdebug", "w", claimCMD)
+    '''
     while rounds > 0:
-        response = os.popen(claimCMD).read()
-        LOG(f'SigmaParticle claim response: {response}')
-        if response == None:
+        claim = main.atomicReceiverClaim( \
+                ergo, wallet_mnemonic, mnemonic_password, senderAddress, senderEIP3Secret,  password=password \
+        )
+        LOG(f'SigmaParticle claim response: {claim}')
+        if claim == None:
             waittime = 5
             LOG(f'response was None, retrying in {waittime}')
             rounds = rounds - 1
             time.sleep(waittime)
             continue
         else:
-            return response
+            return claim
         break
 
 

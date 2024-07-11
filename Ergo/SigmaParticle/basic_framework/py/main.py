@@ -9,7 +9,6 @@ from sigmastate.eval.package import ecPointToGroupElement
 interpreterClasspath = \
     "/home/" + os.getlogin() + "/Downloads/sigmastate-interpreter/target/scala-2.13/sigma-state-assembly-5.0.14.jar"
 jpype.addClassPath(interpreterClasspath)
- print("Running", contractName)
 def atomicDeposit(ergo, wallet_mnemonic, mnemonic_password, senderAddress, senderEIP3Secret, verifyTreeOnly=None, password=""):
     sender = senderAddress[0]
     castedSender = ergo.castAddress(senderAddress[0])
