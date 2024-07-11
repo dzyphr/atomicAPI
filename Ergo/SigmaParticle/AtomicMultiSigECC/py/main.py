@@ -49,12 +49,6 @@ def main(args):
             exit(1)
         rs = random.randrange(0, n)
         rs = rs % n
-def p1Deduce(sr_, sr):
-        p1x = int(sr_) - int(sr)  #p1 discovers x this way
-        xObj = {
-            "x": str(p1x)
-        }
-        return json.dumps(xObj, indent=4)
         rs = rs % javaBigIntegerMAX
         rsERGO = BigInteger(str(rs))
         ks = random.randrange(0, n)
