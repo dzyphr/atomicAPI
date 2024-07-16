@@ -1,4 +1,8 @@
-import os, json, sys, time, random, jpype, java.lang, waits, coinSelection, scalaPipe, scala.math.BigInt as BigInt, file_tools
+from pathlib import Path
+import sys
+current_dir = Path(__file__).resolve().parent
+sys.path.append(str(current_dir))
+import os, json, time, random, jpype, java.lang, waits, coinSelection, scalaPipe, scala.math.BigInt as BigInt, file_tools
 from jpype import *
 from org.ergoplatform.appkit import *
 from org.ergoplatform.appkit.impl import *
@@ -122,16 +126,32 @@ def atomicDeposit(ergo, wallet_mnemonic, mnemonic_password, senderAddress, sende
     #TODO Optionally get boxes from this extraIndex (not certain needs extraIndex yet) node endpoint:
     #http://127.0.0.1:9052/blockchain/box/unspent/byAddress/ ADDRESS ?offset=0&limit=20&sortDirection=asc
     #also TODO deal with double spends from client side to avoid double spending error from naive box choice
-    inputBoxes = BoxOperations.createForSender(Address.create(sender), ergo._ctx).withAmountToSpend(ergoAmountFeeIncluded).loadTop()
+    inputBoxes = BoxOperations.createForSender(Address.create(sender), ergo._ctx).withAmountToSpend(ergoAmountFeeIncluded * 2).loadTop()
 #        inputBoxes =  ergo.getInputBox(sender_address=castedSender, amount_list=[ergoAmountRaw], tokenList=None)
     AtomicBox = ergo._ctx.newTxBuilder().outBoxBuilder() \
         .value(ergoAmountFeeIncluded) \
         .contract(AtomicContract)\
         .build()
-    unsignedTx = ergo.buildUnsignedTransaction(\
-        input_box =coinSelection.pruneToIndex(1, inputBoxes) , outBox=[AtomicBox],\
-        sender_address=castedSender\
-    )
+    index = 1
+    while True:
+            try:
+#                inputBox = coinSelection.pruneToIndex(index, inputBoxes)
+                try:
+                    inputBox = coinSelection.largestFittingOutputs(inputBoxes, ergoAmountFeeIncluded)
+                except ValueError as e:
+                        print(e)
+                inputBox = coinSelection.pruneToIndex(index, inputBoxes)
+
+                unsignedTx = ergo.buildUnsignedTransaction(\
+                    input_box = inputBox , outBox=[AtomicBox],\
+                    sender_address=castedSender\
+                )
+                break
+            except java.lang.IllegalArgumentException as e:
+                index += 1
+                print(e)
+                continue
+
     signedTx = senderProver.sign(unsignedTx)
     ergo.txId(signedTx) #DEPOSIT
     signedTxJSON = senderProver.sign(unsignedTx).toJson(True)
@@ -146,11 +166,19 @@ def atomicDeposit(ergo, wallet_mnemonic, mnemonic_password, senderAddress, sende
     f.write(strlockHeight)
     f.close()
     '''
-    file_tools.clean_file_open("boxId", "w", j["outputs"][0]["boxId"])
-    file_tools.clean_file_open("lockHeight", "w", strlockHeight)
+    file_tools.clean_file_open(f"{targetDir}boxId", "w", j["outputs"][0]["boxId"])
+    file_tools.clean_file_open(f"{targetDir}lockHeight", "w", strlockHeight)
 
 
 def atomicReceiverClaim(ergo, wallet_mnemonic, mnemonic_password, senderAddress, senderEIP3Secret, password=""):
+    contractdir = str(os.path.dirname(os.path.realpath(__file__)))
+    contractdir = contractdir.replace("py", "") #full path!!! from /home
+    contractdir = contractdir[contractdir.find("Ergo"):]
+    SigmaParticleDir = "Ergo/SigmaParticle/"
+    targetDir = f'{contractdir}'
+    print(targetDir)
+    loadedenv = dotenv_values(targetDir + '.env')
+    os.environ.update(loadedenv)
     receiver = senderAddress[0]
     castedReceiver = ergo.castAddress(senderAddress[0])
     receiverPubkey = Address.create(receiver).getPublicKey()
@@ -192,6 +220,14 @@ def atomicReceiverClaim(ergo, wallet_mnemonic, mnemonic_password, senderAddress,
     return signedTxJSON
 
 def atomicSenderRefund(ergo, wallet_mnemonic, mnemonic_password, senderAddress, senderEIP3Secret, password=""):
+    contractdir = str(os.path.dirname(os.path.realpath(__file__)))
+    contractdir = contractdir.replace("py", "") #full path!!! from /home
+    contractdir = contractdir[contractdir.find("Ergo"):]
+    SigmaParticleDir = "Ergo/SigmaParticle/"
+    targetDir = f'{contractdir}'
+    print(targetDir)
+    loadedenv = dotenv_values(targetDir + '.env')
+    os.environ.update(loadedenv)
     sender = senderAddress[0]
     castedSender = ergo.castAddress(senderAddress[0])
     senderPubkey = Address.create(sender).getPublicKey()
@@ -218,6 +254,8 @@ def atomicSenderRefund(ergo, wallet_mnemonic, mnemonic_password, senderAddress, 
     ergo.txId(signedTx) #REFUND (after timelock height)
     signedTxJSON = senderProver.sign(unsignedTx).toJson(True)
     sys.stdout.write(str(signedTxJSON))
+
+
 
 def main(contractName, ergo, wallet_mnemonic, mnemonic_password, senderAddress, senderEIP3Secret, args):
     print("Running", contractName)
@@ -311,11 +349,6 @@ def main(contractName, ergo, wallet_mnemonic, mnemonic_password, senderAddress, 
                 atomicLockScript)
         ergoTree = AtomicContract.getErgoTree().bytesHex()
         file_tools.clean_file_open("ergoTree", "w", str(ergoTree))
-        '''
-        f = open("ergoTree", "w")
-        f.write(str(ergoTree))
-        f.close()
-        '''
         if verifyTreeOnly != None:
             if verifyTreeOnly == True:
                 exit()
@@ -329,24 +362,26 @@ def main(contractName, ergo, wallet_mnemonic, mnemonic_password, senderAddress, 
             .value(ergoAmountFeeIncluded) \
             .contract(AtomicContract)\
             .build()
-        unsignedTx = ergo.buildUnsignedTransaction(\
-            input_box =coinSelection.pruneToIndex(1, inputBoxes) , outBox=[AtomicBox],\
-            sender_address=castedSender\
-        )
+        index = 1
+        while True:
+            try:
+                inputBox = coinSelection.pruneToIndex(index, inputBoxes)
+                unsignedTx = ergo.buildUnsignedTransaction(\
+                    input_box = inputBox , outBox=[AtomicBox],\
+                    sender_address=castedSender\
+                )
+                break
+            except java.lang.IllegalArgumentException as e:
+                index += 1
+                print(e)
+                continue
+
         signedTx = senderProver.sign(unsignedTx)
         ergo.txId(signedTx) #DEPOSIT
         signedTxJSON = senderProver.sign(unsignedTx).toJson(True)
 #        sys.stdout.write(str(signedTxJSON))
         j = json.loads(str(signedTxJSON))
         print(j["outputs"][0]["boxId"])
-        '''
-        f = open("boxId", "w")
-        f.write(j["outputs"][0]["boxId"]) 
-        f.close()
-        f = open("lockHeight", "w")
-        f.write(strlockHeight)
-        f.close()
-        '''
         file_tools.clean_file_open("boxId", "w", j["outputs"][0]["boxId"])
         file_tools.clean_file_open("lockHeight", "w", strlockHeight)
 
@@ -442,4 +477,3 @@ def main(contractName, ergo, wallet_mnemonic, mnemonic_password, senderAddress, 
             print("unknown arg.\nchoices: deposit, claim, refund")
     else:
         print("enter argument.\nchoices: deposit, claim, refund")
-

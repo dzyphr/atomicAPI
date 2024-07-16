@@ -413,17 +413,29 @@ def GeneralizedENC_FinalizationSubroutine( \
             init_J = json_tools.ojf(initiatorJSONPath)
             InitiatorErgoAccountName = init_J["InitiatorErgoAccountName"]
             SigmaParticleInterface.SigmaParticle_updateKeyEnv(swapName, InitiatorErgoAccountName)
-            SigmaParticleInterface.deployErgoContract(swapName, password=localchainpassword) #TODO generalize based on chain
+            while SigmaParticleInterface.getBoxID(swapName) == False:
+                SigmaParticleInterface.deployErgoContract(swapName, password=localchainpassword) 
+                time.sleep(1)
             boxId = SigmaParticleInterface.getBoxID(swapName)
-            InitiatorAtomicSchnorrLockHeight = file_tools.clean_file_open("Ergo/SigmaParticle/" + swapName + "/lockHeight", "r")
-            contractKeyValList = [{"boxId":boxId, "InitiatorAtomicSchnorrLockHeight":InitiatorAtomicSchnorrLockHeight, \
-                    "InitiatorErgoAddr":InitiatorErgoAddr}]
+            InitiatorAtomicSchnorrLockHeight = file_tools.clean_file_open( \
+                    "Ergo/SigmaParticle/" + swapName + "/lockHeight", "r" \
+            )
+            contractKeyValList = [{
+                "boxId":boxId, \
+                "InitiatorAtomicSchnorrLockHeight":InitiatorAtomicSchnorrLockHeight, \
+                "InitiatorErgoAddr":InitiatorErgoAddr \
+            }]
             json_tools.keyVal_list_update(contractKeyValList, initiatorJSONPath)
             json_tools.keyVal_list_update(contractKeyValList, finalizationPATH)
-            ENC_finalization =  ElGamalInterface.ElGamal_Encrypt(ElGamalKey, ElGamalKeyPath, finalizationPATH, ENC_finalizationPATH)
+            ENC_finalization =  ElGamalInterface.ElGamal_Encrypt( \
+                    ElGamalKey, ElGamalKeyPath, finalizationPATH, ENC_finalizationPATH 
+            )
             setSwapState(swapName, "finalized_unsubmitted", setMap=True)
         
-        finalize(swapName, contractFunds, CoinA_Price, CoinB_Price, initiatorJSONPath, finalizationPATH, InitiatorErgoAddr, ElGamalKey, ElGamalKeyPath, ENC_finalizationPATH)
+        finalize( \
+                swapName, contractFunds, CoinA_Price, CoinB_Price, initiatorJSONPath, \
+                finalizationPATH, InitiatorErgoAddr, ElGamalKey, ElGamalKeyPath, ENC_finalizationPATH \
+        )
     #GeneralizedENC_InitiatorClaimSubroutine(init_J["initiatorJSONPath"])
 
 def GeneralizedENC_InitiatorClaimSubroutine(initiatorJSONPath, localchainpassword="", crosschainpassword=""):

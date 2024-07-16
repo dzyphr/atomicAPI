@@ -1,3 +1,7 @@
+from pathlib import Path
+import sys
+current_dir = Path(__file__).resolve().parent
+sys.path.append(str(current_dir))
 import secrets 
 from jpype import *
 import numpy as np
@@ -19,7 +23,6 @@ from java.math import BigInteger
 import waits
 import coinSelection
 import scalaPipe
-import sys
 import ast
 #ERGO ECC ADD point.add(point)
 #ERGO ECC MULTIPLY G dlogGroup().generator().multiply(scalar) 

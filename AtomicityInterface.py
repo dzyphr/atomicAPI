@@ -15,12 +15,6 @@ def Atomicity_CheckContractFunds(swapName, j_response, password=""):
         deploy = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(deploy)
         balance = deploy.getBalance(contractAddr)
-        '''
-        script = "cd " + Atomicity  + "/" + swapName + \
-                    " && python3 -u py/deploy.py getBalance " + \
-                    contractAddr 
-        value = os.popen(script).read()
-        '''
         LOG(f'Atomicity getBalance script output: {balance}')
         return balance
 
@@ -32,13 +26,6 @@ def Atomicity_SendFunds(addr, amount_wei, swapName, gas=None, gasMod=None, passw
     deploy = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(deploy)
     output = deploy.sendAmount(amount_wei, addr, password=password, gas=gas, gasMod=gasMod)
-    '''
-    cmd = "cd " + Atomicity + \
-            swapName + " && ./deploy.sh sendAmount " + \
-            str(amount_wei) + " " + addr + " " + password
-    output =  os.popen(cmd).read()
-    LOG(f'Atomicity sendAmount script output: {output}')
-    '''
     return output
 
 def Atomicity_newFrame(swapName, chain, multiFile=None, constructorArgs=None):
@@ -59,33 +46,12 @@ def Atomicity_Refund(swapName, role, gas=None, gasMod=None, password=""):
     formattedSwapName = "Swap_" + swapName.replace("-", "")
     EVMSwapName = "Swap_" + swapName.replace("-", "")
     if role == "responder":
-        '''
-        if gas == None or gasMod == None:
-            addr = json_tools.ojf(swapName + "/response_path.json")["responderContractAddr"]
-
-            scriptPath = f'{Atomicity}{swapName}/py/deploy.py'
-            spec = importlib.util.spec_from_file_location("deploy", scriptPath)
-            deploy = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(deploy)
-            output = deploy.senderReclaim(addr, gas=gas, gasMod=gasMod, password=password)
-            refundCMD = \
-                    "cd " + Atomicity + formattedSwapName + " && ./deploy.sh refund " + addr + " " + password
-            output = os.popen(refundCMD).read()
-        else:
-            addr = json_tools.ojf(swapName + "/response_path.json")["responderContractAddr"]
-            refundCMD = \
-                    "cd " + Atomicity + formattedSwapName + " && ./deploy.sh refund " +\
-                    addr + " " + str(gas) + " " + str(gasMod) + " " + password
-            print(refundCMD)
-            output = os.popen(refundCMD).read()
-        '''
         addr = json_tools.ojf(swapName + "/response_path.json")["responderContractAddr"]
         scriptPath = f'{Atomicity}{EVMSwapName}/py/deploy.py'
         spec = importlib.util.spec_from_file_location("deploy", scriptPath)
         deploy = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(deploy)
         output = deploy.senderReclaim(addr, gas=gas, gasMod=gasMod, password=password)
-
         LOG(f'Atomicity refund output: {output}')
         return output
         
@@ -98,19 +64,11 @@ def Atomicity_RemainingLockTimeAtomicMultisig_v_002(j_response, swapName, passwo
     EVMSwapName = "Swap_" + swapName.replace("-", "")
     if responderChain == "Sepolia":
         addr = resp_j["responderContractAddr"]
-#        file_tools.clean_file_open("addrtest", "w", addr)
-        addr = json_tools.ojf(swapName + "/response_path.json")["responderContractAddr"]
         scriptPath = f'{Atomicity}{EVMSwapName}/py/deploy.py'
         spec = importlib.util.spec_from_file_location("deploy", scriptPath)
         deploy = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(deploy)
         lockTimeoutput = deploy.checkRemainingLockTime(addr, filepath=f'{swapName}/remainingLockTime', password=password)
-        '''
-        cmd = \
-                "cd " + Atomicity + "Swap_" + swapName.replace("-", "") + " && ./deploy.sh lockTime " + \
-                addr + " ../../../" + swapName + "/remainingLockTime "
-        lockTimeoutput = os.popen(cmd.replace("\n", "")).read()
-        '''
         LOG(f'Atomicity lockTime output: {lockTimeoutput}')
         if file_tools.wait_for_file(swapName + "/remainingLockTime"):
             remainingLockTime = file_tools.clean_file_open(swapName + "/remainingLockTime", "r")
@@ -134,7 +92,6 @@ def Atomicity_buildScalarContract(chain, counterpartyChainPub, xG, locktimeDurat
     cmd = "cd " + Atomicity + "&& ./new_frame " + swapName + \
             " -M -CA 4 " + "\\\"" + counterpartyChainPub + "\\\" " + \
             str(ast.literal_eval(xG)[0]) + " " + str(ast.literal_eval(xG)[1]) + " " + str(locktimeDuration)
-#    file_tools.clean_file_open("AtomicityNewFrameConstructorArgsDebug", "w", cmd)
     new_frame = os.popen(cmd).read()
     LOG(f'Atomicity new_frame output: {new_frame}')
     file_tools.wait_for_file(Atomicity + swapName + "/contracts/" + swapName + ".sol")
@@ -204,8 +161,6 @@ def Atomicity_compareScalarContractCoords(swapName, contractAddr, expectedX, exp
     spec.loader.exec_module(deploy)
     x = deploy.getXCoord(contractAddr)
     y = deploy.getYCoord(contractAddr)
-#    x = os.popen("cd " + Atomicity + swapName + " && python3 -u py/deploy.py getXCoord " + contractAddr + " " + password).read()
-#    y = os.popen("cd " + Atomicity + swapName + " && python3 -u py/deploy.py getYCoord " + contractAddr + " " + password).read()
     print("onchain:(", x, " ,", y, ")  offchain:(", expectedX, " ,", expectedY, ")")
     LOG(f'onchain:({x},{y}) offchain:({expectedX}, {expectedY})')
     if int(x) == int(expectedX) and int(y) == int(expectedY):
@@ -225,16 +180,11 @@ def Atomicity_claimScalarContract(initiatorMasterJSONPath, swapName, gas=None, g
         gas = 8000000
     if gasMod == None or type(gasMod) != int:
         gasMod = 1
-    output = claim(contractAddr, x, gas=gas, gasMod=gasMod, password=password)
-    '''
-    claimScript = \
-            "cd " + Atomicity + swapName + " && ./deploy.sh claim " + contractAddr + " " + str(x) + \
-            " " + str(gas) + " " + str(gasMod) + " " + password
-    #TODO Optional log scripts for future debugging
-    output = None
-    while output == None or output == "":
-        output = os.popen(claimScript).read()
-    '''
+    scriptPath = f'{Atomicity}{swapName}/py/deploy.py'
+    spec = importlib.util.spec_from_file_location("deploy", scriptPath)
+    deploy = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(deploy)
+    output = deploy.claim(contractAddr, x, gas=gas, gasMod=gasMod, password=password)
     LOG(f'Atomicity Scalar Contract Claim Output: {output}')
     return output
 

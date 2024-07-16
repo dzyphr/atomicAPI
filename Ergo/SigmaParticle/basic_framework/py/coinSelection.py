@@ -7,7 +7,7 @@ def largestFittingOutputs(outputsToSpend, depositAmount):
     total = 0
     for i in outputsToSpend:
         valueList.append(i.getValue())
-    while total < (depositAmount * Parameters.OneErg):
+    while total < (depositAmount ):
         total += max(valueList)
         indexList.append(valueList.index(max(valueList)))
         valueList.pop(valueList.index(max(valueList)))

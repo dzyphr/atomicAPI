@@ -22,7 +22,6 @@ AtomicSwapPath = "Ergo/SigmaParticle/AtomicMultiSig/"
 def SigmaParticle_newFrame(swapName):
     LOG('SigmaParticle_newFrame')
     cmd = "cd " + str(SigmaParticlePath)  + " && ./new_frame " + str(swapName)
-#    file_tools.clean_file_open("newframesigmaparticlescriptdebug", "w" , cmd)
     output = os.popen(cmd).read()
     LOG(f'SigmaParticle new_frame output:{output}')
 
@@ -56,29 +55,7 @@ def SigmaParticle_box_to_addr(boxId, swapName, password=""):
             tree = SigmaParticle_getTreeFromBox(boxId, swapName, password=password).replace("\n", "")
             if tree != None and tree != "":
                 hashedtree = str(hashlib.sha256(tree.encode()).hexdigest())#for deterministic proper size filename
-                '''
-                scriptPath = f'{SigmaParticlePath}treeToAddr/py/connect.py'
-                spec = importlib.util.spec_from_file_location("connect", scriptPath)
-                connect = importlib.util.module_from_spec(spec)
-                spec.loader.exec_module(connect)
-                node_url = connect.connect(password=password) #dotenv loaded here dont call env vars before
-
-                scriptPath = f'{SigmaParticlePath}treeToAddr/py/main.py'
-                spec = importlib.util.spec_from_file_location("main", scriptPath)
-                main = importlib.util.module_from_spec(spec)
-                spec.loader.exec_module(main)
-                res = main.treeToAddr(node_url, tree, filepath=f'{swapName}/boxAddr', password=password)
-                '''
                 res = SigmaParticle_treeToAddr(tree, swapName, 'boxAddr', password=password)
-                '''
-                treeToAddrCmd = \
-                            "cd " + SigmaParticlePath + "treeToAddr && ./deploy.sh " + \
-                            tree + " " + \
-                            "../../../" + swapName + "/boxAddr" 
-                
-#                file_tools.clean_file_open("treeToAddrScriptTestDebug", "w", treeToAddrCmd)
-                res = os.popen(treeToAddrCmd).read()
-                '''
                 LOG(f'SigmaParticle treeToAddr output: {res}')
                 if is_json(res) == True:
                     addr = json.loads(res)["address"]
@@ -139,22 +116,8 @@ def SigmaParticle_CheckLockTimeAtomicSchnorr(swapName, boxId, password=""):
             main = importlib.util.module_from_spec(spec)
             spec.loader.exec_module(main)
             output = main.getConstantAt(ergo, boxId, 8, filepath=f'{SigmaParticlePath}{swapName}/lockHeight')
-            '''
-            lockHeightCMD = \
-                            "cd " + SigmaParticlePath + "boxConstantByIndex && ./deploy.sh " + boxId + \
-                            " 8 ../" + swapName + "/lockHeight"
-#            file_tools.clean_file_open("lockHeightScriptDebug", "w" , lockHeightCMD)
-            output = os.popen(lockHeightCMD).read()
-            '''
             LOG(f'SigmaParticle boxConstantByIndex output: {output}')
             time.sleep(5)
-    '''
-    currentHeightCMD = \
-                    "cd " + SigmaParticlePath + "currentHeight && ./deploy.sh ../../../" + \
-                    swapName + "/localChain_currentHeight " 
-    file_tools.clean_file_open("currentHeightCMDDeubug", "w", currentHeightCMD)
-    output = os.popen(currentHeightCMD).read()
-    '''
     scriptPath = f'{SigmaParticlePath}currentHeight/py/connect.py'
     spec = importlib.util.spec_from_file_location("connect", scriptPath)
     connect = importlib.util.module_from_spec(spec)
@@ -293,12 +256,6 @@ def responderVerifyErgoScript(swapName, expectedErgoTree, password=""):
     main = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(main)
     verify = main.atomicDeposit(ergo, wallet_mnemonic, mnemonic_password, senderAddress, senderEIP3Secret, verifyTreeOnly=True, password=password)
-    '''
-    verifyCMD = \
-        "cd " + SigmaParticlePath + swapName + " && ./deploy.sh deposit verifyTreeOnly " + password
-#    file_tools.clean_file_open("responderVerifyErgoScriptdebug", "w", verifyCMD)
-    verify = os.popen(verifyCMD).read() 
-    '''
     LOG('SigmaParticle verifyTreeOnly output: {verify}')
     ergoTreePath = SigmaParticlePath + swapName + "/ergoTree"
     ergoTree = file_tools.clean_file_open(ergoTreePath, "r")
@@ -337,11 +294,6 @@ def responderClaimAtomicSchnorr(swapName, tries=None, password=""):
     spec = importlib.util.spec_from_file_location("main", scriptPath)
     main = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(main)
-    '''
-    claimCMD = \
-            "cd " + SigmaParticlePath + swapName + " && ./deploy.sh claim " + password
-#    file_tools.clean_file_open("sigmaresponderclaimscriptdebug", "w", claimCMD)
-    '''
     while rounds > 0:
         claim = main.atomicReceiverClaim( \
                 ergo, wallet_mnemonic, mnemonic_password, senderAddress, senderEIP3Secret,  password=password \
@@ -383,13 +335,6 @@ def SigmaParticle_getTreeFromBox(boxID, swapName, password=""):
     tries = 60
     while tries > 0:
         boxID = boxID.replace("\n", "")
-        '''
-        cmd = \
-                "cd " + SigmaParticlePath + "getTreeFromBox && ./deploy.sh " + boxID + \
-                " ../" + swapName + "/expectedErgoTree" + " "
-#        file_tools.clean_file_open("getTreeFromBoxScriptDebug", "w", cmd)
-        result = os.popen(cmd).read()
-        '''
         scriptPath = f'{SigmaParticlePath}getTreeFromBox/py/connect.py'
         spec = importlib.util.spec_from_file_location("connect", scriptPath)
         connect = importlib.util.module_from_spec(spec)
@@ -414,11 +359,6 @@ def SigmaParticle_getTreeFromBox(boxID, swapName, password=""):
 
 def deployErgoContract(swapName, password=""):
     LOG('deployErgoContract')
-    '''
-    command = "cd " + SigmaParticlePath + swapName + " && ./deploy.sh deposit " + password
- #   file_tools.clean_file_open("initiatorDeployErgoContractDebug", "w", command)
-    deploy = os.popen(command).read()
-    '''
     scriptPath = f'{SigmaParticlePath}{swapName}/py/connect.py'
     spec = importlib.util.spec_from_file_location("connect", scriptPath)
     connect = importlib.util.module_from_spec(spec)
@@ -431,8 +371,11 @@ def deployErgoContract(swapName, password=""):
     main = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(main)
 #this will depend on the contract function names so needs modularization w new routines
-    main.atomicDeposit(ergo, wallet_mnemonic, mnemonic_password, senderAddress, senderEIP3Secret, password=password)
+    deploy = main.atomicDeposit( \
+            ergo, wallet_mnemonic, mnemonic_password, senderAddress, senderEIP3Secret, password=password \
+    )
     LOG(f'SigmaParticle deploy output: {deploy}')
+    return deploy
 
 def getBoxID(swapName):
     LOG('getBoxID')
@@ -453,15 +396,6 @@ def checkBoxValue(boxID, boxValPATH, swapName, role=None, ergopassword="", other
     LOG('checkBoxValue')
     tries = 200
     while tries > 0:
-        '''
-        cmd = \
-                "cd " + SigmaParticlePath + \
-                "/boxValue/ && ./deploy.sh " + \
-                boxID + " " + "../../../" + boxValPATH + \
-                " " #DONT USE ERGO PASSWORD ITS NOT NEEDED FOR PUBLIC API STUFF #TODO Remove ergopassword
-#        file_tools.clean_file_open("checkBoxValueScriptDebug", "w", cmd)
-        devnull = open(os.devnull, 'wb')
-        '''
         scriptPath = f'{SigmaParticlePath}boxValue/py/connect.py'
         spec = importlib.util.spec_from_file_location("connect", scriptPath)
         connect = importlib.util.module_from_spec(spec)
@@ -476,10 +410,6 @@ def checkBoxValue(boxID, boxValPATH, swapName, role=None, ergopassword="", other
     #this will depend on the contract function names so needs modularization w new routines
         while is_numeric_string(file_tools.clean_file_open(boxValPATH, "r")) == False:
             response = main.boxVal(ergo, boxID, filepath=f'{boxValPATH}')
-            '''
-            pipe = subprocess.Popen(cmd, shell=True, stdout=devnull, stderr=devnull, close_fds=True)
-            pipe.wait()
-            '''
             time.sleep(5)
 #        response = file_tools.clean_file_open(boxValPATH, "r")
         LOG(f'SigmaParticle boxValue output: {response}')
@@ -546,28 +476,12 @@ def checkSchnorrTreeForClaim(boxID, swapName, initiatorMasterJSONPath, password=
     tree = None
     addr = None 
     while True:
-#        if os.path.isfile(SigmaParticlePath + swapName + "/ergoTree") == True:
-#            tree = file_tools.clean_file_open(SigmaParticlePath + swapName + "/ergoTree", "r").replace("\n", "")
-#        else:
         while tree == None:
             tree = SigmaParticle_getTreeFromBox(boxID, swapName, password=password)
         res = SigmaParticle_treeToAddr(tree, swapName, 'scriptAddr', password=password)        
-        '''
-        treeToAddrCmd = \
-                f'cd   {SigmaParticlePath}treeToAddr && ./deploy.sh  {tree}  ../../../{swapName}/scriptAddr'
- #       file_tools.clean_file_open("treeToAddrScriptTestDebug", "w", treeToAddrCmd)
-        '''
-#        while addr == None:
         addr = json.loads(res)["address"]
         LOG(f'SigmaParticle treeToAddr output: {addr}')
-        '''
-        boxFilterCmd = \
-                "cd " + SigmaParticlePath + "boxFilter && " + \
-                "./deploy.sh " + addr + " " + boxID + " ../../../" + swapName + "/atomicClaim "
-        file_tools.clean_file_open("boxFilterCmdDebug", "w", boxFilterCmd)
-        boxFilter = os.popen(boxFilterCmd).read()
-        '''
-        SigmaParticle_boxFilter(addr, boxID, swapName, 'atomicClaim', password=password)
+        boxFilter = SigmaParticle_boxFilter(addr, boxID, swapName, 'atomicClaim', password=password)
         LOG(f'SigmaParticle boxFilter output: {boxFilter}')
         if os.path.isfile(swapName + "/atomicClaim_tx1") == True:
             j = json.loads(file_tools.clean_file_open(swapName + "/atomicClaim_tx1", "r"))
@@ -576,25 +490,18 @@ def checkSchnorrTreeForClaim(boxID, swapName, initiatorMasterJSONPath, password=
                 R4 = j["outputs"][0]["additionalRegisters"]["R4"]
                 sr_list = [{"sr":R4}]
                 json_tools.keyVal_list_update(sr_list, initiatorMasterJSONPath)
-    #            print("atomic swap was claimed by responder!")
                 LOG("Atomic swap was claimed by responder!")
                 return True
         else:
             LOG("no atomic swap claim found...")
-            #check contract lock time here for refund
             remainingLocalLockTime = SigmaParticle_CheckLockTimeAtomicSchnorr(swapName, boxID, password=password)
             if type(remainingLocalLockTime) == int:
                 if remainingLocalLockTime <= 0:
                     LOG('No claim found and locktime 0, refunding.')
-                    #claim refund here
                     echoBoxIdCMD = \
                             "echo '\natomicBox=" + boxID + "' >> " + SigmaParticlePath + swapName + "/.env"
                     echo = os.popen(echoBoxIdCMD).read()
                     LOG(f'echo boxID output: {echo}')
-                    '''
-                    cmd =  "cd " + SigmaParticlePath + swapName  + " && ./deploy.sh refund " + password
-                    refund = os.popen(cmd).read() #TODO check for success
-                    '''
                     scriptPath = f'{SigmaParticlePath}{swapName}/py/connect.py'
                     spec = importlib.util.spec_from_file_location("connect", scriptPath)
                     connect = importlib.util.module_from_spec(spec)
@@ -643,19 +550,9 @@ def deduceX_fromAtomicSchnorrClaim(initiatorMasterJSONPath, swapName):
     responderContractAddr = masterJSON["responderContractAddr"] 
     responderLocalChain = masterJSON["responderLocalChain"]
     enc_sr = masterJSON["sr"]
-    '''
-    decode_sr_cmd = \
-            "cd " + SigmaParticlePath + "valFromHex && ./deploy.sh " + enc_sr + " ../../../" + swapName + "/decoded_sr.bin " 
-    decode = os.popen(decode_sr_cmd).read()
-    '''
     decode = SigmaParticle_valFromHex(enc_sr, swapName, 'decoded_sr.bin')
     LOG(f'SigmaParticle valFromHex output: {decode}')
     sr = file_tools.clean_file_open(swapName + "/decoded_sr.bin", "r")
-    '''
-    deduction_cmd = \
-            "cd " + SigmaParticlePath + "AtomicMultiSigECC && python3 -u py/deploy.py p1Deduce " + sr_ + " " + sr
-    deduction_response = os.popen(deduction_cmd).read()
-    '''
     deduction_response = SigmaParticle_ECC_p1Deduce(sr_, sr)
     LOG(f'SigmaParticle deduction command output: {deduction_response}')
     deduction_j = json.loads(deduction_response)
