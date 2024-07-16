@@ -420,8 +420,8 @@ def uploadContract(senderAddr, senderPrivKey, rpc, abi, bytecode, chain_id, gas=
                     "from": senderAddr, 
                     "nonce": nonce, 
                     "gas": int(gas),
-                    "maxFeePerGas": rpc.eth.getBlock("pending").baseFeePerGas \
-                            + rpc.toWei('.2', 'gwei') + rpc.toWei(str(gasModExtra), 'gwei'),
+                    "maxFeePerGas": (rpc.eth.getBlock("pending").baseFeePerGas \
+                            + rpc.toWei('.2', 'gwei') + rpc.toWei(str(gasModExtra), 'gwei')),
                     "maxPriorityFeePerGas": rpc.toWei(str(gasModExtra), 'gwei')
                 }
             )
@@ -432,8 +432,8 @@ def uploadContract(senderAddr, senderPrivKey, rpc, abi, bytecode, chain_id, gas=
                     "from": senderAddr,
                     "nonce": nonce,
                     "gas": int(gas),
-                    "maxFeePerGas": rpc.eth.getBlock("pending").baseFeePerGas \
-                            + rpc.toWei('.2', 'gwei') + rpc.toWei(str(gasModExtra), 'gwei'),
+                    "maxFeePerGas": (rpc.eth.getBlock("pending").baseFeePerGas \
+                            + rpc.toWei('.2', 'gwei') + rpc.toWei(str(gasModExtra), 'gwei')),
                     "maxPriorityFeePerGas": rpc.toWei(str(gasModExtra), 'gwei')
                 }
             )
@@ -700,16 +700,6 @@ if args_n > 1:
         if args_n == 4:
             gas = sys.argv[2]
             gasMod = sys.argv[3]
-            '''
-            rpc, chain_id, senderAddr, senderPrivKey, url = pickChain()
-            getContract()
-            flat = checkMultiFile()
-            compilation = compileContract()
-            abi, bytecode = exportBytecode(compilation)
-            contractAddr = uploadContract(rpc, abi, bytecode, gas=gas, gasModExtra=gasModExtra)
-            APISolcV = getSOLCVersion()
-#            verify(flat, contractAddr, APISolcV, url, True)
-            '''
             deploy(gas=gas, gasMod=gasMod)
             exit()
         if args_n == 5:
@@ -717,41 +707,3 @@ if args_n > 1:
             gasModExtra = sys.argv[3]
             password = sys.argv[4]
             deploy(gas=gas, gasMod=gasMod, password=password)
-            '''
-            rpc, chain_id, senderAddr, senderPrivKey, url = pickChain(password=sys.argv[4])
-            getContract()
-            flat = checkMultiFile()
-            compilation = compileContract()
-            abi, bytecode = exportBytecode(compilation)
-            contractAddr = uploadContract(rpc, abi, bytecode, gas=gas, gasModExtra=gasModExtra)
-            APISolcV = getSOLCVersion()
-            '''
-    '''
-    else:
-        #arg given is not expected so we assume its a deploy w a password
-        password = sys.argv[1]
-        deploy(password=password)
-        rpc, chain_id, senderAddr, senderPrivKey, url = pickChain(password=sys.argv[1])
-        getContract()
-        flat = checkMultiFile()
-        compilation = compileContract()
-        abi, bytecode = exportBytecode(compilation)
-        contractAddr = uploadContract(rpc, abi, bytecode)
-        APISolcV = getSOLCVersion()
-    '''
-
-'''
-else:
-    #normal deploy / hardcoded gas rate
-    #no args aka no password
-    deploy()
-    rpc, chain_id, senderAddr, senderPrivKey, url = pickChain()
-    getContract()
-    flat = checkMultiFile()
-    compilation = compileContract()
-    abi, bytecode = exportBytecode(compilation)
-    contractAddr = uploadContract(rpc, abi, bytecode)
-    APISolcV = getSOLCVersion()
-#    verify(flat, contractAddr, APISolcV, url, True)
-    exit()
-'''

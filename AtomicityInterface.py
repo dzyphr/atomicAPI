@@ -1,6 +1,7 @@
 import time, os, ast, json, json_tools, subprocess, file_tools
 import importlib.util
 from LOG import LOG
+from decimal import Decimal
 Atomicity = "EVM/Atomicity/"
 HARDCODEDSOLCV = "0.8.0"
 
@@ -130,7 +131,7 @@ def Atomicity_deployEVMContract(swapName, customGas=None, customGasMod=None, pas
             custom = True
     gasMod = 1
     if customGasMod != None:
-        if type(customGasMod) != int:
+        if type(customGasMod) != int and type(customGasMod) != Decimal:
             print("gasMod must be int")
         else:
             gasMod = customGasMod

@@ -2,7 +2,7 @@ import file_tools, os, uuid, responderInterface, json_tools, subprocess, sys, js
 
 
 def sigHandle(sig, frame):
-    os._exit(0)
+    sys.exit(0)
 
 signal.signal(signal.SIGTERM, sigHandle)
 signal.signal(signal.SIGINT, sigHandle)

@@ -10,6 +10,7 @@ def pid_by_name(procName):
     return False
 
 def state_reload_test_checkpoint(swapID, role="", stateReloadTest="", platform=""):
+#    print("state_reload_test_checkpoint", flush=True)
     if stateReloadTest == "":
         return None
     #TODO make logic for stateReloadTest=All
@@ -28,11 +29,11 @@ def state_reload_test_checkpoint(swapID, role="", stateReloadTest="", platform="
     while pid_by_name(procName) != False:
         pid = pid_by_name(procName)
         AUTOTESTLOG(f'StateReloadTest: Killing {procName} Proccess ID: {pid}', "info")
-        os.kill(pid, signal.SIGTERM)
-        os.kill(pid, signal.SIGKILL)
-        os.kill(pid, signal.SIGINT)
+        os.killpg(pid, signal.SIGTERM)
+        os.killpg(pid, signal.SIGINT)
     AUTOTESTLOG(f'StateReloadTest: Restarting {procName}', "info")
     os.popen(cmd).read()
+    time.sleep(3)
     return True
 
 def state_reload_test_worker(stop_event, swapID, role="", stateReloadTest="", platform=""):
@@ -65,7 +66,7 @@ def automated_test_local_client_side(watch=False, platform="Ubuntu", stateReload
     
     #TODO for now client is only ETH in future need to modularize this to make sense of amounts likely
 
-    amount = 0.12
+    amount = 0.09
 
     localClientAccountsMapURL = "http://localhost:3031/v0.0.1/AllChainAccountsMap"
     clientAccounts = json.loads(requests.get(localClientAccountsMapURL).json())
@@ -199,6 +200,8 @@ def automated_test_local_client_side(watch=False, platform="Ubuntu", stateReload
         url, data=startSwapFromUIData, headers=headers \
     ).text.replace("\n", "").replace("\r","").replace("\t","")[1:-1].replace("\\", '')[1:-1]
     SwapTicketID = json.loads(response)["SwapTicketID"]
+
+
     if stateReloadTest != "":
         stop_event = Event()
         thread = Thread(target=state_reload_test_worker, args=( \
@@ -211,7 +214,6 @@ def automated_test_local_client_side(watch=False, platform="Ubuntu", stateReload
     responderJSONPath = f'{SwapTicketID}/responder.json'
     file_tools.wait_for_file(responderJSONPath)
     responderJSON = json_tools.ojf(f'{SwapTicketID}/responder.json')
-
     while "responderContractAddr" not in json_tools.ojf(f'{SwapTicketID}/responder.json').keys():
         time.sleep(5)
     responderJSON = json_tools.ojf(f'{SwapTicketID}/responder.json')

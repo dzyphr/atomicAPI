@@ -8,6 +8,7 @@ import file_tools
 import price_tools
 import config_tools
 import swap_tools
+from decimal import Decimal
 from LOG import LOG
 from passwordFileEncryption import get_val_from_envdata_key, decrypt_file_return_contents
 py = "python3 -u "
@@ -19,7 +20,7 @@ s_ = " "
 MIN_CLAIM_LOCKTIME_ERGOTESTNET = int(config_tools.valFromConf(".env", "MIN_CLAIM_LOCKTIME_ERGOTESTNET"))
 MIN_REFUND_LOCKTIME_SEPOLIA = int(config_tools.valFromConf(".env", "MIN_REFUND_LOCKTIME_SEPOLIA"))
 SEPOLIA_EVM_GAS_CONTROL = int(config_tools.valFromConf(".env", "SEPOLIA_EVM_GAS_CONTROL"))
-SEPOLIA_EVM_GASMOD_CONTROL = int(config_tools.valFromConf(".env", "SEPOLIA_EVM_GASMOD_CONTROL"))
+SEPOLIA_EVM_GASMOD_CONTROL = Decimal(config_tools.valFromConf(".env", "SEPOLIA_EVM_GASMOD_CONTROL"))
 
 # we need to assume we have the ENC file saved already
 def process_initiation(ENC_filepath, DEC_filepath, SenderPubKey, UserKeyFileName): #this is generic to any enc_message actually

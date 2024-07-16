@@ -18,13 +18,11 @@ LOG('Atomic API Logger Started')
 
 
 def sigHandle(sig, frame):
-#    sys.exit(0)
-    os._exit(0)
+    sys.exit()
+signal.signal(signal.SIGTERM, sigHandle)
 
 if config_tools.valFromConf(".env", "LOGMAINARGS").strip("\"") == "True": LOG(f'CLI Args: {argstr}')
 def main():
-    signal.signal(signal.SIGINT, sigHandle)
-    signal.signal(signal.SIGTERM, sigHandle)
     if len(args) == 2:
         if args[1] == "automated_test_local_client_side":
             LOG('running automated_test_local_client_side()')
