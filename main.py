@@ -436,11 +436,11 @@ def main():
                 args[8], args[9], enc=True, password=args[10]
             )
 
-LOG('Atomic API Logger Finished')
 
 
 if __name__ == "__main__":
 #    try:
         main()
+        LOG('Atomic API Logger Finished')
 #    except (BrokenPipeError, IOError):
 #        print ('BrokenPipeError caught', file = sys.stderr)
