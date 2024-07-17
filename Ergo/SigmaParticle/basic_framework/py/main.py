@@ -139,8 +139,8 @@ def atomicDeposit(ergo, wallet_mnemonic, mnemonic_password, senderAddress, sende
                 try:
                     inputBox = coinSelection.largestFittingOutputs(inputBoxes, ergoAmountFeeIncluded)
                 except ValueError as e:
-                    print(e)
-                    inputBox = coinSelection.pruneToIndex(index, inputBoxes)
+                        print(e)
+                inputBox = coinSelection.pruneToIndex(index, inputBoxes)
 
                 unsignedTx = ergo.buildUnsignedTransaction(\
                     input_box = inputBox , outBox=[AtomicBox],\
@@ -153,7 +153,6 @@ def atomicDeposit(ergo, wallet_mnemonic, mnemonic_password, senderAddress, sende
                 continue
 
     signedTx = senderProver.sign(unsignedTx)
-    ergo.txId(signedTx) #DEPOSIT
     signedTxJSON = senderProver.sign(unsignedTx).toJson(True)
 #        sys.stdout.write(str(signedTxJSON))
     j = json.loads(str(signedTxJSON))
@@ -168,6 +167,7 @@ def atomicDeposit(ergo, wallet_mnemonic, mnemonic_password, senderAddress, sende
     '''
     file_tools.clean_file_open(f"{targetDir}boxId", "w", j["outputs"][0]["boxId"])
     file_tools.clean_file_open(f"{targetDir}lockHeight", "w", strlockHeight)
+    ergo.txId(signedTx) #DEPOSIT
 
 
 def atomicReceiverClaim(ergo, wallet_mnemonic, mnemonic_password, senderAddress, senderEIP3Secret, password=""):
@@ -377,13 +377,13 @@ def main(contractName, ergo, wallet_mnemonic, mnemonic_password, senderAddress, 
                 continue
 
         signedTx = senderProver.sign(unsignedTx)
-        ergo.txId(signedTx) #DEPOSIT
         signedTxJSON = senderProver.sign(unsignedTx).toJson(True)
 #        sys.stdout.write(str(signedTxJSON))
         j = json.loads(str(signedTxJSON))
         print(j["outputs"][0]["boxId"])
         file_tools.clean_file_open("boxId", "w", j["outputs"][0]["boxId"])
         file_tools.clean_file_open("lockHeight", "w", strlockHeight)
+        ergo.txId(signedTx) #DEPOSIT
 
 
     def atomicReceiverClaim():

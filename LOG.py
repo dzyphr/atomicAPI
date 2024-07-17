@@ -10,8 +10,13 @@ sessionID_hash = randsha256()
 
 def LOG(logstr):
     if config_tools.valFromConf(".env", "LOGGING").strip("\"") == "True":
-        logger = logging.getLogger(__name__)
-        logging.basicConfig(filename="atomicAPI.log", level=logging.INFO)
+        logger = logging.getLogger(sessionID_hash)
+        if not logger.handlers:
+            logHandler = logging.FileHandler("atomicAPI.log")
+            logHandler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
+            logger.addHandler(logHandler)
+#            logging.basicConfig(filename="atomicAPI.log")
+        logger.setLevel(logging.INFO)
         logger.info(f'{logstr}\nsession:{sessionID_hash}')
 
 #TODO use avaialable logging levels to seperate logging detail configurations

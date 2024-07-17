@@ -473,13 +473,18 @@ def SigmaParticle_boxFilter(address, boxID, swapName, filename, password=""):
 
 def checkSchnorrTreeForClaim(boxID, swapName, initiatorMasterJSONPath, password=""):
     LOG('checkSchnorrTreeForClaim')
-    tree = None
-    addr = None 
     while True:
         while tree == None:
             tree = SigmaParticle_getTreeFromBox(boxID, swapName, password=password)
-        res = SigmaParticle_treeToAddr(tree, swapName, 'scriptAddr', password=password)        
-        addr = json.loads(res)["address"]
+#        res = SigmaParticle_treeToAddr(tree, swapName, 'scriptAddr', password=password)        
+        while True:
+            try:
+                res = SigmaParticle_treeToAddr(tree, swapName, 'scriptAddr', password=password)
+                addr = json.loads(res)["address"]
+                break
+            except TypeError as e:
+                print(e)
+                continue
         LOG(f'SigmaParticle treeToAddr output: {addr}')
         boxFilter = SigmaParticle_boxFilter(addr, boxID, swapName, 'atomicClaim', password=password)
         LOG(f'SigmaParticle boxFilter output: {boxFilter}')
