@@ -33,24 +33,25 @@ def process_initiation(ENC_filepath, DEC_filepath, SenderPubKey, UserKeyFileName
 
 def response(DEC_initiation_filepath, responderMasterJSONPATH, response_filepath, SenderPubKey):
     LOG('response')
-    j_init = json.loads(file_tools.clean_file_open(DEC_initiation_filepath, "r"))
-    ksG = j_init["ksG"]
-    j_master = json.loads(file_tools.clean_file_open(responderMasterJSONPATH, "r"))
-    swapName = j_master["swapName"]
-    sr_filepath = swapName + "/sr"
-    x_filepath = swapName + "/x"
-    responderMessageContent = str(datetime.now())
-    command = \
-        py + AtomicSwapECCPath + "p2Respond " +\
-        "'" + ksG  + "' " + "'" + responderMessageContent  + "' " + \
-        sr_filepath + s_ + x_filepath 
-    response = os.popen(command).read()
-    LOG('response: {response}')
-    file_tools.clean_file_open(response_filepath, "w", response)
-    sr = file_tools.clean_file_open(sr_filepath, "r")
-    x = file_tools.clean_file_open(x_filepath, "r")
-    secretslist = [{"sr":sr}, {"x":x}]
-    json_tools.keyVal_list_update(secretslist, responderMasterJSONPATH)
+    if os.path.isfile(response_filepath) == False:
+        j_init = json.loads(file_tools.clean_file_open(DEC_initiation_filepath, "r"))
+        ksG = j_init["ksG"]
+        j_master = json.loads(file_tools.clean_file_open(responderMasterJSONPATH, "r"))
+        swapName = j_master["swapName"]
+        sr_filepath = swapName + "/sr"
+        x_filepath = swapName + "/x"
+        responderMessageContent = str(datetime.now())
+        command = \
+            py + AtomicSwapECCPath + "p2Respond " +\
+            "'" + ksG  + "' " + "'" + responderMessageContent  + "' " + \
+            sr_filepath + s_ + x_filepath 
+        response = os.popen(command).read()
+        LOG('response: {response}')
+        file_tools.clean_file_open(response_filepath, "w", response)
+        sr = file_tools.clean_file_open(sr_filepath, "r")
+        x = file_tools.clean_file_open(x_filepath, "r")
+        secretslist = [{"sr":sr}, {"x":x}]
+        json_tools.keyVal_list_update(secretslist, responderMasterJSONPATH)
 
 def GeneralizeENC_ResponseSubroutine(\
         swapName, responderCrossChainAccountName, responderLocalChainAccountName, \
@@ -233,8 +234,11 @@ def GeneralizeENC_ResponseSubroutine(\
         respJ = json_tools.ojf(responderJSONPath)
         responderLocalChainAccountName = resp_J["responderSepoliaAccountName"]
         xG = json.loads(file_tools.clean_file_open(responsePATH, "r"))["xG"]
-        AtomicityInterface.Atomicity_buildScalarContract(ResponderChain, InitiatorEVMAddr,  xG, MIN_REFUND_LOCKTIME_SEPOLIA, swapName)
-        AtomicityInterface.Atomicity_updateKeyEnv(swapName, responderLocalChainAccountName)
+        if AtomicityInterface.Atomicity_ContractFilesBuilt(swapName) == False:
+            AtomicityInterface.Atomicity_buildScalarContract( \
+                    ResponderChain, InitiatorEVMAddr,  xG, MIN_REFUND_LOCKTIME_SEPOLIA, swapName \
+            )
+            AtomicityInterface.Atomicity_updateKeyEnv(swapName, responderLocalChainAccountName)
         swap_tools.setSwapState(swapName, "uploadingResponseContract", setMap=True)
         addr = AtomicityInterface.Atomicity_deployEVMContract(
                 swapName, customGas=SEPOLIA_EVM_GAS_CONTROL,
@@ -246,6 +250,9 @@ def GeneralizeENC_ResponseSubroutine(\
             LOG(f'fail: deployContract() didnt return a contract addr')
             print("fail: deployContract() didnt return a contract addr")
             return
+        addrkeyvallist = [{"responderContractAddr":addr}]
+        json_tools.keyVal_list_update(addrkeyvallist, responsePATH)
+        json_tools.keyVal_list_update(addrkeyvallist, responderJSONPath)
         swapAmount = json_tools.ojf(responderJSONPath)["SwapAmount"]
         responderFundingAmountWei = price_tools.EthToWei(swapAmount)
         #TODO save to resp_J?
@@ -257,9 +264,10 @@ def GeneralizeENC_ResponseSubroutine(\
         ):
         LOG('fund')
         swap_tools.setSwapState(swapName, "fundingResponseContract", setMap=True)
-        update_response_keyValList = [{"responderLocalChain":ResponderChain}, \
-                {"responderContractAddr":addr},\
-                {"ResponderErgoAddr":ResponderErgoAddr}]
+        update_response_keyValList = [ \
+                {"responderLocalChain":ResponderChain}, \
+                {"ResponderErgoAddr":ResponderErgoAddr} \
+        ]
         json_tools.keyVal_list_update(update_response_keyValList, responsePATH)
         j_response = json_tools.ojf(responsePATH)
         AtomicityInterface.Atomicity_SendFunds(
@@ -323,7 +331,7 @@ def GeneralizeENC_ResponseSubroutine(\
                                                                                         #w a contract balance call
             resp_J = json_tools.ojf(swapName + "/responder.json")
             addr = resp_J["responderContractAddr"]
-            swapAmount = resp_J["swapAmount"]
+            swapAmount = resp_J["SwapAmount"]
             ResponderChain = resp_J["ResponderChain"]
             ResponderErgoAddr = resp_J["ResponderErgoAddr"]
             responsePATH = resp_J["responsePATH"]
@@ -332,7 +340,7 @@ def GeneralizeENC_ResponseSubroutine(\
             ElGamalKeyPath = resp_J["ElGamalKeyPath"]
             ENC_Response_PATH = resp_J["ENC_Response_PATH"]
             responderFundingAmountWei = price_tools.EthToWei(swapAmount)
-            j_response = json.tools.ojf(responsePATH)
+            j_response = json_tools.ojf(responsePATH)
             if int(AtomicityInterface.Atomicity_CheckContractFunds(swapName, j_response, password=localChainAccountPassword)) <= 0:
                 #TODO check against specific funding amount
                 fund(addr, responderFundingAmountWei, ResponderChain, ResponderErgoAddr,
@@ -346,7 +354,7 @@ def GeneralizeENC_ResponseSubroutine(\
         if reloadSwapState in [swap_tools.PossibleSwapStates[4], swap_tools.PossibleSwapStates[5]]: #funded or responding
             resp_J = json_tools.ojf(swapName + "/responder.json")
             addr = resp_J["responderContractAddr"]
-            swapAmount = resp_J["swapAmount"]
+            swapAmount = resp_J["SwapAmount"]
             ResponderChain = resp_J["ResponderChain"]
             ResponderErgoAddr = resp_J["ResponderErgoAddr"]
             responsePATH = resp_J["responsePATH"]
@@ -399,6 +407,7 @@ def GeneralizedENC_ResponderClaimSubroutine(
     ):
     LOG('GeneralizedENC_ResponderClaimSubroutine')
     resp_J = json_tools.ojf(responderJSONPath)
+    swapName = resp_J["swapName"]
     if resp_J["InitiatorChain"] == "TestnetErgo" and resp_J["ResponderChain"] == "Sepolia":
         def setup(resp_J):
             LOG('setup')
@@ -495,7 +504,7 @@ def GeneralizedENC_ResponderClaimSubroutine(
                 return False
             swap_tools.setSwapState(swapName, "verifiedFinalizedContractValues", setMap=True)
 
-        def claim():
+        def claim(swapName, crossChainAccountPassword):
             LOG('claim')
             swap_tools.setSwapState(swapName, "claiming", setMap=True)
             SigmaParticleInterface.responderClaimAtomicSchnorr(swapName, 2500, password=crossChainAccountPassword)
@@ -508,12 +517,14 @@ def GeneralizedENC_ResponderClaimSubroutine(
                 responderErgoAccountName, DEC_finalization = \
                             setup(resp_J)
                 #    print("ergo contract verification status:", responderVerifyErgoScript(swapName, expectedErgoTree))
-                verify(\
+                status = verify(\
                         DEC_finalizationPATH, responderJSONPath, \
                         DEC_finalization, swapName, responderErgoAccountName, \
                         localChainAccountPassword=localChainAccountPassword, crossChainAccountPassword=crossChainAccountPassword\
                     )
-                claim()
+                if status == False:
+                    return False
+                claim(swapName, crossChainAccountPassword)
                 return
             if reloadSwapState in [swap_tools.PossibleSwapStates[8], swap_tools.PossibleSwapStates[9]]: #finalized or verifying
                 DEC_finalizationPATH = resp_J["DEC_finalizationPATH"]
@@ -521,15 +532,17 @@ def GeneralizedENC_ResponderClaimSubroutine(
                 DEC_finalization = file_tools.clean_file_open(DEC_finalizationPATH, "r")
                 swapName = resp_J["swapName"]
                 responderErgoAccountName = resp_J["responderErgoAccountName"]
-                verify(\
+                status = verify(\
                     DEC_finalizationPATH, responderJSONPath, \
                     DEC_finalization, swapName, responderErgoAccountName, \
                     localChainAccountPassword=localChainAccountPassword, crossChainAccountPassword=crossChainAccountPassword\
                 )
-                claim()
+                if status == False:
+                    return False
+                claim(swapName, crossChainAccountPassword)
                 return
             if reloadSwapState in [swap_tools.PossibleSwapStates[10], swap_tools.PossibleSwapStates[11]]: #verified or claiming
-                claim()
+                claim(swapName, crossChainAccountPassword)
                 return
         else:            
             swapName, ENC_finalizationPATH, ElGamalKey, \
@@ -544,7 +557,7 @@ def GeneralizedENC_ResponderClaimSubroutine(
                 )
             if status == False:
                 return False
-            claim()
+            claim(swapName, crossChainAccountPassword)
 
 def Responder_CheckLockTimeRefund(swapName, password=""):
     LOG('ergoScript verification returned false, wont fulfil swa')

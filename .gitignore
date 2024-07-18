@@ -56,3 +56,4 @@ checkcontractfundsdebug
 initiatorClaimScriptDebug
 initiatorDeployErgoContractDebug
 EVM/Atomicity/Swap_*
+startclient.sh

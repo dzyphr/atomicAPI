@@ -5,6 +5,10 @@ from decimal import Decimal
 Atomicity = "EVM/Atomicity/"
 HARDCODEDSOLCV = "0.8.0"
 
+def Atomicity_ContractFilesBuilt(swapName):
+    swapName = f'Swap_{swapName.replace("-", "")}'
+    return os.path.isfile(f'{Atomicity}{swapName}/py/deploy.py')
+
 def Atomicity_CheckContractFunds(swapName, j_response, password=""):
     LOG('Atomicity_CheckContractFunds')
     chain = j_response["responderLocalChain"]

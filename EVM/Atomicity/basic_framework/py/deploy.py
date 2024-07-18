@@ -458,7 +458,7 @@ def uploadContract(senderAddr, senderPrivKey, rpc, abi, bytecode, chain_id, gas=
     #print(contractName, "Deployed!\n")
     print(tx_receipt.contractAddress)
     uploadedContract = rpc.eth.contract(address=tx_receipt.contractAddress, abi=abi)
-    f = open(contractName + "-addr", "w")
+    f = open(targetdir +  contractName + "-addr", "w")
     f.write(tx_receipt.contractAddress) 
     f.close()
     return tx_receipt.contractAddress

@@ -43,13 +43,14 @@ def treeToAddr(node_url, tree, filepath=None, password=""):
             addr = json.loads(response)["address"]
             f.write(addr)
             f.close()
-            print(response)
+#            print(response)
             return response
         else:
             print(response)
             return response
     except Exception as err:
-        print("error getting address for: ", tree, "\nerror: ", err)
+        #print("error getting address for: ", tree, "\nerror: ", err)
+        pass
 
 def main(contractName, node_url, args):
     

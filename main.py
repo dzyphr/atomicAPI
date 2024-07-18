@@ -7,6 +7,7 @@ from config_tools import firstRunCheck, updateMainEnv, initErgoAccountNonInterac
 from bearerRESTAPIkeygen import generate_bearer_RESTAPI_key, add_RESTAPI_key_to_private_accepted_keys_JSON, starterAPIKeys, add_RESTAPI_key_to_public_accepted_keys_JSON
 from passwordFileEncryption import proveEncEnvFilePasswordKnowledge
 from LOG import LOG
+import asyncio
 args = sys.argv
 
 argstr =  " ".join(args)
@@ -19,7 +20,9 @@ LOG('Atomic API Logger Started')
 
 def sigHandle(sig, frame):
     sys.exit()
+    raise SystemExit(sig)
 signal.signal(signal.SIGTERM, sigHandle)
+signal.signal(signal.SIGINT, sigHandle)
 
 if config_tools.valFromConf(".env", "LOGMAINARGS").strip("\"") == "True": LOG(f'CLI Args: {argstr}')
 def main():
@@ -58,6 +61,30 @@ def main():
                 auto_test.automated_test_local_client_side(watch=True)
             if args[2] == "--stateReloadTest=initiated":
                 auto_test.automated_test_local_client_side(stateReloadTest="initiated")
+            if args[2] == "--stateReloadTest=uploadingResponseContract":
+                auto_test.automated_test_local_client_side(stateReloadTest="uploadingResponseContract")
+            if args[2] == "--stateReloadTest=uploadedResponseContract":
+                auto_test.automated_test_local_client_side(stateReloadTest="uploadedResponseContract")
+            if args[2] == "--stateReloadTest=fundingResponseContract":
+                auto_test.automated_test_local_client_side(stateReloadTest="fundingResponseContract")
+            if args[2] == "--stateReloadTest=fundedResponseContract":
+                auto_test.automated_test_local_client_side(stateReloadTest="fundedResponseContract")
+            if args[2] == "--stateReloadTest=responding":
+                auto_test.automated_test_local_client_side(stateReloadTest="responding")
+            if args[2] == "--stateReloadTest=responded_unsubmitted":
+                auto_test.automated_test_local_client_side(stateReloadTest="responded_unsubmitted")
+            if args[2] == "--stateReloadTest=responded_submitted":
+                auto_test.automated_test_local_client_side(stateReloadTest="responded_submitted")
+            if args[2] == "--stateReloadTest=finalized":
+                auto_test.automated_test_local_client_side(stateReloadTest="finalized")
+            if args[2] == "--stateReloadTest=verifyingFinalizedContractValues":
+                auto_test.automated_test_local_client_side(stateReloadTest="verifyingFinalizedContractValues")
+            if args[2] == "--stateReloadTest=verifiedFinalizedContractValues":
+                auto_test.automated_test_local_client_side(stateReloadTest="verifiedFinalizedContractValues")
+            if args[2] == "--stateReloadTest=claiming":
+                auto_test.automated_test_local_client_side(stateReloadTest="claiming")
+            if args[2] == "--stateReloadTest=all":
+                auto_test.automated_test_local_client_side(stateReloadTest="all")
         if args[1] == "BitPandaPrice":
             if config_tools.valFromConf(".env", "LOGMAINARGS").strip("\"") == "True": LOG(f'running priceFeeds.BitPandaPrice("{args[2]}")')
             print(priceFeeds.BitPandaPrice(args[2]))

@@ -1,20 +1,43 @@
 #automated tests
-import requests, json, uuid, json_tools, file_tools, AtomicityInterface, SigmaParticleInterface, time, os, psutil, signal
+import requests, json, uuid, json_tools, file_tools, AtomicityInterface, SigmaParticleInterface, time, os, psutil, signal, swap_tools
 from threading import Thread, Event
 from LOG import AUTOTESTLOG
-
 def pid_by_name(procName):
     for proc in psutil.process_iter(['pid', 'name']):
         if procName == proc.info['name']:
             return proc.info['pid']
     return False
 
+def kill_proc_tree(pid, sig=signal.SIGTERM, include_parent=True,
+                   timeout=None, on_terminate=None):
+    """Kill a process tree (including grandchildren) with signal
+    "sig" and return a (gone, still_alive) tuple.
+    "on_terminate", if specified, is a callback function which is
+    called as soon as a child terminates.
+    """
+    assert pid != os.getpid(), "won't kill myself"
+    parent = psutil.Process(pid)
+    children = parent.children(recursive=True)
+    if include_parent:
+        children.append(parent)
+    for p in children:
+        try:
+            p.send_signal(sig)
+        except psutil.NoSuchProcess:
+            pass
+    gone, alive = psutil.wait_procs(children, timeout=timeout,
+                                    callback=on_terminate)
+    return (gone, alive)
+
+
 def state_reload_test_checkpoint(swapID, role="", stateReloadTest="", platform=""):
 #    print("state_reload_test_checkpoint", flush=True)
     if stateReloadTest == "":
+#        AUTOTESTLOG(f'var stateReloadTest was None', "err")
         return None
     #TODO make logic for stateReloadTest=All
     if checkSwapState(swapID, stateReloadTest) == False:
+#        AUTOTESTLOG(f'Swap {swapID} current swapState is not {stateReloadTest} ', "err")
         return None
     if role == "Client":
         procName = "AASwapClientRESTAPI"
@@ -29,23 +52,57 @@ def state_reload_test_checkpoint(swapID, role="", stateReloadTest="", platform="
     while pid_by_name(procName) != False:
         pid = pid_by_name(procName)
         AUTOTESTLOG(f'StateReloadTest: Killing {procName} Proccess ID: {pid}', "info")
-        os.killpg(pid, signal.SIGTERM)
-        os.killpg(pid, signal.SIGINT)
+        pgid = os.getpgid(pid)
+        kptres = kill_proc_tree(pid, sig=signal.SIGTERM, include_parent=True,
+                   timeout=None, on_terminate=None)
+        print(kptres)
+#        os.killpg(pgid, signal.SIGTERM)
+#        os.killpg(pgid, signal.SIGINT)
+#        os.kill(pid, signal.SIGTERM)
+#        os.kill(pid, signal.SIGINT)
     AUTOTESTLOG(f'StateReloadTest: Restarting {procName}', "info")
     os.popen(cmd).read()
-    time.sleep(3)
     return True
 
+
+states = []
+
 def state_reload_test_worker(stop_event, swapID, role="", stateReloadTest="", platform=""):
-    while not stop_event.isSet():
-        if state_reload_test_checkpoint(swapID, role=role, stateReloadTest=stateReloadTest, platform=platform) == True:
-            break
-        else:
-            continue
+    while not stop_event.is_set():
+        if stateReloadTest != "all":
+            if state_reload_test_checkpoint(swapID, role=role, stateReloadTest=stateReloadTest, platform=platform) == True:
+                AUTOTESTLOG(f"Reloading on SwapState: {stateReloadTest}", "info")
+                break
+            else:
+                continue
+        elif stateReloadTest == "all":
+            for state in swap_tools.PossibleSwapStates:
+                if state in [*swap_tools.PossibleSwapStates[12:16]]: #ignore end states for now
+                    return
+                print(state)
+                if state not in states:
+                    states.append(state)
+                else:
+                    break
+                AUTOTESTLOG(f"Reloading on SwapState: {state}", "info")
+                if state in [*swap_tools.PossibleSwapStates[5:8]]: #these states happen near instantly so give them few tries
+                    retries = 3
+                    while retries > 0:
+                        if state_reload_test_checkpoint(swapID, role=role, stateReloadTest=state, platform=platform) == True:
+                            break
+                        else:
+                            retries -= 1
+                            continue
+                else:
+                    while True:
+                        if state_reload_test_checkpoint(swapID, role=role, stateReloadTest=state, platform=platform) == True:
+                            break
+                        else:
+                            continue
 
 
 def checkSwapState(swapID, state):
-    SwapState = file_tools.clean_file_open(f'{swapID}/SwapState', "r")
+    SwapState = file_tools.clean_file_open(f'{swapID}/SwapState', "r") #swaptools getswapstate?
     if SwapState == state:
         return True
     elif SwapState != state:
@@ -66,7 +123,7 @@ def automated_test_local_client_side(watch=False, platform="Ubuntu", stateReload
     
     #TODO for now client is only ETH in future need to modularize this to make sense of amounts likely
 
-    amount = 0.09
+    amount = 0.02
 
     localClientAccountsMapURL = "http://localhost:3031/v0.0.1/AllChainAccountsMap"
     clientAccounts = json.loads(requests.get(localClientAccountsMapURL).json())
@@ -191,7 +248,6 @@ def automated_test_local_client_side(watch=False, platform="Ubuntu", stateReload
     url = "http://localhost:3031/v0.0.1/requests"
     AUTOTESTLOG(f'Client Data Collected Successfully, Starting Swap', "info", watch=watch)
 
-    #TODO watch the swap state, kill and restart the process if stateReloadTest == currentState , log events
     #TODO create stateReloadAll test, either constantly kill and restart the state during the same swap, or run a 
     #new swap for each state reload test possible
 
@@ -220,10 +276,14 @@ def automated_test_local_client_side(watch=False, platform="Ubuntu", stateReload
     AUTOTESTLOG(f'Contract Deployed: {responderJSON["responderContractAddr"]}', "info")
 
     #Check for contract funding
-    while AtomicityInterface.Atomicity_CheckContractFunds(SwapTicketID, responderJSON) == 0:
-        time.sleep(5)
+    while True:
+        ContactFundedAmount = int(AtomicityInterface.Atomicity_CheckContractFunds(SwapTicketID, responderJSON))
+        if ContactFundedAmount == 0:
+            time.sleep(5)
+        else:
+            break
 
-    ContactFundedAmount = AtomicityInterface.Atomicity_CheckContractFunds(SwapTicketID, responderJSON)
+#    ContactFundedAmount = AtomicityInterface.Atomicity_CheckContractFunds(SwapTicketID, responderJSON)
     AUTOTESTLOG(f'Contract Funded: {ContactFundedAmount}', "info", watch=watch)
 
     #Check for finalization contract
