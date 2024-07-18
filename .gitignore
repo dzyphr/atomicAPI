@@ -1,4 +1,5 @@
 *.env
+startserver.sh
 autotest-*
 Swap_*
 atomicAPI.log

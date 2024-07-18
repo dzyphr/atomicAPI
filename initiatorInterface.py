@@ -413,9 +413,9 @@ def GeneralizedENC_FinalizationSubroutine( \
             init_J = json_tools.ojf(initiatorJSONPath)
             InitiatorErgoAccountName = init_J["InitiatorErgoAccountName"]
             SigmaParticleInterface.SigmaParticle_updateKeyEnv(swapName, InitiatorErgoAccountName)
-            while SigmaParticleInterface.getBoxID(swapName) == False:
-                SigmaParticleInterface.deployErgoContract(swapName, password=localchainpassword) 
-                time.sleep(1)
+#            while SigmaParticleInterface.getBoxID(swapName) == False:
+            txjson = SigmaParticleInterface.deployErgoContract(swapName, password=localchainpassword) 
+#                time.sleep(1)
             boxId = SigmaParticleInterface.getBoxID(swapName)
             InitiatorAtomicSchnorrLockHeight = file_tools.clean_file_open( \
                     "Ergo/SigmaParticle/" + swapName + "/lockHeight", "r" \
@@ -431,6 +431,7 @@ def GeneralizedENC_FinalizationSubroutine( \
                     ElGamalKey, ElGamalKeyPath, finalizationPATH, ENC_finalizationPATH 
             )
             setSwapState(swapName, "finalized_unsubmitted", setMap=True)
+            LOG('finalized, submitting finalization')
         
         finalize( \
                 swapName, contractFunds, CoinA_Price, CoinB_Price, initiatorJSONPath, \
@@ -445,7 +446,15 @@ def GeneralizedENC_InitiatorClaimSubroutine(initiatorJSONPath, localchainpasswor
     if init_J["InitiatorChain"] == "TestnetErgo" and init_J["ResponderChain"] == "Sepolia":
         swapName = init_J["swapName"]
         setSwapState(swapName, "claiming", setMap=True)
-        boxID = init_J["boxId"]
+        while True:
+            try:
+                init_J = json.loads(file_tools.clean_file_open(initiatorJSONPath, "r"))
+                boxID = init_J["boxId"]
+                break
+            except KeyError as e:
+                print(e)
+                time.sleep(10)
+                continue
         initiatorEVMAccountName = init_J["InitiatorEVMAccountName"] 
         if SigmaParticleInterface.checkSchnorrTreeForClaim(boxID, swapName, initiatorJSONPath, password=localchainpassword) == False:
             LOG('refund attempted due to timelock expiry')
