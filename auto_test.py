@@ -31,13 +31,9 @@ def kill_proc_tree(pid, sig=signal.SIGTERM, include_parent=True,
 
 
 def state_reload_test_checkpoint(swapID, role="", stateReloadTest="", platform=""):
-#    print("state_reload_test_checkpoint", flush=True)
     if stateReloadTest == "":
-#        AUTOTESTLOG(f'var stateReloadTest was None', "err")
         return None
-    #TODO make logic for stateReloadTest=All
     if checkSwapState(swapID, stateReloadTest) == False:
-#        AUTOTESTLOG(f'Swap {swapID} current swapState is not {stateReloadTest} ', "err")
         return None
     if role == "Client":
         procName = "AASwapClientRESTAPI"
@@ -56,10 +52,6 @@ def state_reload_test_checkpoint(swapID, role="", stateReloadTest="", platform="
         kptres = kill_proc_tree(pid, sig=signal.SIGTERM, include_parent=True,
                    timeout=None, on_terminate=None)
         print(kptres)
-#        os.killpg(pgid, signal.SIGTERM)
-#        os.killpg(pgid, signal.SIGINT)
-#        os.kill(pid, signal.SIGTERM)
-#        os.kill(pid, signal.SIGINT)
     AUTOTESTLOG(f'StateReloadTest: Restarting {procName}', "info")
     os.popen(cmd).read()
     return True
@@ -108,7 +100,24 @@ def checkSwapState(swapID, state):
     elif SwapState != state:
         return False
 
-def automated_test_local_client_side(watch=False, platform="Ubuntu", stateReloadTest=""):
+def checkElGQGChannelCorrectness(QG, privateAPIKey):
+    url = "http://localhost:3031/v0.0.1/requests"
+    data = json.dumps({
+        "id": str(uuid.uuid4()),
+        "request_type": "checkElGQGChannelCorrectness",
+        "QGChannel": QG
+    })
+    headers = {
+        "Authorization": f'Bearer {privateAPIKey}',
+        "Content-Type": "application/json"
+    }
+    response = requests.post(url, data=data, headers=headers).text
+    return response
+
+def automated_test_local_server_side(watch=False, platform="Ubuntu", stateReloadTest=""):
+    SwapTicketID = start_swap_from_local_client(watch=watch)
+
+def start_swap_from_local_client(watch=False):
     localMarketServerOrderTypesURL = "http://127.0.0.1:3030/v0.0.1/ordertypes"
     OrderTypes = json.loads(requests.get(localMarketServerOrderTypesURL).json())
     if len(OrderTypes) == 0:
@@ -163,19 +172,6 @@ def automated_test_local_client_side(watch=False, platform="Ubuntu", stateReload
     privateAPIKey = json_tools.ojf("accepted_private_api_keys.json")["0"]
 
     #If you get badapikey you're probably running this from your server, this test is for client side
-    def checkElGQGChannelCorrectness(QG):
-        url = "http://localhost:3031/v0.0.1/requests"
-        data = json.dumps({
-            "id": str(uuid.uuid4()),
-            "request_type": "checkElGQGChannelCorrectness",
-            "QGChannel": QG
-        })
-        headers = {
-            "Authorization": f'Bearer {privateAPIKey}',
-            "Content-Type": "application/json"
-        }
-        response = requests.post(url, data=data, headers=headers).text
-        return response
 
     localQGPubkeyArrayURL = "http://localhost:3031/v0.0.1/QGPubkeyArray"
     localQGPubkeyArray = json.loads(requests.get(localQGPubkeyArrayURL).json())
@@ -188,7 +184,7 @@ def automated_test_local_client_side(watch=False, platform="Ubuntu", stateReload
     marketElGKey = ""
     #get a compatible ElGamal Key
     for channel in MarketQGPubKeyArray:
-        if checkElGQGChannelCorrectness(channel).strip("\"") == "true":
+        if checkElGQGChannelCorrectness(channel, privateAPIKey).strip("\"") == "true":
             if channel in localQGPubkeyArray.keys():
                 compatkey = localQGPubkeyArray[channel][0]
                 compatchannel = channel
@@ -256,7 +252,10 @@ def automated_test_local_client_side(watch=False, platform="Ubuntu", stateReload
         url, data=startSwapFromUIData, headers=headers \
     ).text.replace("\n", "").replace("\r","").replace("\t","")[1:-1].replace("\\", '')[1:-1]
     SwapTicketID = json.loads(response)["SwapTicketID"]
+    return SwapTicketID
 
+def automated_test_local_client_side(watch=False, platform="Ubuntu", stateReloadTest=""):
+    SwapTicketID = start_swap_from_local_client(watch=watch)
 
     if stateReloadTest != "":
         stop_event = Event()
