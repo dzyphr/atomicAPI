@@ -57,9 +57,10 @@ def state_reload_test_checkpoint(swapID, role="", stateReloadTest="", platform="
     return True
 
 
-states = []
+#states = []
 
 def state_reload_test_worker(stop_event, swapID, role="", stateReloadTest="", platform=""):
+    states = []
     while not stop_event.is_set():
         if stateReloadTest != "all":
             if state_reload_test_checkpoint(swapID, role=role, stateReloadTest=stateReloadTest, platform=platform) == True:
@@ -68,8 +69,15 @@ def state_reload_test_worker(stop_event, swapID, role="", stateReloadTest="", pl
             else:
                 continue
         elif stateReloadTest == "all":
-            for state in swap_tools.PossibleSwapStates:
-                if state in [*swap_tools.PossibleSwapStates[12:16]]: #ignore end states for now
+            if role == "Client":
+                PossibleStates = swap_tools.PossibleSwapStates
+            elif role == "Server":
+                PossibleStates = swap_tools.PossibleSwapStatesInitiator
+            for state in PossibleStates:
+                if state in [ \
+                        *swap_tools.PossibleSwapStates[12:16], \
+                        *swap_tools.PossibleSwapStatesInitiator[10:14] \
+                ]: #ignore end states for now
                     return
                 print(state)
                 if state not in states:
@@ -77,7 +85,10 @@ def state_reload_test_worker(stop_event, swapID, role="", stateReloadTest="", pl
                 else:
                     break
                 AUTOTESTLOG(f"Reloading on SwapState: {state}", "info")
-                if state in [*swap_tools.PossibleSwapStates[5:8]]: #these states happen near instantly so give them few tries
+                if state in [ \
+                        *swap_tools.PossibleSwapStates[5:8], \
+                        *swap_tools.PossibleSwapStatesInitiator[0:2] \
+                ]: #these states happen near instantly so give them few tries only to prevent hang
                     retries = 3
                     while retries > 0:
                         if state_reload_test_checkpoint(swapID, role=role, stateReloadTest=state, platform=platform) == True:
@@ -91,6 +102,7 @@ def state_reload_test_worker(stop_event, swapID, role="", stateReloadTest="", pl
                             break
                         else:
                             continue
+
 
 
 def checkSwapState(swapID, state):
@@ -114,10 +126,55 @@ def checkElGQGChannelCorrectness(QG, privateAPIKey):
     response = requests.post(url, data=data, headers=headers).text
     return response
 
-def automated_test_local_server_side(watch=False, platform="Ubuntu", stateReloadTest=""):
-    SwapTicketID = start_swap_from_local_client(watch=watch)
+def automated_test_local_server_side(watch=False, platform="Ubuntu", stateReloadTest="", clientTargetPath=""):
+    SwapTicketID = start_swap_from_local_client(watch=watch, clientTargetPath=clientTargetPath)
+    if stateReloadTest != "":
+        stop_event = Event()
+        thread = Thread(target=state_reload_test_worker, args=( \
+                stop_event, SwapTicketID, "Server", stateReloadTest, platform \
+        ))
+        thread.start()
+    AUTOTESTLOG(f'Started SwapTicketID: {SwapTicketID}', "info")
+    init_J_filepath = f'{SwapTicketID}/initiator.json'
+    file_tools.wait_for_file(init_J_filepath)
+    init_J = json_tools.ojf(init_J_filepath)  
+    ENC_init_filepath = init_J["ENC_Init_PATH"]
+    file_tools.wait_for_file(ENC_init_filepath)
+    AUTOTESTLOG(f'Swap {SwapTicketID} Intiated on Server', "info")
+    DEC_Response_PATH = init_J["DEC_Response_PATH"]
+    file_tools.wait_for_file(DEC_Response_PATH)
+    while True:
+        try:
+            init_J = json_tools.ojf(init_J_filepath)
+            init_J["counterpartyContractFundedAmount"]
+            break
+        except (KeyError, json.decoder.JSONDecodeError) as e:
+            time.sleep(3)
+            continue
+    AUTOTESTLOG( \
+            f'Swap {SwapTicketID} got a  Response from the Client. \nAmount Funded: {init_J["counterpartyContractFundedAmount"]}', \
+            'info' \
+    )
+    AUTOTESTLOG('Finalizing...', "info")
+    ENC_finalizationPATH = init_J["ENC_finalizationPATH"]
+    file_tools.wait_for_file(ENC_finalizationPATH)
+    AUTOTESTLOG(f'Swap {SwapTicketID} Finalized on Server', "info")
+    atomicClaim_tx1path = f'{SwapTicketID}/atomicClaim_tx1'
+    file_tools.wait_for_file(atomicClaim_tx1path)
+    atomicClaim_tx = json_tools.ojf(atomicClaim_tx1path)["outputs"][0]
 
-def start_swap_from_local_client(watch=False):
+    AUTOTESTLOG(f'Swap {SwapTicketID} Claimed by Client.\nTx: {atomicClaim_tx}\nClaiming from responder\'s contract.', "info")
+    init_J = json_tools.ojf(init_J_filepath)
+    while int(AtomicityInterface.Atomicity_CheckContractFunds(SwapTicketID, init_J)) != 0:
+        init_J = json_tools.ojf(init_J_filepath)
+        time.sleep(10)
+    AUTOTESTLOG(f'Swap {SwapTicketID} Claimed by Server', 'info')
+    #TODO find receiverClaim tx from contract addr to ensure claim
+    AUTOTESTLOG(f'Succesful Claim. AutoTest finished!', "info")
+    if stateReloadTest != "":
+       stop_event.set()
+
+def start_swap_from_local_client(watch=False, clientTargetPath=""):
     localMarketServerOrderTypesURL = "http://127.0.0.1:3030/v0.0.1/ordertypes"
     OrderTypes = json.loads(requests.get(localMarketServerOrderTypesURL).json())
     if len(OrderTypes) == 0:
@@ -169,7 +226,7 @@ def start_swap_from_local_client(watch=False):
     
     MarketQGPubKeyArray = json.loads(requests.get(MarketQGPubKeyArrayURL).json())
 
-    privateAPIKey = json_tools.ojf("accepted_private_api_keys.json")["0"]
+    privateAPIKey = json_tools.ojf(f"{clientTargetPath}accepted_private_api_keys.json")["0"]
 
     #If you get badapikey you're probably running this from your server, this test is for client side
 

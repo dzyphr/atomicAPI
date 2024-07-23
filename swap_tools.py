@@ -201,15 +201,15 @@ def watchSwapLoop(swapName, localChainAccountPassword="", crossChainAccountPassw
                         #swaps that break here should just be reinitiated
                         #no reason to reload
                         return
-                    if swapState == PossibleSwapStatesInitiator[1]: #initiated_unsubmitted
+                    elif swapState == PossibleSwapStatesInitiator[1]: #initiated_unsubmitted
                         #have to return because basically waiting for client to request initiation again from their state reload
                         #probably very rare case
                         return
-                    if swapState == PossibleSwapStatesInitiator[2]: #initiated_submitted
+                    elif swapState == PossibleSwapStatesInitiator[2]: #initiated_submitted
                         #technically we're still waiting for a response here
                         #so because of that we shouldn't move forward with finalizing
                         return
-                    if swapState == PossibleSwapStatesInitiator[3]: #responded
+                    elif swapState == PossibleSwapStatesInitiator[3]: #responded
                         initiatorInterface.GeneralizedENC_FinalizationSubroutine(
                             initiatorJSONPath, CoinA_Price, CoinB_Price, 
                             localchainpassword=localChainAccountPassword, crosschainpassword=crossChainAccountPassword
@@ -218,7 +218,7 @@ def watchSwapLoop(swapName, localChainAccountPassword="", crossChainAccountPassw
                             initiatorJSONPath, 
                             localchainpassword=localChainAccountPassword, crosschainpassword=crossChainAccountPassword
                         )
-                    if swapState in [
+                    elif swapState in [
                            PossibleSwapStatesInitiator[4], #verifying_response
                            PossibleSwapStatesInitiator[5], #verified_response
                            PossibleSwapStatesInitiator[6]  #finalizing
@@ -233,7 +233,7 @@ def watchSwapLoop(swapName, localChainAccountPassword="", crossChainAccountPassw
                             localchainpassword=localChainAccountPassword, crosschainpasswordcross=ChainAccountPassword
                         )
                         return
-                    if swapState in [
+                    elif swapState in [
                             PossibleSwapStatesInitiator[7], PossibleSwapStatesInitiator[8], 
                             PossibleSwapStatesInitiator[9], PossibleSwapStatesInitiator[10]
                     ]:      #finalized_unsubmitted finalized_submitted claiming or refunding

@@ -28,7 +28,6 @@ if config_tools.valFromConf(".env", "LOGMAINARGS").strip("\"") == "True": LOG(f'
 def main():
     if len(args) == 2:
         if args[1] == "automated_test_local_client_side":
-            LOG('running automated_test_local_client_side()')
             auto_test.automated_test_local_client_side()
         if args[1] == "firstRunCheck":
             LOG('running firstRunCheck()')
@@ -55,9 +54,12 @@ def main():
             LOG('running market_pricing.marketPricingLoop()')
             market_pricing.marketPricingLoop()
     elif len(args) == 3:
+        if args[1] == "automated_test_local_server_side":
+            if args[2].startswith("--clientTargetPath="):
+                ctp = args[2].replace("--clientTargetPath=", "")
+                auto_test.automated_test_local_server_side(clientTargetPath=ctp)
         if args[1] == "automated_test_local_client_side":
             if args[2] == "--watch":
-                LOG('running automated_test_local_client_side(watch=True)')
                 auto_test.automated_test_local_client_side(watch=True)
             if args[2] == "--stateReloadTest=initiated":
                 auto_test.automated_test_local_client_side(stateReloadTest="initiated")
@@ -221,6 +223,12 @@ def main():
             if config_tools.valFromConf(".env", "LOGMAINARGS").strip("\"") == "True": LOG(f'running swap_tools.watchSwapLoop("{args[2]}")')
             swap_tools.watchSwapLoop(args[2])
     elif len(args) == 4:
+        if args[1] == "automated_test_local_server_side":
+            if args[2].startswith("--clientTargetPath="):
+                if args[3] == "--watch":
+                    ctp = args[2].replace("--clientTargetPath=", "")
+                    LOG(f'running automated_test_local_server_side(clientTargetPath={ctp})')
+                    auto_test.automated_test_local_server_side(clientTargetPath=ctp, watch=True)
         if args[1] == "SigmaParticle_box_to_addr":
             if config_tools.valFromConf(".env", "LOGMAINARGS").strip("\"") == "True": LOG(f'running sys.stdout.write(SigmaParticleInterface.SigmaParticle_box_to_addr("{args[2]}", "{args[3]}"))')
             sys.stdout.write(SigmaParticleInterface.SigmaParticle_box_to_addr(args[2], args[3]))
@@ -268,6 +276,14 @@ def main():
                     args[2], crosschainpassword=args[3]
             )
     elif len(args) == 5:
+        if args[1] == "automated_test_local_server_side":
+            if args[2].startswith("--clientTargetPath="):
+                if args[3] == "--watch":
+                    if args[4].startswith("--stateReloadTest="):
+                        ctp = args[2].replace("--clientTargetPath=", "")
+                        state = args[4].replace("--stateReloadTest=", "")
+                        LOG(f'running automated_test_local_server_side(clientTargetPath={ctp}, stateReloadTest={state})')
+                        auto_test.automated_test_local_server_side(clientTargetPath=ctp, watch=True, stateReloadTest=state)
         if args[1] == "SigmaParticle_box_to_addr":
             if config_tools.valFromConf(".env", "LOGMAINARGS").strip("\"") == "True": LOG(f'running \
                     sys.stdout.write(SigmaParticleInterface.SigmaParticle_box_to_addr("{args[2]}", "{args[3]}", password="{args[4]}"))')

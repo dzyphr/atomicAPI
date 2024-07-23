@@ -6,7 +6,7 @@ def randsha256():
 
 
 
-sessionID_hash = randsha256()
+sessionID_hash = str(randsha256())
 
 def LOG(logstr):
     if config_tools.valFromConf(".env", "LOGGING").strip("\"") == "True":
@@ -24,8 +24,8 @@ def LOG(logstr):
 
 
 def AUTOTESTLOG(logstr, kind, watch=False, platform="Ubuntu"):
-    logger = logging.getLogger(sessionID_hash)
     filename = f'autotest-{sessionID_hash}.log'
+    logger = logging.getLogger(filename)
     if not logger.handlers:
         autotesthandler = logging.FileHandler(filename)
         autotesthandler.setFormatter(logging.Formatter('%(asctime)s - %(levelname)s - %(message)s'))
@@ -37,10 +37,12 @@ def AUTOTESTLOG(logstr, kind, watch=False, platform="Ubuntu"):
     if kind == "err":
         autotesthandler = logging.FileHandler(filename)
         autotesthandler.setLevel(logging.ERROR)
+        logger.setLevel(logging.ERROR)
         logger.error(f'{logstr}')
         return
     elif kind == "info":
         autotesthandler = logging.FileHandler(filename)
         autotesthandler.setLevel(logging.INFO)
+        logger.setLevel(logging.INFO)
         logger.info(f'{logstr}')
         return 

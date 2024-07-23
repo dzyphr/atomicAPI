@@ -11,7 +11,7 @@ def Atomicity_ContractFilesBuilt(swapName):
 
 def Atomicity_CheckContractFunds(swapName, j_response, password=""):
     LOG('Atomicity_CheckContractFunds')
-    chain = j_response["responderLocalChain"]
+    chain = j_response["responderLocalChain"] #needs modularizing for either role
     contractAddr = j_response["responderContractAddr"]
     swapName = "Swap_" + swapName.replace("-", "")
     if chain == "Sepolia":
