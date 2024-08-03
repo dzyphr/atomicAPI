@@ -31,12 +31,6 @@ elif args[1] == "refund":
 from connect import *
 ergo, wallet_mnemonic, mnemonic_password, senderAddress, senderEIP3Secret = connect(password=password) #dotenv loaded here dont call env vars before
 
-def sigHandle(sig, frame):
-    os._exit(0)
-    
-signal.signal(signal.SIGTERM, sigHandle)
-signal.signal(signal.SIGINT, sigHandle)
-
 try:
     getattr(__import__("main"), "main")\
             (os.getenv('ContractName'), ergo, wallet_mnemonic, mnemonic_password, senderAddress, senderEIP3Secret, args)

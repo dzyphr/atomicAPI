@@ -1,12 +1,6 @@
 import file_tools, os, uuid, responderInterface, json_tools, subprocess, sys, json, ClientEndpoints, initiatorInterface, signal
 
 
-def sigHandle(sig, frame):
-    sys.exit(0)
-
-signal.signal(signal.SIGTERM, sigHandle)
-signal.signal(signal.SIGINT, sigHandle)
-
 
 PossibleSwapStates = [
         "initiated", #0 

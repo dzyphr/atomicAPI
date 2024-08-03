@@ -1,7 +1,10 @@
-import sys, configparser, json, shutil, json_tools, time, os, ast, ElGamalInterface, SigmaParticleInterface
+import sys, os
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+import configparser, json, shutil, json_tools, time, ast, ElGamalInterface, SigmaParticleInterface
 import AtomicityInterface, enum_tools, price_tools, file_tools, config_tools
 from enum import Enum
-from swap_tools import setSwapState
+#from swap_tools import swap_tools.setSwapState
+import swap_tools
 from passwordFileEncryption import get_val_from_envdata_key, decrypt_file_return_contents
 from LOG import LOG
 py = "python3 -u "
@@ -236,7 +239,7 @@ def GeneralizedENC_InitiationSubroutine(\
         localChainAccountPassword=localChainAccountPassword, crossChainAccountPassword=crossChainAccountPassword)
     def init(mi):
         LOG('init')
-#        setSwapState(swapName, "initiating", setMap=True) #should be set by REST API 
+#        swap_tools.setSwapState(swapName, "initiating", setMap=True) #should be set by REST API 
         file_tools.clean_file_open(mi["initiatorJSONPath"], "w", "{}")
         class initiatorInputEnum(Enum):
             ElGamalKey = mi["ElGamalKey"]
@@ -267,7 +270,7 @@ def GeneralizedENC_InitiationSubroutine(\
         publicInit = sanitizeInitiation(privateInit)
         file_tools.clean_file_open(mi["publicInitPATH"], "w", publicInit)
         encrypt = ElGamalInterface.ElGamal_Encrypt(mi["ElGamalKey"], mi["ElGamalKeyPath"], mi["publicInitPATH"], mi["ENC_Init_PATH"])
-        setSwapState(swapName, "initiated_unsubmitted", setMap=True)
+        swap_tools.setSwapState(swapName, "initiated_unsubmitted", setMap=True)
     init(mi)
     return mi["ENC_Init_PATH"]
 
@@ -329,7 +332,7 @@ def GeneralizedENC_FinalizationSubroutine( \
         def init(init_J, initiatorJSONPath, CoinA_Price, CoinB_Price, localchainpassword="", crosschainpassword=""):
             LOG('init')
             swapName = init_J["swapName"]
-            setSwapState(swapName, "responded", setMap=True)
+            swap_tools.setSwapState(swapName, "responded", setMap=True)
             ENC_Response_PATH = init_J["ENC_Response_PATH"]
             ElGamalKey = init_J["ElGamalKey"]
             ElGamalKeyPath = init_J["ElGamalKeyPath"]
@@ -361,7 +364,7 @@ def GeneralizedENC_FinalizationSubroutine( \
 
         def verifyResponse(swapName, DEC_Response_PATH, crosschainpassword, initiatorJSONPath, addr, xG):
             LOG('verifyResponse')
-            setSwapState(swapName, "verifying_response", setMap=True)
+            swap_tools.setSwapState(swapName, "verifying_response", setMap=True)
             inspect_json = inspectResponse(DEC_Response_PATH, swapName, password=crosschainpassword)
             if inspect_json == "Error: response does not have expected keys":
                 print("fail")
@@ -387,7 +390,7 @@ def GeneralizedENC_FinalizationSubroutine( \
                 LOG("on chain contract does not meet offchain contract spec, will not fulfil this swap!")
                 print("on chain contract does not meet offchain contract spec, will not fulfil this swap!")
                 exit()
-            setSwapState(swapName, "verified_response", setMap=True)
+            swap_tools.setSwapState(swapName, "verified_response", setMap=True)
             return contractFunds
 
         contractFunds = verifyResponse(swapName, DEC_Response_PATH, crosschainpassword, initiatorJSONPath, addr, xG)
@@ -398,7 +401,7 @@ def GeneralizedENC_FinalizationSubroutine( \
         ):
             LOG('finalize')
             convList = price_tools.getPriceConversions(price_tools.weiToEth(contractFunds), CoinA_Price, CoinB_Price)
-            setSwapState(swapName, "finalizing", setMap=True)
+            swap_tools.setSwapState(swapName, "finalizing", setMap=True)
             #TODO if we re enter this section due to a state reload, we should check if we already sent something to the mempool
             #or potentially it uploaded already if we hit the deploy function before state break
             finalizeOBJ = finalizeSwap(initiatorJSONPath)
@@ -415,7 +418,7 @@ def GeneralizedENC_FinalizationSubroutine( \
             SigmaParticleInterface.SigmaParticle_updateKeyEnv(swapName, InitiatorErgoAccountName)
 #            while SigmaParticleInterface.getBoxID(swapName) == False:
             txjson = SigmaParticleInterface.deployErgoContract(swapName, password=localchainpassword) 
-#                time.sleep(1)
+ #               time.sleep(1)
             boxId = SigmaParticleInterface.getBoxID(swapName)
             InitiatorAtomicSchnorrLockHeight = file_tools.clean_file_open( \
                     "Ergo/SigmaParticle/" + swapName + "/lockHeight", "r" \
@@ -430,9 +433,8 @@ def GeneralizedENC_FinalizationSubroutine( \
             ENC_finalization =  ElGamalInterface.ElGamal_Encrypt( \
                     ElGamalKey, ElGamalKeyPath, finalizationPATH, ENC_finalizationPATH 
             )
-            setSwapState(swapName, "finalized_unsubmitted", setMap=True)
+            swap_tools.setSwapState(swapName, "finalized_unsubmitted", setMap=True)
             LOG('finalized, submitting finalization')
-        
         finalize( \
                 swapName, contractFunds, CoinA_Price, CoinB_Price, initiatorJSONPath, \
                 finalizationPATH, InitiatorErgoAddr, ElGamalKey, ElGamalKeyPath, ENC_finalizationPATH \
@@ -445,7 +447,7 @@ def GeneralizedENC_InitiatorClaimSubroutine(initiatorJSONPath, localchainpasswor
     init_J = json.loads(file_tools.clean_file_open(initiatorJSONPath, "r"))
     if init_J["InitiatorChain"] == "TestnetErgo" and init_J["ResponderChain"] == "Sepolia":
         swapName = init_J["swapName"]
-        setSwapState(swapName, "claiming", setMap=True)
+        swap_tools.setSwapState(swapName, "claiming", setMap=True)
         while True:
             try:
                 init_J = json.loads(file_tools.clean_file_open(initiatorJSONPath, "r"))
@@ -464,6 +466,6 @@ def GeneralizedENC_InitiatorClaimSubroutine(initiatorJSONPath, localchainpasswor
 #        AtomicityInterface.Atomicity_updateKeyEnv(swapName, initiatorEVMAccountName)
         AtomicityInterface.Atomicity_claimScalarContract(initiatorJSONPath, swapName, gasMod=3, password=crosschainpassword)
         LOG('Swap Claimed')
-        setSwapState(swapName, "claimed", setMap=True)
+        swap_tools.setSwapState(swapName, "claimed", setMap=True)
     ################################################################################
 

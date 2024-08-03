@@ -1,4 +1,7 @@
-import priceFeeds, price_tools, json_tools, uuid, file_tools, os, json, ast, time, numbers
+import sys, os
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
+import priceFeeds, price_tools, json_tools, uuid, file_tools,  json, ast, time, numbers
 from decimal import *
 
 ### should be able to set options such as

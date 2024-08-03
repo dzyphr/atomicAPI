@@ -3,12 +3,37 @@ import logging
 import os
 from dotenv import load_dotenv
 load_dotenv()
+from dotenv import dotenv_values
 import sys 
+import file_tools
 from passwordFileEncryption import get_val_from_envdata_key, decrypt_file_return_contents
 if bool(os.getenv('localErgpy')) == True:
     sys.path.insert(0, '../ergpy/ergpy') #prefer local version
 from ergpy import appkit, helper_functions
+
 def connect(password=""):
+    '''
+    log = f"Current Working Directory: {os.getcwd()}\n"
+    log += f"Script Directory: {os.path.dirname(os.path.realpath(__file__))}\n"
+
+    # Resolve absolute path for .env file
+    script_dir = os.path.dirname(os.path.realpath(__file__))
+#    contractdir = os.path.join(script_dir, "Ergo/SigmaParticle/")
+    script_dir = script_dir[script_dir.find("Ergo"):]
+    env_path = os.path.join(script_dir.replace("py", ""), '.env')
+ #   log += f"Target Directory: {contractdir}\n"
+    log += f".env Path: {env_path}\n"
+
+    # Load environment variables
+    if os.path.isfile(env_path):
+        loadedenv = dotenv_values(env_path)
+        os.environ.update(loadedenv)
+        log += "Environment variables loaded."
+    else:
+        log += f".env file not found at: {env_path}"
+
+    file_tools.clean_file_open("testpyo3envs", "w", log)
+    '''
     if password == "":
         load_dotenv()
         node_url = os.getenv('testnetNode') # MainNet or TestNet

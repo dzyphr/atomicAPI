@@ -21,7 +21,6 @@ def height_filepath(ergo, filepath):
     f = open(filepath, "w")
     f.write(height)
     f.close()
-    print(height)
     return height
 
 def main(contractName, ergo, args):
@@ -34,7 +33,6 @@ def main(contractName, ergo, args):
         f = open(filepath, "w")
         f.write(height)
         f.close()
-        print(height)
 
 
 

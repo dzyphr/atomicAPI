@@ -17,12 +17,13 @@ def test2pAtomicSwap(p1Chain1, p1Chain2, p2Chain1, p2Chain2):
 
 LOG('Atomic API Logger Started')
 
+def sig_handle(sig, frame):
+    print(f"Signal {sig} received, terminating.")
+    sys.exit(0)  # Exit with a success code
 
-def sigHandle(sig, frame):
-    sys.exit()
-    raise SystemExit(sig)
-signal.signal(signal.SIGTERM, sigHandle)
-signal.signal(signal.SIGINT, sigHandle)
+signal.signal(signal.SIGTERM, sig_handle)
+signal.signal(signal.SIGINT, sig_handle)
+
 
 if config_tools.valFromConf(".env", "LOGMAINARGS").strip("\"") == "True": LOG(f'CLI Args: {argstr}')
 def main():
@@ -210,6 +211,7 @@ def main():
         if args[1] == "GeneralizedENC_InitiatorClaimSubroutine":
             if config_tools.valFromConf(".env", "LOGMAINARGS").strip("\"") == "True": LOG(f'running initiatorInterface.GeneralizedENC_InitiatorClaimSubroutine("{args[2]}")')
             initiatorInterface.GeneralizedENC_InitiatorClaimSubroutine(args[2])
+            
         if args[1] == "Responder_CheckLockTimeRefund":
             if config_tools.valFromConf(".env", "LOGMAINARGS").strip("\"") == "True": LOG(f'running responderInterface.Responder_CheckLockTimeRefund("{args[2]}")')
             responderInterface.Responder_CheckLockTimeRefund(args[2])
@@ -270,11 +272,13 @@ def main():
             initiatorInterface.GeneralizedENC_InitiatorClaimSubroutine(
                     args[2], localchainpassword=args[3]
             )
+            
         if args[1] == "GeneralizedENC_InitiatorClaimSubroutine_crossENCOnly":
             if config_tools.valFromConf(".env", "LOGMAINARGS").strip("\"") == "True": LOG(f'running initiatorInterface.GeneralizedENC_InitiatorClaimSubroutine("{args[2]}", crosschainpassword="{args[3]}")')
             initiatorInterface.GeneralizedENC_InitiatorClaimSubroutine(
                     args[2], crosschainpassword=args[3]
             )
+            
     elif len(args) == 5:
         if args[1] == "automated_test_local_server_side":
             if args[2].startswith("--clientTargetPath="):
@@ -294,6 +298,7 @@ def main():
                     "{args[2]}", localchainpassword="{args[3]}", crosschainpassword="{args[4]}"\
             )')
             initiatorInterface.GeneralizedENC_InitiatorClaimSubroutine(args[2], localchainpassword=args[3], crosschainpassword=args[4])
+            
         if args[1] == "GeneralizedENC_ResponderClaimSubroutine":
             if config_tools.valFromConf(".env", "LOGMAINARGS").strip("\"") == "True": LOG(f'running\
                     responderInterface.GeneralizedENC_ResponderClaimSubroutine(\
@@ -315,6 +320,7 @@ def main():
         if args[1] == "GeneralizedENC_FinalizationSubroutine":#initiator refund checking starts here
             if config_tools.valFromConf(".env", "LOGMAINARGS").strip("\"") == "True": LOG(f'running initiatorInterface.GeneralizedENC_FinalizationSubroutine("{args[2]}", "{args[3]}", "{args[4]}")')
             initiatorInterface.GeneralizedENC_FinalizationSubroutine(args[2], args[3], args[4])
+            
         if args[1] == "ElGamal_decrypt":
             if config_tools.valFromConf(".env", "LOGMAINARGS").strip("\"") == "True": LOG(f'running sys.stdout.write(ElGamalInterface.ElGamal_Decrypt("{args[2]}", "{args[3]}", "{args[4]}"))')
             sys.stdout.write(ElGamalInterface.ElGamal_Decrypt(args[2], args[3], args[4]))#subjectFilePath, senderPubKey, userKeyFileName
@@ -361,6 +367,7 @@ def main():
             initiatorInterface.GeneralizedENC_FinalizationSubroutine(
                     args[2], args[3], args[4], crosschainpassword=args[5]
             )
+            
         if args[1] == "GeneralizedENC_FinalizationSubroutine_localENCOnly":#initiator refund checking starts here
             if config_tools.valFromConf(".env", "LOGMAINARGS").strip("\"") == "True": LOG(f'running initiatorInterface.GeneralizedENC_FinalizationSubroutine( \
                     "{args[2]}", "{args[3]}", "{args[4]}", localchainpassword="{args[5]}" \
@@ -368,6 +375,7 @@ def main():
             initiatorInterface.GeneralizedENC_FinalizationSubroutine(
                     args[2], args[3], args[4], localchainpassword=args[5]
             )
+            
     elif len(args) == 7:
         if args[1] == "checkBoxValue":
             if config_tools.valFromConf(".env", "LOGMAINARGS").strip("\"") == "True": LOG(f'running\
@@ -387,6 +395,7 @@ def main():
             initiatorInterface.GeneralizedENC_FinalizationSubroutine(
                     args[2], args[3], args[4], localchainpassword=args[5], crosschainpassword=args[6]
             )
+            
         if args[1] == "UpdateMarketOrderTypeUUIDsList":
             if config_tools.valFromConf(".env", "LOGMAINARGS").strip("\"") == "True": LOG(f'running \
                 market_pricing.UpdateMarketOrderTypeUUIDsList( \
@@ -485,5 +494,6 @@ if __name__ == "__main__":
 #    try:
         main()
         LOG('Atomic API Logger Finished')
+#        sys.exit(0)
 #    except (BrokenPipeError, IOError):
 #        print ('BrokenPipeError caught', file = sys.stderr)

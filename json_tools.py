@@ -24,7 +24,14 @@ def json_to_keyValList(jsonPath): #convert a json file to a python key value lis
         print("Invalid Json")
 
 def ojf(filepath): #open json file
-    return json.loads(str(file_tools.clean_file_open(filepath, "r")))
+    while True:
+        try:
+            contents = json.loads(str(file_tools.clean_file_open(filepath, "r")))
+            break
+        except json.decoder.JSONDecodeError as e: 
+            print(e)
+            continue
+    return contents
 
 def createOrUpdateIndexedJSONPath(path, value):
     if os.path.isfile(path):

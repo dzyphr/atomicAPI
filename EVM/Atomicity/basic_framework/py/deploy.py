@@ -23,12 +23,6 @@ os.environ.update(loadedenv)
 
 Atomicity = "EVM/Atomicity/"
 
-def sigHandle(sig, frame):
-    sys.exit(0)
-
-signal.signal(signal.SIGTERM, sigHandle)
-signal.signal(signal.SIGINT, sigHandle)
-
 
 solcV = os.getenv('SolidityCompilerVersion') #solidity compiler version
 contractName = os.getenv('ContractName') #this variable is set when creating a new_frame
